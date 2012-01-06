@@ -40,13 +40,6 @@ if(BUILD_TEST)
   add_subdirectory(test)
 endif()
 
-install(DIRECTORY apps/
-        DESTINATION bin
-        USE_SOURCE_PERMISSIONS
-        PATTERN "*.bag" EXCLUDE
-        PATTERN "*.pyc" EXCLUDE
-        )
-
 #these setup the lib to be used by others
 include(cmake/install.cmake)
 include(cmake/config.cmake)

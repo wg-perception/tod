@@ -179,9 +179,6 @@ namespace object_recognition
             adjacency_ransac.FillAdjacency(keypoints, spans.find(object_id)->second, *sensor_error_);
             std::cout << "done filling" << std::endl;
             // Keep processing the graph until there is no maximum clique of the right size
-            std::vector<ObjectId> object_ids;
-            std::vector<cv::Mat> Rs, Ts;
-
             while (true)
             {
               // Compute the maximum of clique of that graph
@@ -211,11 +208,13 @@ namespace object_recognition
                   R_mat(j, i) = coefficients[4 * j + i];
                 tvec(j, 0) = coefficients[4 * j + 3];
               }
+              R_mat = R_mat.t();
+              tvec = -R_mat * tvec;
 
               // Save the result;
               PoseResult pose_result;
-              pose_result.R_ = R_mat.t();
-              pose_result.T_ = -R_mat * tvec;
+              pose_result.R_ = R_mat;
+              pose_result.T_ = tvec;
               pose_result.object_id_ = object_id;
               pose_results_->push_back(pose_result);
               std::cout << R_mat << std::endl;

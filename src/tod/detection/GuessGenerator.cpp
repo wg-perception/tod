@@ -139,6 +139,7 @@ namespace object_recognition
         const cv::Mat & initial_image = inputs.get<cv::Mat>("image");
 
         // Get the outputs
+        pose_results_->clear();
         if (point_cloud.empty())
         {
           // Only use 2d to 3d matching
@@ -154,7 +155,6 @@ namespace object_recognition
             DrawClustersPerObject(keypoints, colors_, initial_image, all_object_points);
 
           // For each object, build the connectivity graph between the matches
-          pose_results_->clear();
           std::map<size_t, std::vector<std::vector<int> > > matching_query_points;
           for (OpenCVIdToObjectPoints::iterator query_iterator = all_object_points.begin();
               query_iterator != all_object_points.end(); ++query_iterator)

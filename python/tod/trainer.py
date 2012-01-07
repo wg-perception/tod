@@ -3,7 +3,7 @@
 Module defining the TOD trainer to train the TOD models
 """
 
-from ecto_object_recognition import tod_training
+from ecto_tod import tod_training
 import image_pipeline
 from ecto_opencv import calib, features2d, highgui
 from feature_descriptor import FeatureDescriptor

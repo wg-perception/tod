@@ -70,6 +70,7 @@ class TodDetector(ecto.BlackBox):
 
         guess_params = self._parameters['guess'].copy()
         guess_params['visualize'] = self._visualize
+        guess_params['db_params'] = ObjectDbParameters(self._parameters['db'])
         self.guess_generator = tod_detection.GuessGenerator("Guess Gen", **guess_params)
 
     def connections(self):

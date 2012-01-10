@@ -48,12 +48,12 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include <object_recognition/common/types.h>
-#include <object_recognition/common/io.h>
+#include <object_recognition/common/pose_result.h>
 #include "adjacency_ransac.h"
 
 using ecto::tendrils;
 using object_recognition::db::ObjectId;
-using object_recognition::io::PoseResult;
+using object_recognition::common::PoseResult;
 
 namespace object_recognition
 {
@@ -81,6 +81,7 @@ namespace object_recognition
         params.declare(&GuessGenerator::sensor_error_, "sensor_error", "The error (in meters) from the Kinect", 0.01);
         params.declare(&GuessGenerator::visualize_, "visualize", "If true, display temporary info through highgui",
                        false);
+        params.declare(&GuessGenerator::db_params_, "db_params", "The DB parameters").required(true);
       }
 
       static void
@@ -213,9 +214,9 @@ namespace object_recognition
 
               // Save the result;
               PoseResult pose_result;
-              pose_result.R_ = R_mat;
-              pose_result.T_ = tvec;
-              pose_result.object_id_ = object_id;
+              pose_result.set_R(R_mat);
+              pose_result.set_T(tvec);
+              pose_result.set_object_id(*db_params_, object_id);
               pose_results_->push_back(pose_result);
               std::cout << R_mat << std::endl;
               std::cout << tvec << std::endl;
@@ -276,7 +277,9 @@ namespace object_recognition
       /** How much can the sensor be wrong at most */
       ecto::spore<float> sensor_error_;
       /** The object recognition results */
-      ecto::spore<std::vector<PoseResult> > pose_results_;
+      ecto::spore<std::vector<common::PoseResult> > pose_results_;
+      /** The DB parameters */
+      ecto::spore<db::ObjectDbParameters> db_params_;
     }
     ;
   }

@@ -9,6 +9,7 @@ ectomodule(tod_detection
 
 link_ecto(tod_detection
   ${OpenCV_LIBS}
+  ${ecto_opencv_LIBRARIES}
   object_recognition_common
   object_recognition_db
   ${pcl_LIBRARIES}

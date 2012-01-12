@@ -42,7 +42,7 @@
 
 #include <opencv2/core/core.hpp>
 
-#include "opencv_candidate/lsh.hpp"
+#include <opencv_candidate/lsh.h>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>

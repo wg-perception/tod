@@ -44,7 +44,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
-#include "opencv_candidate/lsh.hpp"
+#include <opencv_candidate/lsh.h>
 
 namespace object_recognition
 {

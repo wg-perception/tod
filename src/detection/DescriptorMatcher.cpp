@@ -50,7 +50,7 @@
 #include "object_recognition/db/db.h"
 #include "object_recognition/db/ModelReader.h"
 #include "object_recognition/db/opencv.h"
-#include "opencv_candidate/lsh.hpp"
+#include <opencv_candidate/lsh.h>
 
 using object_recognition::db::Documents;
 using object_recognition::db::ObjectId;

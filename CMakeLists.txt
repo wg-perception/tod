@@ -21,7 +21,7 @@ find_package(Boost COMPONENTS system filesystem serialization REQUIRED)
 find_package(ecto REQUIRED)
 find_package(ecto_opencv REQUIRED)
 find_package(object_recognition REQUIRED)
-find_ros_package(pcl)
+find_package(PCL REQUIRED)
 find_package(OpenCV REQUIRED)
 
 set_ecto_install_package_name(ecto_tod)
@@ -33,7 +33,9 @@ configure_file(python/__init__.py.in
 ecto_python_env_gen(${CMAKE_BINARY_DIR}/lib ${CMAKE_CURRENT_SOURCE_DIR}/python)
 
 include_directories(${object_recognition_INCLUDE_DIRS}
-	${ecto_opencv_INCLUDE_DIRS})
+	${ecto_opencv_INCLUDE_DIRS}
+	${PCL_INCLUDE_DIRS}
+)
 
 add_subdirectory(src)
 option(BUILD_TEST "Build tests" ON)
@@ -56,4 +58,3 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/
 install(FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/__init__.py
         DESTINATION ${PYTHON_PACKAGES_PATH}/ecto_tod
         )
-

@@ -223,17 +223,74 @@ namespace object_recognition
       optimizeModelCoefficients(const PointCloudConstPtr &target, const std::vector<int> &inliers,
                                 const Eigen::VectorXf &model_coefficients, Eigen::VectorXf &optimized_coefficients)
       {
-        Eigen::Matrix4f transform;
-        pcl::estimateRigidTransformationSVD<PointT, PointT>(*input_, inliers, *target, inliers, transform);
-        optimized_coefficients.resize(16);
-        optimized_coefficients.segment<4>(0) = transform.row(0);
-        optimized_coefficients.segment<4>(4) = transform.row(1);
-        optimized_coefficients.segment<4>(8) = transform.row(2);
-        optimized_coefficients.segment<4>(12) = transform.row(3);
+        estimateRigidTransformationSVD(*input_, inliers, *target, inliers, optimized_coefficients);
       }
 
       mutable std::vector<int> samples_;
     private:
+      /** \brief Estimate a rigid transformation between a source and a target point cloud using an SVD closed-form
+       * solution of absolute orientation using unit quaternions
+       * \param[in] cloud_src the source point cloud dataset
+       * \param[in] indices_src the vector of indices describing the points of interest in cloud_src
+       * \param[in] cloud_tgt the target point cloud dataset
+       * \param[in] indices_tgt the vector of indices describing the correspondences of the interest points from
+       * indices_src
+       * \param[out] transform the resultant transformation matrix (as model coefficients)
+       *
+       * This method is an implementation of: Horn, B. “Closed-Form Solution of Absolute Orientation Using Unit Quaternions,” JOSA A, Vol. 4, No. 4, 1987
+       * THIS IS COPIED STRAIGHT UP FROM PCL AS THEY CHANGED THE API ANDMADE IT PRIVATE
+       */
+      void
+      estimateRigidTransformationSVD(const typename pcl::PointCloud<PointT> &cloud_src,
+                                     const std::vector<int> &indices_src,
+                                     const typename pcl::PointCloud<PointT> &cloud_tgt,
+                                     const std::vector<int> &indices_tgt, Eigen::VectorXf &transform)
+      {
+        transform.resize(16);
+        Eigen::Vector4f centroid_src, centroid_tgt;
+        // Estimate the centroids of source, target
+        compute3DCentroid(cloud_src, indices_src, centroid_src);
+        compute3DCentroid(cloud_tgt, indices_tgt, centroid_tgt);
+
+        // Subtract the centroids from source, target
+        Eigen::MatrixXf cloud_src_demean;
+        demeanPointCloud(cloud_src, indices_src, centroid_src, cloud_src_demean);
+
+        Eigen::MatrixXf cloud_tgt_demean;
+        demeanPointCloud(cloud_tgt, indices_tgt, centroid_tgt, cloud_tgt_demean);
+
+        // Assemble the correlation matrix H = source * target'
+        Eigen::Matrix3f H = (cloud_src_demean * cloud_tgt_demean.transpose()).topLeftCorner<3, 3>();
+
+        // Compute the Singular Value Decomposition
+        Eigen::JacobiSVD<Eigen::Matrix3f> svd(H, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        Eigen::Matrix3f u = svd.matrixU();
+        Eigen::Matrix3f v = svd.matrixV();
+
+        // Compute R = V * U'
+        if (u.determinant() * v.determinant() < 0)
+        {
+          for (int x = 0; x < 3; ++x)
+            v(x, 2) *= -1;
+        }
+
+        Eigen::Matrix3f R = v * u.transpose();
+
+        // Return the correct transformation
+        transform.segment<3>(0) = R.row(0);
+        transform[12] = 0;
+        transform.segment<3>(4) = R.row(1);
+        transform[13] = 0;
+        transform.segment<3>(8) = R.row(2);
+        transform[14] = 0;
+
+        Eigen::Vector3f t = centroid_tgt.head<3>() - R * centroid_src.head<3>();
+        transform[3] = t[0];
+        transform[7] = t[1];
+        transform[11] = t[2];
+        transform[15] = 1.0;
+      }
+
       void
       BuildNeighbors()
       {

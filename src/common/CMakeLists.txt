@@ -8,7 +8,7 @@ add_library(tod_common
 
 target_link_libraries(tod_common
   ${OpenCV_LIBS}
-  ${pcl_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 install(TARGETS tod_common

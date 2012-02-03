@@ -30,8 +30,6 @@ configure_file(python/__init__.py.in
   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/__init__.py
   @ONLY)
 
-ecto_python_env_gen(${CMAKE_BINARY_DIR}/lib ${CMAKE_CURRENT_SOURCE_DIR}/python)
-
 include_directories(${object_recognition_INCLUDE_DIRS}
 	${ecto_opencv_INCLUDE_DIRS}
 	${PCL_INCLUDE_DIRS}
@@ -58,3 +56,5 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/
 install(FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/__init__.py
         DESTINATION ${PYTHON_PACKAGES_PATH}/ecto_tod
         )
+
+catkin_add_env_hooks(10tod SHELLS all )

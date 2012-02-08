@@ -17,7 +17,7 @@ endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/ecto_tod)
 
-find_package(Boost COMPONENTS system filesystem serialization REQUIRED)
+find_package(Boost REQUIRED system filesystem serialization)
 find_package(ecto REQUIRED)
 find_package(ecto_opencv REQUIRED)
 find_package(object_recognition REQUIRED)

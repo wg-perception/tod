@@ -6,9 +6,11 @@ add_library(tod_common
   adjacency_ransac.cpp
   )
 
+find_package(Boost)
 target_link_libraries(tod_common
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 
 install(TARGETS tod_common

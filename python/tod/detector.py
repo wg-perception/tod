@@ -7,8 +7,8 @@ from ecto_tod import tod_detection
 from ecto_object_recognition.object_recognition_db import DbModels, ObjectDbParameters
 from ecto_opencv import features2d, highgui, imgproc, calib
 from feature_descriptor import FeatureDescriptor
-from object_recognition.common.utils import json_helper
-from object_recognition.pipelines.detection import DetectionPipeline
+from object_recognition_core.utils import json_helper
+from object_recognition_core.pipelines.detection import DetectionPipeline
 import ecto
 import ecto_sensor_msgs
 
@@ -127,6 +127,7 @@ class TodDetectionPipeline(DetectionPipeline):
     def type_name(cls):
         return 'TOD'
 
+    @classmethod
     def detector(self, *args, **kwargs):
         visualize = kwargs.pop('visualize', False)
         submethod = kwargs.pop('submethod')

@@ -8,8 +8,8 @@ import image_pipeline
 from ecto_opencv import calib, features2d, highgui
 from feature_descriptor import FeatureDescriptor
 from g2o import SbaDisparity
-from object_recognition.common.utils import dict_to_cpp_json_str
-from object_recognition.pipelines.training import TrainingPipeline
+from object_recognition_core.utils import dict_to_cpp_json_str
+from object_recognition_core.pipelines.training import TrainingPipeline
 import ecto
 
 ########################################################################################################################

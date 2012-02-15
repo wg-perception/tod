@@ -140,7 +140,8 @@ class TODTrainingPipeline(TrainingPipeline):
     def type_name(cls):
         return "TOD"
 
-    def incremental_model_builder(self, *args, **kwargs):
+    @classmethod
+    def incremental_model_builder(cls, *args, **kwargs):
         submethod = kwargs['submethod']
         pipeline_params = kwargs['pipeline_params']
         args = kwargs['args']
@@ -158,7 +159,8 @@ class TODTrainingPipeline(TrainingPipeline):
         return TODModelBuilder(json_feature_descriptor_params=dict_to_cpp_json_str(feature_descriptor_params),
                                visualize=visualize)
 
-    def post_processor(self, *args, **kwargs):
+    @classmethod
+    def post_processor(cls, *args, **kwargs):
         pipeline_params = kwargs['pipeline_params']
         search_params = pipeline_params.get("search", False)
 

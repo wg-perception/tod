@@ -4,14 +4,14 @@ ectomodule(tod_detection
   GuessGenerator.cpp
   ModelReader.cpp
   module.cpp
-  )
+)
 
 link_ecto(tod_detection
   ${OpenCV_LIBS}
   ${ecto_opencv_LIBRARIES}
   object_recognition_common
   object_recognition_db
-  ${pcl_LIBRARIES}
+  ${PCL_LIBRARIES}
   ${Boost_LIBRARIES}
   opencv_candidate
   tod_common

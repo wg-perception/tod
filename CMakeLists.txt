@@ -9,6 +9,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 add_definitions("-Wno-pragmas -fno-strict-aliasing -Wall -Wl,--no-undefined")
+set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-as-needed /opt/ros/fuerte/lib/libpcl_io.so /opt/ros/fuerte/stacks/perception_pcl/pcl_ros/lib/libpcl_ros_io.so -Wl,--as-needed")
 
 #set the default path for built libraries to the "ecto_opencv" directory
 if (NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
@@ -23,6 +24,8 @@ find_package(ecto_opencv REQUIRED)
 find_package(object_recognition REQUIRED)
 find_package(PCL REQUIRED)
 find_package(OpenCV REQUIRED)
+
+find_library(pcl_ros_io_LIBRARIES pcl_ros_io /opt/ros/fuerte/stacks/perception_pcl/pcl_ros/lib)
 
 set_ecto_install_package_name(ecto_tod)
 

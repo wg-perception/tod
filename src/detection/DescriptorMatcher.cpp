@@ -107,9 +107,9 @@ namespace object_recognition
               }
               else
               {
-                float min_x = std::numeric_limits<float>::max(), max_x = std::numeric_limits<float>::min(), min_y =
-                    std::numeric_limits<float>::max(), max_y = std::numeric_limits<float>::min(), min_z =
-                    std::numeric_limits<float>::max(), max_z = std::numeric_limits<float>::min();
+                float min_x = std::numeric_limits<float>::max(), max_x = -std::numeric_limits<float>::max(), min_y =
+                    std::numeric_limits<float>::max(), max_y = -std::numeric_limits<float>::max(), min_z =
+                    std::numeric_limits<float>::max(), max_z = -std::numeric_limits<float>::max();
                 for (; i != end; ++i)
                 {
                   min_x = std::min(min_x, (*i).val[0]);

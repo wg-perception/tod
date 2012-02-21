@@ -21,9 +21,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/ecto_tod)
 find_package(Boost REQUIRED system filesystem serialization)
 find_package(ecto REQUIRED)
 find_package(ecto_opencv REQUIRED)
-find_package(object_recognition REQUIRED)
-find_package(PCL REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(PCL REQUIRED)
 
 find_library(pcl_ros_io_LIBRARIES pcl_ros_io /opt/ros/fuerte/stacks/perception_pcl/pcl_ros/lib)
 
@@ -33,9 +32,12 @@ configure_file(python/__init__.py.in
   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/__init__.py
   @ONLY)
 
-include_directories(${object_recognition_INCLUDE_DIRS}
-	${ecto_opencv_INCLUDE_DIRS}
-	${PCL_INCLUDE_DIRS}
+include_directories(
+    ${object_recognition_INCLUDE_DIRS}
+)
+include_directories(SYSTEM
+    ${PCL_INCLUDE_DIRS}
+    ${ecto_opencv_INCLUDE_DIRS}
 )
 
 add_subdirectory(src)
@@ -49,7 +51,6 @@ endif()
 include(cmake/install.cmake)
 include(cmake/config.cmake)
 
-  
 #install targets for all things python
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/
   DESTINATION ${PYTHON_PACKAGES_PATH}

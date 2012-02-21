@@ -3,12 +3,12 @@
 Module defining the TOD detector to find objects in a scene
 """
 
-from ecto_tod import tod_detection
-from ecto_object_recognition.object_recognition_db import DbModels, ObjectDbParameters
+from ecto_object_recognition_core.object_recognition_core_db import DbModels, ObjectDbParameters
 from ecto_opencv import features2d, highgui, imgproc, calib
+from ecto_tod import tod_detection
 from feature_descriptor import FeatureDescriptor
-from object_recognition_core.utils import json_helper
 from object_recognition_core.pipelines.detection import DetectionPipeline
+from object_recognition_core.utils import json_helper
 import ecto
 import ecto_sensor_msgs
 

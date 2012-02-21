@@ -43,7 +43,7 @@
 
 #include <opencv2/core/core.hpp>
 
-namespace object_recognition
+namespace tod
 {
   namespace maximum_clique
   {

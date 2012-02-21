@@ -42,7 +42,7 @@
 
 #include "maximum_clique.h"
 
-namespace object_recognition
+namespace tod
 {
   namespace maximum_clique
   {

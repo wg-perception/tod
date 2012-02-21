@@ -6,7 +6,7 @@
 
 TEST(OR_tod, Graph1)
 {
-  object_recognition::maximum_clique::Graph graph(10);
+  tod::maximum_clique::Graph graph(10);
   graph.AddEdge(4, 1);
   graph.AddEdge(4, 3);
   graph.AddEdge(5, 3);
@@ -31,7 +31,7 @@ TEST(OR_tod, Graph1)
   graph.AddEdge(9, 7);
   graph.AddEdge(9, 8);
 
-  object_recognition::maximum_clique::Graph::Vertices vertices;
+  tod::maximum_clique::Graph::Vertices vertices;
   graph.FindMaximumClique(vertices);
 
   EXPECT_EQ(vertices.size(), 4);
@@ -39,14 +39,14 @@ TEST(OR_tod, Graph1)
 
 TEST(OR_tod, Graph2)
 {
-  object_recognition::maximum_clique::Graph graph(10);
+  tod::maximum_clique::Graph graph(10);
   // Connect all of the vertices
   for (unsigned int i = 0; i < 10; ++i)
     for (unsigned int j = i + 1; j < 10; ++j)
       graph.AddEdge(i, j);
   graph.DeleteEdge(0, 1);
 
-  object_recognition::maximum_clique::Graph::Vertices vertices;
+  tod::maximum_clique::Graph::Vertices vertices;
   graph.FindMaximumClique(vertices);
 
   EXPECT_EQ(vertices.size(), 9);

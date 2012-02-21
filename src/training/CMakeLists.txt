@@ -1,4 +1,11 @@
 # deal with the training TOD modules
+
+find_package(object_recognition_core REQUIRED)
+
+include_directories(SYSTEM
+    ${object_recognition_core_INCLUDE_DIRS}
+)
+
 ectomodule(tod_training
     CameraToWorld.cpp
     KeypointValidator.cpp
@@ -16,7 +23,7 @@ set_target_properties(tod_detection_ectomodule
       )
 
 link_ecto(tod_training
-  object_recognition_db
+  ${object_recognition_core_LIBRARIES}
   ${OpenCV_LIBS}
   opencv_candidate
   ${pcl_LIBRARIES}

@@ -3,14 +3,14 @@
 Module defining the TOD trainer to train the TOD models
 """
 
-from ecto_tod import tod_training
-import image_pipeline
 from ecto_opencv import calib, features2d, highgui
+from ecto_tod import tod_training
 from feature_descriptor import FeatureDescriptor
 from g2o import SbaDisparity
-from object_recognition_core.utils import dict_to_cpp_json_str
 from object_recognition_core.pipelines.training import TrainingPipeline
+from object_recognition_core.utils import dict_to_cpp_json_str
 import ecto
+import image_pipeline
 
 ########################################################################################################################
 class TODModelBuilder(ecto.BlackBox):

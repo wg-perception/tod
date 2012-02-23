@@ -3,10 +3,11 @@
 Module defining the TOD detector to find objects in a scene
 """
 
-from ecto_object_recognition_core.object_recognition_core_db import DbModels, ObjectDbParameters
 from ecto_opencv import features2d, highgui, imgproc, calib
 from ecto_tod import tod_detection
 from feature_descriptor import FeatureDescriptor
+from object_recognition_core.db.interface import DbModels, ObjectDbParameters
+from object_recognition_core.db.object_db import ObjectDb
 from object_recognition_core.pipelines.detection import DetectionPipeline
 from object_recognition_core.utils import json_helper
 import ecto
@@ -133,6 +134,6 @@ class TodDetectionPipeline(DetectionPipeline):
         submethod = kwargs.pop('submethod')
         parameters = kwargs.pop('parameters')
         object_ids = parameters['object_ids']
-        db_params = ObjectDbParameters(parameters['db'])
-        model_documents = DbModels(db_params, object_ids, self.type_name(), json_helper.dict_to_cpp_json_str(submethod))
+        object_db = ObjectDb(parameters['db'])
+        model_documents = DbModels(object_db, object_ids, self.type_name(), json_helper.dict_to_cpp_json_str(submethod))
         return TodDetector(submethod, parameters, model_documents, visualize, **kwargs)

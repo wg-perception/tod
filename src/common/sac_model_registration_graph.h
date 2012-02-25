@@ -36,9 +36,9 @@
 #ifndef SAC_MODEL_REGISTRATION_GRAPH_H_
 #define SAC_MODEL_REGISTRATION_GRAPH_H_
 
-#include "pcl/sample_consensus/sac_model.h"
-#include "pcl/sample_consensus/sac_model_registration.h"
-#include "pcl/sample_consensus/model_types.h"
+#include <pcl/sample_consensus/sac_model.h>
+#include <pcl/sample_consensus/sac_model_registration.h>
+#include <pcl/sample_consensus/model_types.h>
 
 #include "maximum_clique.h"
 

@@ -79,7 +79,7 @@ namespace tod
       params.declare(&GuessGenerator::sensor_error_, "sensor_error", "The error (in meters) from the Kinect", 0.01);
       params.declare(&GuessGenerator::visualize_, "visualize", "If true, display temporary info through highgui",
                      false);
-      params.declare(&GuessGenerator::db_params_, "db_params", "The DB parameters").required(true);
+      params.declare(&GuessGenerator::db_, "db", "The DB to get data from").required(true);
     }
 
     static void
@@ -215,7 +215,7 @@ namespace tod
             PoseResult pose_result;
             pose_result.set_R(R_mat);
             pose_result.set_T(tvec);
-            pose_result.set_object_id(*db_params_, object_id);
+            pose_result.set_object_id(*db_, object_id);
             pose_results_->push_back(pose_result);
             std::cout << R_mat << std::endl;
             std::cout << tvec << std::endl;
@@ -277,8 +277,8 @@ BOOST_FOREACH          (const std::vector<int> & indices, query_iterator->second
     ecto::spore<float> sensor_error_;
     /** The object recognition results */
     ecto::spore<std::vector<object_recognition_core::common::PoseResult> > pose_results_;
-    /** The DB parameters */
-    ecto::spore<object_recognition_core::db::ObjectDbParameters> db_params_;
+    /** The DB */
+    ecto::spore<object_recognition_core::db::ObjectDb> db_;
   }
   ;
 }

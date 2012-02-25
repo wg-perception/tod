@@ -27,10 +27,11 @@ class TodDetector(ecto.BlackBox):
     if ECTO_ROS_FOUND:
         message_cvt = ecto_ros.Mat2Image
 
-    def __init__(self, submethod, parameters, model_documents, visualize=False, **kwargs):
+    def __init__(self, submethod, parameters, model_documents, object_db, visualize=False, **kwargs):
         self._submethod = submethod
         self._parameters = parameters
         self._model_documents = model_documents
+        self._object_db = object_db
 
         self._visualize = visualize
 
@@ -71,7 +72,8 @@ class TodDetector(ecto.BlackBox):
 
         guess_params = self._parameters['guess'].copy()
         guess_params['visualize'] = self._visualize
-        guess_params['db_params'] = ObjectDbParameters(self._parameters['db'])
+        guess_params['db'] = self._object_db
+
         self.guess_generator = tod_detection.GuessGenerator("Guess Gen", **guess_params)
 
     def connections(self):
@@ -136,4 +138,4 @@ class TodDetectionPipeline(DetectionPipeline):
         object_ids = parameters['object_ids']
         object_db = ObjectDb(parameters['db'])
         model_documents = DbModels(object_db, object_ids, self.type_name(), json_helper.dict_to_cpp_json_str(submethod))
-        return TodDetector(submethod, parameters, model_documents, visualize, **kwargs)
+        return TodDetector(submethod, parameters, model_documents, object_db, visualize, **kwargs)

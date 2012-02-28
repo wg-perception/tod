@@ -2,8 +2,13 @@
 
 find_package(object_recognition_core REQUIRED)
 
+rosbuild_lite_init()
+
+find_pcl_package()
+
 include_directories(SYSTEM
-    ${object_recognition_core_INCLUDE_DIRS}
+                    ${object_recognition_core_INCLUDE_DIRS}
+                    ${PCL_INCLUDE_DIRS}
 )
 
 ectomodule(tod_training

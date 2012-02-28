@@ -22,7 +22,13 @@ find_package(ecto_opencv REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
 
-find_library(pcl_ros_io_LIBRARIES pcl_ros_io /opt/ros/fuerte/stacks/perception_pcl/pcl_ros/lib)
+rosbuild_lite_init()
+
+if (ROS_ELECTRIC_FOUND)
+    find_library(pcl_ros_io_LIBRARIES pcl_ros_io /opt/ros/electric/stacks/perception_pcl/pcl_ros/lib)
+else()
+    find_library(pcl_ros_io_LIBRARIES pcl_ros_io /opt/ros/fuerte/stacks/perception_pcl/pcl_ros/lib)
+endif()
 
 set_ecto_install_package_name(ecto_tod)
 

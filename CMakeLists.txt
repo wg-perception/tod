@@ -20,7 +20,7 @@ find_package(Boost REQUIRED system filesystem serialization)
 find_package(ecto REQUIRED)
 find_package(ecto_opencv REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(PCL REQUIRED)
+find_pcl_package()
 
 rosbuild_lite_init()
 

@@ -52,7 +52,6 @@ if(BUILD_TEST)
 endif()
 
 #these setup the lib to be used by others
-include(cmake/install.cmake)
 include(cmake/config.cmake)
 
 #install targets for all things python

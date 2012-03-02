@@ -263,5 +263,5 @@ BOOST_FOREACH      (const cv::DMatch & match, matches[match_index])
 
 }
 
-ECTO_CELL(tod_detection, object_recognition_core::db::bases::ModelReaderBase<tod::DescriptorMatcher>,
+ECTO_CELL(ecto_detection, object_recognition_core::db::bases::ModelReaderBase<tod::DescriptorMatcher>,
     "DescriptorMatcher", "Given descriptors, find matches, relating to objects.");

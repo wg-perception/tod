@@ -30,7 +30,7 @@ else()
     find_library(pcl_ros_io_LIBRARIES pcl_ros_io /opt/ros/fuerte/stacks/perception_pcl/pcl_ros/lib)
 endif()
 
-set_ecto_install_package_name(ecto_tod)
+set_ecto_install_package_name(tod)
 
 configure_file(python/__init__.py.in
   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/__init__.py

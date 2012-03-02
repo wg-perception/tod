@@ -307,5 +307,5 @@ BOOST_FOREACH        (const cv::DMatch & match, matches_all[descriptor_id])
   ;
 }
 
-ECTO_CELL(tod_training, tod::PrepareForG2O, "PrepareForG2O",
+ECTO_CELL(ecto_training, tod::PrepareForG2O, "PrepareForG2O",
     "Given 3d points and descriptors, find correspondences for SBA")

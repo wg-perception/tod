@@ -2,7 +2,7 @@
 """
 module that displays a TOD model for a given object_id
 """
-from ecto_tod import tod_detection
+from tod import ecto_detection
 import image_pipeline_conversion
 from object_recognition_core.db import dbtools, models
 from object_recognition_core.utils.parser import ObjectRecognitionParser
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     if len(tod_models) < 1:
         raise RuntimeError("There are no tod models available.")
 
-    db_reader = tod_detection.ModelReader('db_reader', db_params=dbtools.args_to_db_params(args))
+    db_reader = ecto_detection.ModelReader('db_reader', db_params=dbtools.args_to_db_params(args))
     #observation dealer will deal out each observation id.
     observation_dealer = ecto.Dealer(tendril=db_reader.inputs.at('model_id'), iterable=tod_models)
     to_pcl = image_pipeline_conversion.MatToPointCloudXYZ()

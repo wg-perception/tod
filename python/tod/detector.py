@@ -4,28 +4,28 @@ Module defining the TOD detector to find objects in a scene
 """
 
 from ecto_opencv import features2d, highgui, imgproc, calib
-from ecto_tod import tod_detection
 from feature_descriptor import FeatureDescriptor
 from object_recognition_core.db.interface import DbModels, ObjectDbParameters
 from object_recognition_core.db.object_db import ObjectDb
 from object_recognition_core.pipelines.detection import DetectionPipeline
 from object_recognition_core.utils import json_helper
+from tod import ecto_detection
 import ecto
-import ecto_sensor_msgs
 
 try:
-    import ecto_ros
+    import ecto_ros.ector_ros
+    import ecto_ros.ecto_sensor_msgs as ecto_sensor_msgs
     ECTO_ROS_FOUND = True
 except ImportError:
     ECTO_ROS_FOUND = False
 
 class TodDetector(ecto.BlackBox):
     feature_descriptor = FeatureDescriptor
-    descriptor_matcher = tod_detection.DescriptorMatcher
-    guess_generator = tod_detection.GuessGenerator
+    descriptor_matcher = ecto_detection.DescriptorMatcher
+    guess_generator = ecto_detection.GuessGenerator
     passthrough = ecto.PassthroughN
     if ECTO_ROS_FOUND:
-        message_cvt = ecto_ros.Mat2Image
+        message_cvt = ecto_ros.ector_ros.Mat2Image
 
     def __init__(self, submethod, parameters, model_documents, object_db, visualize=False, **kwargs):
         self._submethod = submethod
@@ -64,7 +64,7 @@ class TodDetector(ecto.BlackBox):
         feature_descriptor_params = merge_dict(feature_descriptor_params, self._submethod)
 
         self.feature_descriptor = FeatureDescriptor(json_params=json_helper.dict_to_cpp_json_str(feature_descriptor_params))
-        self.descriptor_matcher = tod_detection.DescriptorMatcher("Matcher",
+        self.descriptor_matcher = ecto_detection.DescriptorMatcher("Matcher",
                                 search_json_params=json_helper.dict_to_cpp_json_str(self._parameters['search']),
                                 model_documents=self._model_documents)
         if ECTO_ROS_FOUND:
@@ -74,7 +74,7 @@ class TodDetector(ecto.BlackBox):
         guess_params['visualize'] = self._visualize
         guess_params['db'] = self._object_db
 
-        self.guess_generator = tod_detection.GuessGenerator("Guess Gen", **guess_params)
+        self.guess_generator = ecto_detection.GuessGenerator("Guess Gen", **guess_params)
 
     def connections(self):
         # make sure the inputs reach the right cells

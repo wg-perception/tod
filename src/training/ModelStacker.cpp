@@ -125,4 +125,4 @@ namespace tod
   };
 }
 
-ECTO_CELL(tod_training, tod::TodModelStacker, "TodModelStacker", "Stack 3d points and descriptors")
+ECTO_CELL(ecto_training, tod::TodModelStacker, "TodModelStacker", "Stack 3d points and descriptors")

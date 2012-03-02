@@ -11,7 +11,7 @@ include_directories(SYSTEM
                     ${PCL_INCLUDE_DIRS}
 )
 
-ectomodule(tod_training
+ectomodule(ecto_training
     CameraToWorld.cpp
     KeypointValidator.cpp
     ModelStacker.cpp
@@ -21,7 +21,7 @@ ectomodule(tod_training
     PrepareForG2O.cpp
 )
 
-link_ecto(tod_training
+link_ecto(ecto_training
   ${object_recognition_core_LIBRARIES}
   ${OpenCV_LIBS}
   opencv_candidate
@@ -29,4 +29,4 @@ link_ecto(tod_training
   tod_common
 )
 
-install_ecto_module(tod_training)
+install_ecto_module(ecto_training)

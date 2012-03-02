@@ -187,5 +187,5 @@ namespace
   ;
 }
 
-ECTO_CELL(tod_training, KeypointsValidator, "KeypointsValidator",
+ECTO_CELL(ecto_training, KeypointsValidator, "KeypointsValidator",
           "Given keypoints and a mask, make sure they belong to the mask by rounding their coordinates.");

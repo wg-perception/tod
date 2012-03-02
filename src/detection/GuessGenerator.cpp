@@ -283,5 +283,5 @@ BOOST_FOREACH          (const std::vector<int> & indices, query_iterator->second
   ;
 }
 
-ECTO_CELL(tod_detection, tod::GuessGenerator, "GuessGenerator",
+ECTO_CELL(ecto_detection, tod::GuessGenerator, "GuessGenerator",
     "Given descriptors and 3D positions, compute object guesses.");

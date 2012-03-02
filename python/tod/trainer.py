@@ -4,11 +4,11 @@ Module defining the TOD trainer to train the TOD models
 """
 
 from ecto_opencv import calib, features2d, highgui
-from ecto_tod import tod_training
 from feature_descriptor import FeatureDescriptor
 from g2o import SbaDisparity
 from object_recognition_core.pipelines.training import TrainingPipeline
 from object_recognition_core.utils.json_helper import dict_to_cpp_json_str
+from tod import ecto_training
 import ecto
 import image_pipeline
 
@@ -31,7 +31,7 @@ class TODModelBuilder(ecto.BlackBox):
                                                    frame_number='The frame number.'
                                                    )
                                         )
-        self.model_stacker = tod_training.TodModelStacker()
+        self.model_stacker = ecto_training.TodModelStacker()
 
         i.forward_all('source')
         o.forward_all('model_stacker')
@@ -39,10 +39,10 @@ class TODModelBuilder(ecto.BlackBox):
     def configure(self, p, i, o):
         self.depth_to_3d_sparse = calib.DepthTo3dSparse()
         self.keypoints_to_mat = features2d.KeypointsToMat()
-        self.camera_to_world = tod_training.CameraToWorld()
-        self.model_stacker = tod_training.TodModelStacker()
+        self.camera_to_world = ecto_training.CameraToWorld()
+        self.model_stacker = ecto_training.TodModelStacker()
         self.rescale_depth = image_pipeline.RescaledRegisteredDepth() #this is for SXGA mode scale handling.
-        self.keypoint_validator = tod_training.KeypointsValidator()
+        self.keypoint_validator = ecto_training.KeypointsValidator()
         self.visualize = p.visualize
 
     def connections(self):
@@ -94,10 +94,10 @@ class TODModelBuilder(ecto.BlackBox):
 class TODPostProcessor(ecto.BlackBox):
     """
     """
-    prepare_for_g2o = tod_training.PrepareForG2O
+    prepare_for_g2o = ecto_training.PrepareForG2O
     g2o = SbaDisparity
-    point_merger = tod_training.PointMerger
-    model_filler = tod_training.ModelFiller
+    point_merger = ecto_training.PointMerger
+    model_filler = ecto_training.ModelFiller
 
     def declare_params(self, p):
         p.forward('json_search_params', cell_name='prepare_for_g2o', cell_key='search_json_params')

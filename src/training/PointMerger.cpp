@@ -114,4 +114,4 @@ BOOST_FOREACH      ( size_t id, (*ids_)[image_id])
   };
 }
 
-ECTO_CELL(tod_training, tod::PointMerger, "PointMerger", "Merge the points and descriptor")
+ECTO_CELL(ecto_training, tod::PointMerger, "PointMerger", "Merge the points and descriptor")

@@ -32,5 +32,5 @@ namespace tod
   };
 }
 
-ECTO_CELL(tod_training, tod::ModelFiller, "ModelFiller",
+ECTO_CELL(ecto_training, tod::ModelFiller, "ModelFiller",
     "Populates a db document with a TOD model for persisting a later date.")

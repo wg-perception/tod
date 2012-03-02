@@ -129,6 +129,6 @@ namespace tod
   };
 }
 
-ECTO_CELL(tod_detection, tod::ModelReader, "ModelReader", "Reads a TOD model from the db")
-ECTO_CELL(tod_detection, tod::ModelReaderIterative, "ModelReaderIterative",
+ECTO_CELL(ecto_detection, tod::ModelReader, "ModelReader", "Reads a TOD model from the db")
+ECTO_CELL(ecto_detection, tod::ModelReaderIterative, "ModelReaderIterative",
     "Reads several TOD models from the db")

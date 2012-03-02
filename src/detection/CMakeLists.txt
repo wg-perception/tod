@@ -11,14 +11,14 @@ include_directories(SYSTEM
                     ${PCL_INCLUDE_DIRS}
 )
 
-ectomodule(tod_detection
+ectomodule(ecto_detection
   DescriptorMatcher.cpp
   GuessGenerator.cpp
   ModelReader.cpp
   module.cpp
 )
 
-link_ecto(tod_detection
+link_ecto(ecto_detection
   ${OpenCV_LIBS}
   ${ecto_opencv_LIBRARIES}
   ${object_recognition_core_LIBRARIES}
@@ -28,4 +28,4 @@ link_ecto(tod_detection
   tod_common
 )
 
-install_ecto_module(tod_detection)
+install_ecto_module(ecto_detection)

@@ -24,7 +24,7 @@ link_ecto(ecto_detection
   ${object_recognition_core_LIBRARIES}
   ${PCL_LIBRARIES}
   ${Boost_LIBRARIES}
-  opencv_candidate
+  ${ecto_opencv_LIBRARIES}
   tod_common
 )
 

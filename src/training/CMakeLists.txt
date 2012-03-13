@@ -24,8 +24,8 @@ ectomodule(ecto_training
 link_ecto(ecto_training
   ${object_recognition_core_LIBRARIES}
   ${OpenCV_LIBS}
-  opencv_candidate
-  ${pcl_LIBRARIES}
+  ${ecto_opencv_LIBRARIES}
+  ${PCL_LIBRARIES}
   tod_common
 )
 

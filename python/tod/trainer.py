@@ -10,7 +10,6 @@ from object_recognition_core.pipelines.training import TrainingPipeline
 from object_recognition_core.utils.json_helper import dict_to_cpp_json_str
 from tod import ecto_training
 import ecto
-import image_pipeline
 
 ########################################################################################################################
 class TODModelBuilder(ecto.BlackBox):
@@ -41,7 +40,8 @@ class TODModelBuilder(ecto.BlackBox):
         self.keypoints_to_mat = features2d.KeypointsToMat()
         self.camera_to_world = ecto_training.CameraToWorld()
         self.model_stacker = ecto_training.TodModelStacker()
-        self.rescale_depth = image_pipeline.RescaledRegisteredDepth() #this is for SXGA mode scale handling.
+        from ecto_image_pipeline.base import RescaledRegisteredDepth
+        self.rescale_depth = RescaledRegisteredDepth() #this is for SXGA mode scale handling.
         self.keypoint_validator = ecto_training.KeypointsValidator()
         self.visualize = p.visualize
 

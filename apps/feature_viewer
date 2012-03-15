@@ -3,7 +3,7 @@
 module that displays a TOD model for a given object_id
 """
 from tod import ecto_detection
-import image_pipeline_conversion
+from ecto_image_pipeline.conversion import MatToPointCloudXYZ
 from object_recognition_core.db import dbtools, models
 from object_recognition_core.utils.parser import ObjectRecognitionParser
 import couchdb
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     db_reader = ecto_detection.ModelReader('db_reader', db_params=dbtools.args_to_db_params(args))
     #observation dealer will deal out each observation id.
     observation_dealer = ecto.Dealer(tendril=db_reader.inputs.at('model_id'), iterable=tod_models)
-    to_pcl = image_pipeline_conversion.MatToPointCloudXYZ()
+    to_pcl = MatToPointCloudXYZ()
     pcl_cloud = ecto_pcl.PointCloudT2PointCloud(format=ecto_pcl.Format.XYZ)
     cloud_viewer = ecto_pcl.CloudViewer()
     plasm = ecto.Plasm()

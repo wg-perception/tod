@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 project(tod)
+find_package(catkin REQUIRED)
+catkin_stack()
+catkin_project(tod
+               INCLUDE_DIRS include
+               DEPENDS Boost Eigen OpenCV object_recognition_core
+)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
@@ -36,12 +42,9 @@ configure_file(python/__init__.py.in
   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/__init__.py
   @ONLY)
 
-include_directories(
-    ${object_recognition_INCLUDE_DIRS}
-)
 include_directories(SYSTEM
-    ${PCL_INCLUDE_DIRS}
-    ${ecto_opencv_INCLUDE_DIRS}
+                    ${PCL_INCLUDE_DIRS}
+                    ${ecto_opencv_INCLUDE_DIRS}
 )
 
 add_subdirectory(src)
@@ -51,9 +54,6 @@ if(BUILD_TEST)
   add_subdirectory(test)
 endif()
 
-#these setup the lib to be used by others
-include(cmake/config.cmake)
-
 #install targets for all things python
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/
   DESTINATION ${PYTHON_PACKAGES_PATH}
@@ -62,6 +62,6 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/
 
 install(FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/__init__.py
         DESTINATION ${PYTHON_PACKAGES_PATH}/ecto_tod
-        )
+)
 
-catkin_add_env_hooks(10tod SHELLS all )
+catkin_add_env_hooks(10.tod SHELLS all )

@@ -11,7 +11,6 @@ catkin_project(tod
 catkin_python_setup()
 
 set(PYTHON_PACKAGES_PATH gen/py)
-set(python_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/gen/py/tod)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
@@ -25,8 +24,6 @@ add_definitions("-Wno-pragmas -fno-strict-aliasing -Wall -Wl,--no-undefined")
 if (NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 endif()
-
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/ecto_tod)
 
 find_package(Boost REQUIRED system filesystem serialization)
 find_package(ecto REQUIRED)

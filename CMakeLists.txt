@@ -7,6 +7,12 @@ catkin_project(tod
                DEPENDS Boost Eigen OpenCV object_recognition_core
 )
 
+#install targets for all things python
+catkin_python_setup()
+
+set(PYTHON_PACKAGES_PATH gen/py)
+set(python_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/gen/py/tod)
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
@@ -38,10 +44,6 @@ endif()
 
 set_ecto_install_package_name(tod)
 
-configure_file(python/__init__.py.in
-  ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/__init__.py
-  @ONLY)
-
 include_directories(SYSTEM
                     ${PCL_INCLUDE_DIRS}
                     ${ecto_opencv_INCLUDE_DIRS}
@@ -53,15 +55,3 @@ if(BUILD_TEST)
   enable_testing()
   add_subdirectory(test)
 endif()
-
-#install targets for all things python
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/
-  DESTINATION ${PYTHON_PACKAGES_PATH}
-  COMPONENT main
-)
-
-install(FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/__init__.py
-        DESTINATION ${PYTHON_PACKAGES_PATH}/ecto_tod
-)
-
-catkin_add_env_hooks(10.tod SHELLS all )

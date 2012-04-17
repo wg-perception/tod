@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
-project(tod)
+project(or-tod)
 find_package(catkin REQUIRED)
 catkin_stack()
-catkin_project(tod
+catkin_project(or-tod
                INCLUDE_DIRS include
                DEPENDS Boost Eigen OpenCV object_recognition_core
 )

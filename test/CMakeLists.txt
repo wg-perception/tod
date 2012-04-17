@@ -16,7 +16,7 @@ if(NOT GTEST_FOUND)
 endif()
 
 include_directories(${GTEST_INCLUDE_DIRS})
-include_directories(${tod_SOURCE_DIR}/src/common)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src/common)
 
 add_executable(tod-clique-test
   main.cpp

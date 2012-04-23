@@ -5,7 +5,7 @@ Module defining the TOD detector to find objects in a scene
 
 from ecto_opencv import features2d, highgui, imgproc, calib
 from feature_descriptor import FeatureDescriptor
-from object_recognition_core.boost.interface import DbModels, ObjectDbParameters
+from object_recognition_core.boost.interface import DbModels
 from object_recognition_core.db.object_db import ObjectDb
 from object_recognition_core.pipelines.detection import DetectionPipeline
 from object_recognition_core.utils import json_helper

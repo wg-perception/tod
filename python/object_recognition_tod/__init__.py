@@ -1,6 +1,6 @@
 import collections
-from trainer import *
-from detector import *
+from .trainer import *
+from .detector import *
 #from feature_descriptor import *
 
 def merge_dict(a, b):

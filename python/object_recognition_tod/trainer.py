@@ -8,7 +8,7 @@ from feature_descriptor import FeatureDescriptor
 from ecto_image_pipeline.g2o import SbaDisparity
 from object_recognition_core.pipelines.training import TrainingPipeline
 from object_recognition_core.utils.json_helper import dict_to_cpp_json_str
-from tod import ecto_training
+from object_recognition_tod import ecto_training
 import ecto
 
 ########################################################################################################################
@@ -151,7 +151,7 @@ class TODTrainingPipeline(TrainingPipeline):
             raise RuntimeError("You must supply feature_descriptor parameters for TOD.")
         # merge it with the subtype
         feature_descriptor_params = { 'feature': feature_params, 'descriptor': pipeline_params.get('descriptor', {}) }
-        from tod import merge_dict
+        from object_recognition_tod import merge_dict
         feature_descriptor_params = merge_dict(feature_descriptor_params, submethod)
 
         #grab visualize if works.

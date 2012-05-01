@@ -2,7 +2,7 @@
 """
 module that displays a TOD model for a given object_id
 """
-from tod import ecto_detection
+from object_recognition_tod import ecto_detection
 from ecto_image_pipeline.conversion import MatToPointCloudXYZ
 from object_recognition_core.db import dbtools, models
 from object_recognition_core.utils.parser import ObjectRecognitionParser

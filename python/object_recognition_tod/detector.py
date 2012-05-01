@@ -9,7 +9,7 @@ from object_recognition_core.boost.interface import DbModels
 from object_recognition_core.db.object_db import ObjectDb
 from object_recognition_core.pipelines.detection import DetectionPipeline
 from object_recognition_core.utils import json_helper
-from tod import ecto_detection
+from object_recognition_tod import ecto_detection
 import ecto
 
 try:
@@ -60,7 +60,7 @@ class TodDetector(ecto.BlackBox):
             raise RuntimeError("You must supply feature_descriptor parameters for TOD.")
         # merge it with the subtype
         feature_descriptor_params = { 'feature': feature_params, 'descriptor': self._parameters.get('descriptor', {}) }
-        from tod import merge_dict
+        from object_recognition_tod import merge_dict
         feature_descriptor_params = merge_dict(feature_descriptor_params, self._submethod)
 
         self.feature_descriptor = FeatureDescriptor(json_params=json_helper.dict_to_cpp_json_str(feature_descriptor_params))

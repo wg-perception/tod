@@ -15,7 +15,8 @@ if __name__ == '__main__':
     dbtools.add_db_arguments(parser)
     parser.add_argument('object_id', help='The id of the object for which the TOD model will be displayed.')
     from ecto.opts import scheduler_options, run_plasm
-    scheduler_options(parser)
+    # disabled as scheduler tuning is useless for that application
+    #scheduler_options(parser)
 
     # read the object_ids
     args = parser.parse_args()

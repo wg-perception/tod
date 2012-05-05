@@ -1,5 +1,39 @@
 TOD
-====
+===
 
-TOD (Texture Obejct Detection) is an object_recognition technique based on a
-standard bag of features technique.
+TOD (Texture Obejct Detection) is based on a standard bag of features technique.
+
+Training
+--------
+
+In the config file you need to specify the feature/descriptor to use as well as the search parameters.
+The DB parameters are standard object_recognition_core :ref:`_object_recognition_core_db` parameters.
+A typical config file looks like this:
+
+.. literalinclude:: ../../conf/config_training.tod
+    :language: json
+
+During training, in the different views of the object features and descriptors are extracted.
+For each of those, if depth was also captured (which is the only supported method and is highly recommended
+anyway), the 3d position is also stored.
+
+You can also view the point cloud of the features by launching the ``apps/feature_viewer`` application
+
+.. program-output:: ../../apps/feature_viewer --help
+    :prompt:
+    :in_srcdir:
+
+Detection
+---------
+
+A typical config file looks like this:
+
+.. literalinclude:: ../../conf/config_training.tod
+    :language: json
+
+During detection, features/descriptors are computed on the current image and compared to our database. Sets of seen
+descriptors are then checked with the nearest neighbors (descriptor-wise) for an analogous 3d configuration.
+In the case of 3d input data, it is just a 3d to 3d comparison, but if the input is only 2d, it's a PnP problem
+(for which we have not plugged the solvePnP from OpenCV).
+
+So basically, you can only get the pose of an object on an RGBD input for now.

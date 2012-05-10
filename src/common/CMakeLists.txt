@@ -19,14 +19,11 @@ add_library(tod_common SHARED
 if (ROS_ELECTRIC_FOUND)
 set_target_properties(tod_common
     PROPERTIES
-#    COMPILE_FLAGS "-Wl,--no-as-needed /opt/ros/fuerte/lib/libpcl_io.so /opt/ros/electric/stacks/perception_pcl/pcl_ros/lib/libpcl_ros_io.so -Wl,--as-needed"
-#    LINK_FLAGS "-Wl,--no-as-needed /opt/ros/electric/stacks/perception_pcl/pcl/lib/libpcl_io.so /opt/ros/electric/stacks/perception_pcl/pcl/lib/libpcl_io.so.1.1 /opt/ros/electric/stacks/perception_pcl/pcl/lib/libpcl_io.so.1.1.1 /opt/ros/electric/stacks/perception_pcl/pcl_ros/lib/libpcl_ros_io.so -Wl,--as-needed"
     LINK_FLAGS "-Wl,--no-as-needed /opt/ros/electric/stacks/perception_pcl/pcl_ros/lib/libpcl_ros_io.so -Wl,--as-needed"
 )
 else()
 set_target_properties(tod_common
     PROPERTIES
-#    COMPILE_FLAGS "-Wl,--no-as-needed /opt/ros/fuerte/lib/libpcl_io.so /opt/ros/fuerte/stacks/perception_pcl/pcl_ros/lib/libpcl_ros_io.so -Wl,--as-needed"
     LINK_FLAGS "-Wl,--no-as-needed /opt/ros/fuerte/stacks/perception_pcl/pcl_ros/lib/libpcl_ros_io.so -Wl,--as-needed"
 )
 endif()
@@ -40,3 +37,4 @@ target_link_libraries(tod_common
 install(TARGETS tod_common
     DESTINATION lib
 )
+

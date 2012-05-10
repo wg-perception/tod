@@ -26,7 +26,6 @@ add_executable(tod-clique-test
 target_link_libraries(tod-clique-test
     ${GTEST_LIBRARIES}
     tod_common
-    ${pcl_ros_io_LIBRARIES}
 )
 
 add_test(tod_clique_tests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tod-clique-test)

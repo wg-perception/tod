@@ -1,5 +1,5 @@
 Catkin-ProjectName: object_recognition_tod
-Version: 0.2.5
+Version: 0.2.6
 Description: Textured Object Recognition a standard bag of features approach
 
 Author: Vincent Rabaud <vrabaud@willowgarage.com>, Ethan Rublee <erublee@willowgarage.com>

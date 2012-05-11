@@ -17,24 +17,22 @@ add_library(tod_common SHARED
 )
 
 if (ROS_ELECTRIC_FOUND)
-set_target_properties(tod_common
+    find_library(pcl_ros_io_LIBRARIES pcl_ros_io /opt/ros/electric/stacks/perception_pcl/pcl_ros/lib)
+    set_target_properties(tod_common
     PROPERTIES
     LINK_FLAGS "-Wl,--no-as-needed /opt/ros/electric/stacks/perception_pcl/pcl_ros/lib/libpcl_ros_io.so -Wl,--as-needed"
-)
+    )
+
+    target_link_libraries(tod_common ${OpenCV_LIBS}
+                                     ${PCL_LIBRARIES}
+                                     ${pcl_ros_io_LIBRARIES}
+    )
 else()
-set_target_properties(tod_common
-    PROPERTIES
-    LINK_FLAGS "-Wl,--no-as-needed /opt/ros/fuerte/stacks/perception_pcl/pcl_ros/lib/libpcl_ros_io.so -Wl,--as-needed"
-)
+    target_link_libraries(tod_common ${OpenCV_LIBRARIES}
+                                     ${PCL_LIBRARIES}
+    )
 endif()
 
-target_link_libraries(tod_common
-    ${OpenCV_LIBS}
-    ${PCL_LIBRARIES}
-    ${pcl_ros_io_LIBRARIES}
-)
-
 install(TARGETS tod_common
-    DESTINATION lib
+        DESTINATION lib
 )
-

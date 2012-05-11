@@ -23,9 +23,10 @@ add_executable(tod-clique-test
   test_maximum_clique.cpp
   )
 
-target_link_libraries(tod-clique-test
-    ${GTEST_LIBRARIES}
-    tod_common
+find_package(PythonLibs REQUIRED)
+target_link_libraries(tod-clique-test ${GTEST_LIBRARIES}
+                                      ${PYTHON_LIBRARIES}
+                                      tod_common
 )
 
 add_test(tod_clique_tests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tod-clique-test)

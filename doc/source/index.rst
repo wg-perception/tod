@@ -7,7 +7,7 @@ Training
 --------
 
 In the config file you need to specify the feature/descriptor to use as well as the search parameters.
-The DB parameters are standard object_recognition_core :ref:`_object_recognition_core_db` parameters.
+The DB parameters are standard :ref:`ObjectDbParameters <object_recognition_core_db>` parameters.
 A typical config file looks like this:
 
 .. literalinclude:: ../../conf/config_training.tod

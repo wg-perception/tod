@@ -62,7 +62,7 @@ namespace tod
     FillAdjacency(const std::vector<cv::KeyPoint> & keypoints, float object_span, float sensor_error);
 
     void
-    AddPoints(const pcl::PointXYZ &training_point, const pcl::PointXYZ & query_point, unsigned int query_index);
+    AddPoints(const cv::Point3f &training_point, const cv::Point3f & query_point, unsigned int query_index);
 
     void
     InvalidateIndices(std::vector<unsigned int> &indices);
@@ -74,28 +74,6 @@ namespace tod
     n_points() const
     {
       return query_indices_.size();
-    }
-
-    inline pcl::PointCloud<pcl::PointXYZ>::Ptr
-    query_points() const
-    {
-      return query_points_;
-    }
-    inline pcl::PointXYZ &
-    query_points(unsigned int index) const
-    {
-      return query_points_->points[index];
-    }
-
-    inline pcl::PointCloud<pcl::PointXYZ>::Ptr
-    training_points() const
-    {
-      return training_points_;
-    }
-    inline pcl::PointXYZ &
-    training_points(unsigned int index) const
-    {
-      return training_points_->points[index];
     }
 
     inline const std::vector<unsigned int> &
@@ -133,6 +111,28 @@ namespace tod
     maximum_clique::AdjacencyMatrix sample_adjacency_;
 
   private:
+    inline pcl::PointCloud<pcl::PointXYZ>::Ptr
+    training_points() const
+    {
+      return training_points_;
+    }
+    inline pcl::PointXYZ &
+    training_points(unsigned int index) const
+    {
+      return training_points_->points[index];
+    }
+
+    inline pcl::PointCloud<pcl::PointXYZ>::Ptr
+    query_points() const
+    {
+      return query_points_;
+    }
+    inline pcl::PointXYZ &
+    query_points(unsigned int index) const
+    {
+      return query_points_->points[index];
+    }
+
     pcl::PointCloud<pcl::PointXYZ>::Ptr query_points_;
     pcl::PointCloud<pcl::PointXYZ>::Ptr training_points_;
     std::vector<unsigned int> query_indices_;

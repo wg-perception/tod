@@ -63,13 +63,13 @@ namespace tod
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   void
-  AdjacencyRansac::AddPoints(const pcl::PointXYZ &training_point, const pcl::PointXYZ & query_point,
+  AdjacencyRansac::AddPoints(const cv::Point3f &training_point, const cv::Point3f & query_point,
                              unsigned int query_index)
   {
     valid_indices_.push_back(query_indices_.size());
 
-    training_points_->push_back(training_point);
-    query_points_->push_back(query_point);
+    training_points_->push_back(pcl::PointXYZ(training_point.x, training_point.y, training_point.z));
+    query_points_->push_back(pcl::PointXYZ(query_point.x, query_point.y, query_point.z));
     query_indices_.push_back(query_index);
   }
 
@@ -188,10 +188,9 @@ namespace tod
     for (unsigned int query_index = 0; query_index < matches.size(); ++query_index)
     {
       // Figure out the 3d query point
-      pcl::PointXYZ query_point;
       const cv::KeyPoint & keypoint = keypoints[query_index];
-      const cv::Vec3f &point3f = point_cloud.at < cv::Vec3f > (keypoint.pt.y, keypoint.pt.x);
-      query_point = pcl::PointXYZ(point3f.val[0], point3f.val[1], point3f.val[2]);
+      const cv::Point3f &query_point = point_cloud.at < cv::Point3f > (keypoint.pt.y, keypoint.pt.x);
+
       // Make sure it does not contain any NaN's
       // We could have a solver that would consider Nan's as missing entries
       if ((query_point.x != query_point.x) || (query_point.y != query_point.y) || (query_point.z != query_point.z))
@@ -203,8 +202,7 @@ namespace tod
       // Get the matches for that point
       for (unsigned int match_index = 0; match_index < local_matches.size(); ++match_index)
       {
-        const cv::Vec3f & val = local_matches_3d.at < cv::Vec3f > (0, match_index);
-        pcl::PointXYZ training_point(val[0], val[1], val[2]);
+        const cv::Vec3f & training_point = local_matches_3d.at < cv::Vec3f > (0, match_index);
 
         // Fill in the clouds
         size_t opencv_object_id = local_matches[match_index].imgIdx;

@@ -216,11 +216,7 @@ BOOST_FOREACH        (const cv::DMatch & match, matches_all[descriptor_id])
           {
             const cv::Vec3f & point_query = points3d.at<cv::Vec3f>(0, index_match.query_index_),
             &point_training = points3d.at<cv::Vec3f>(0, index_match.training_index_);
-            pcl::PointXYZ query_point = pcl::PointXYZ(point_query.val[0], point_query.val[1],
-                point_query.val[2]);
-            pcl::PointXYZ training_point = pcl::PointXYZ(point_training.val[0], point_training.val[1],
-                point_training.val[2]);
-            adjacency_ransac.AddPoints(training_point, query_point, index_match.query_index_);
+            adjacency_ransac.AddPoints(point_training, point_query, index_match.query_index_);
           }
 
           double span = 1;

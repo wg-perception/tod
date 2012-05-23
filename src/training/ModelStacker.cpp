@@ -60,18 +60,19 @@ namespace tod
       inputs.declare < cv::Mat > ("K", "The camera intrinsics matrix.").required(true);
       inputs.declare < cv::Mat > ("R", "The rotation matrix of the camera.").required(true);
       inputs.declare < cv::Mat > ("T", "The translation vector of the camera.").required(true);
-      inputs.declare < cv::Mat > ("points", "The 2d position of the points, with their disparity.").required(true);
+      inputs.declare < cv::Mat > ("points", "The 2d position of the points.").required(true);
+      inputs.declare(&TodModelStacker::disparities_in_, "disparities", "The disparities of the points.").required(true);
       inputs.declare < cv::Mat > ("points3d", "The 3d position of the points.").required(true);
       inputs.declare < cv::Mat > ("descriptors", "The descriptors.").required(true);
 
       outputs.declare < Eigen::Matrix3d > ("K", "The intrinsic parameter matrix.");
       outputs.declare < VectorQuaterniond > ("quaternions", "The initial estimates of the camera rotations.");
       outputs.declare < VectorVector3d > ("Ts", "The initial estimates of the camera translations.");
+      outputs.declare < std::vector<cv::Mat> > ("points", "The measured 2d positions (2-channel matrices).");
       outputs.declare < std::vector<cv::Mat>
-      > ("points3d", "The measured 2d positions and disparity (3-channel matrices).");
-      outputs.declare < std::vector<cv::Mat>
-      > ("points", "The estimated 3d position of the points (3-channel matrices).");
+      > ("points3d", "The estimated 3d position of the points (3-channel matrices).");
       outputs.declare < std::vector<cv::Mat> > ("descriptors", "The stacked descriptors.");
+      outputs.declare(&TodModelStacker::disparities_out_, "disparities", "The disparities of the points.").required(true);
     }
 
     void
@@ -101,6 +102,7 @@ namespace tod
       descriptors_->push_back(descriptors);
       points_->push_back(points);
       points3d_->push_back(points3d);
+      disparities_out_->push_back(*disparities_in_);
 
       // Add the new camera parameters to the list of camera parameters
       {
@@ -122,6 +124,8 @@ namespace tod
     ecto::spore<std::vector<cv::Mat> > points3d_;
     ecto::spore<std::vector<cv::Mat> > points_;
     ecto::spore<std::vector<cv::Mat> > descriptors_;
+    ecto::spore<std::vector<double> > disparities_in_;
+    ecto::spore<std::vector<std::vector<double> > > disparities_out_;
   };
 }
 

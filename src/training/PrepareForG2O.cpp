@@ -91,9 +91,10 @@ namespace tod
     static void
     declare_io(const tendrils& params, tendrils& inputs, tendrils& outputs)
     {
-      inputs.declare < std::vector<cv::Mat> > ("points", "The measured points.").required(true);
-      inputs.declare < std::vector<cv::Mat> > ("points3d", "The 3d points in the world frame.").required(true);
-      inputs.declare < std::vector<cv::Mat> > ("descriptors", "The stacked descriptors.").required(true);
+      inputs.declare(&PrepareForG2O::in_points_, "points", "The measured points.").required(true);
+      inputs.declare(&PrepareForG2O::disparities_in_, "disparities", "The disparities of the points.").required(true);
+      inputs.declare(&PrepareForG2O::in_points3d_, "points3d", "The 3d points in the world frame.").required(true);
+      inputs.declare(&PrepareForG2O::descriptors_, "descriptors", "The stacked descriptors.").required(true);
 
       outputs.declare < Eigen::SparseMatrix<int> > ("x", "The measured x of the points.");
       outputs.declare < Eigen::SparseMatrix<int> > ("y", "The measured y of the points.");
@@ -120,10 +121,6 @@ namespace tod
       matcher_ = new lsh::LshMatcher(search_param_tree["n_tables"].get_uint64(),
                                      search_param_tree["key_size"].get_uint64(),
                                      search_param_tree["multi_probe_level"].get_uint64());
-
-      in_points_ = inputs["points"];
-      in_points3d_ = inputs["points3d"];
-      descriptors_ = inputs["descriptors"];
 
       x_ = outputs["x"];
       y_ = outputs["y"];
@@ -214,7 +211,7 @@ BOOST_FOREACH        (const cv::DMatch & match, matches_all[descriptor_id])
 
           BOOST_FOREACH(const IndexMatch & index_match, matches_per_view[training_image_id ])
           {
-            const cv::Vec3f & point_query = points3d.at<cv::Vec3f>(0, index_match.query_index_),
+            const cv::Vec2f & point_query = points3d.at<cv::Vec2f>(0, index_match.query_index_),
             &point_training = points3d.at<cv::Vec3f>(0, index_match.training_index_);
             adjacency_ransac.AddPoints(point_training, point_query, index_match.query_index_);
           }
@@ -224,7 +221,7 @@ BOOST_FOREACH        (const cv::DMatch & match, matches_all[descriptor_id])
           std::vector<cv::KeyPoint> keypoints(n_points);
           for (unsigned int i = 0; i < n_points; ++i)
           {
-            const cv::Vec3f & vec = (*in_points_)[query_image_id].at<cv::Vec3f>(0, i);
+            const cv::Vec2f & vec = (*in_points_)[query_image_id].at<cv::Vec2f>(0, i);
             keypoints[i].pt = cv::Point2f(vec[0], vec[1]);
           }
           adjacency_ransac.FillAdjacency(keypoints, span, sensor_error);
@@ -266,10 +263,10 @@ BOOST_FOREACH        (const cv::DMatch & match, matches_all[descriptor_id])
           size_t image_id = image_id_index.first;
           size_t index = image_id_index.second;
           {
-            const cv::Vec3f & vec = (*in_points_)[image_id].at<cv::Vec3f>(0, index);
+            const cv::Vec2f & vec = (*in_points_)[image_id].at<cv::Vec2f>(0, index);
             x.coeffRef(image_id, id) = vec.val[0];
             y.coeffRef(image_id, id) = vec.val[1];
-            disparity.coeffRef(image_id, id) = vec.val[2];
+            disparity.coeffRef(image_id, id) = (*disparities_in_)[image_id][index];
           }
           {
             const cv::Vec3f & vec = (*in_points3d_)[image_id].at<cv::Vec3f>(0, index);
@@ -297,6 +294,7 @@ BOOST_FOREACH        (const cv::DMatch & match, matches_all[descriptor_id])
     ecto::spore<Eigen::SparseMatrix<int> > x_;
     ecto::spore<Eigen::SparseMatrix<int> > y_;
     ecto::spore<Eigen::SparseMatrix<int> > disparity_;
+    ecto::spore<std::vector<std::vector<double> > > disparities_in_;
     ecto::spore<VectorVector3d> out_points_;
     ecto::spore<std::vector<std::vector<size_t> > > ids_;
   }

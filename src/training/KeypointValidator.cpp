@@ -45,6 +45,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
+#include <opencv2/rgbd/rgbd.hpp>
 
 using ecto::tendrils;
 
@@ -77,8 +78,9 @@ namespace
       inputs.declare<cv::Mat>("K", "The calibration matrix").required(true);
       inputs.declare<cv::Mat>("depth", "The depth image (with a size similar to the mask one).").required(true);
 
-      outputs.declare<cv::Mat>(
-          "points", "The valid keypoints: 1 x n_points x 3 channels (x in pixels, y in pixels, disparity in pixels)");
+      outputs.declare(&KeypointsValidator::points_out_, "points", "The valid keypoints: 1 x n_points x 2 channels (x in pixels, y in pixels)");
+      outputs.declare(&KeypointsValidator::disparities_, "disparities",
+                      "The valid keypoints: 1 x n_points (disparity in pixels)");
       outputs.declare<cv::Mat>("descriptors", "The matching descriptors, n_points x feature_length");
     }
 
@@ -100,7 +102,9 @@ namespace
       inputs["descriptors"] >> descriptors;
       size_t n_points = descriptors.rows;
       cv::Mat clean_descriptors = cv::Mat(descriptors.size(), descriptors.type());
-      cv::Mat clean_points = cv::Mat(1, n_points, CV_32FC3);
+      cv::Mat_ < cv::Vec2f > clean_points(1, n_points);
+      std::vector<double> disparities;
+      disparities.reserve(n_points);
 
       cv::Mat_<uchar> mask;
       in_mask.convertTo(mask, CV_8U);
@@ -147,25 +151,36 @@ namespace
           continue;
 
         // Now, check that the depth of the keypoint is valid
-        if (depth.depth() == CV_16U)
+        switch (depth.depth())
         {
-          z = depth.at<uint16_t>(y, x);
-          if ((z == std::numeric_limits<uint16_t>::min()) || (z == std::numeric_limits<uint16_t>::max()))
-            is_good = false;
-          z /= 1000;
-        }
-        else
-        {
-          z = depth.at<float>(y, x);
-          if ((z != z) || (z == std::numeric_limits<float>::max()))
-            is_good = false;
+          case CV_16U:
+            z = depth.at < uint16_t > (y, x);
+            if (!cv::isValidDepth < uint16_t > (z))
+              is_good = false;
+            z /= 1000;
+            break;
+          case CV_16S:
+            z = depth.at < int16_t > (y, x);
+            if (!cv::isValidDepth < int16_t > (z))
+              is_good = false;
+            z /= 1000;
+            break;
+          case CV_32F:
+            z = depth.at<float>(y, x);
+            if (!cv::isValidDepth<float>(z))
+              is_good = false;
+            break;
+          default:
+            continue;
+            break;
         }
 
         if (!is_good)
           continue;
 
         // Store the keypoint and descriptor
-        clean_points.at<cv::Vec3f>(0, clean_row_index) = cv::Vec3f(x, y, (*baseline_) * K.at<float>(0, 0) / z);
+        clean_points.at<cv::Vec2f>(0, clean_row_index) = cv::Vec2f(x, y);
+        disparities.push_back((*baseline_) * K.at<float>(0, 0) / z);
         cv::Mat clean_descriptor_row = clean_descriptors.row(clean_row_index++);
         descriptors.row(keypoint_index).copyTo(clean_descriptor_row);
       }
@@ -176,16 +191,21 @@ namespace
         clean_points.colRange(0, clean_row_index).copyTo(final_points);
         clean_descriptors.rowRange(0, clean_row_index).copyTo(final_descriptors);
       }
-      outputs["points"] << final_points;
+
+      *points_out_ = final_points;
       outputs.get<cv::Mat>("descriptors") = final_descriptors;
+      *disparities_ = disparities;
 
       return ecto::OK;
     }
   private:
     ecto::spore<double> baseline_;
-  }
-  ;
+    /** The disparities for the valid */
+    ecto::spore<std::vector<double> > disparities_;
+    /** The valid 2d points */
+    ecto::spore<cv::Mat> points_out_;
+  };
 }
 
 ECTO_CELL(ecto_training, KeypointsValidator, "KeypointsValidator",
-          "Given keypoints and a mask, make sure they belong to the mask by rounding their coordinates.");
+          "Given keypoints and a mask, make sure they belong to the mask by rounding their coordinates.")

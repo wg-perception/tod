@@ -70,8 +70,8 @@ class TODModelBuilder(ecto.BlackBox):
 
         # store all the info
         graph += [ self.camera_to_world['points'] >> self.model_stacker['points3d'],
-                        self.keypoint_validator['points'] >> self.model_stacker['points'],
-                        self.keypoint_validator['descriptors'] >> self.model_stacker['descriptors'],
+                        self.keypoint_validator['points', 'descriptors', 'disparities'] >>
+                                                            self.model_stacker['points', 'descriptors', 'disparities'],
                         self.source['K', 'R', 'T'] >> self.model_stacker['K', 'R', 'T'],
                         ]
 
@@ -106,6 +106,7 @@ class TODPostProcessor(ecto.BlackBox):
         self.source = ecto.PassthroughN(items=dict(K='The camera matrix',
                                                    quaternions='A vector of quaternions',
                                                    Ts='A vector of translation vectors',
+                                                   disparities='The disparities of the measurements',
                                                    descriptors='A stacked vector of descriptors',
                                                    points='The 2D measurements per point.',
                                                    points3d='The estimated 3d position of the points (3-channel matrices).'
@@ -121,7 +122,8 @@ class TODPostProcessor(ecto.BlackBox):
         self.model_filler = self.model_filler()
 
     def connections(self):
-        graph = [self.source['points', 'points3d', 'descriptors'] >> self.prepare_for_g2o['points', 'points3d', 'descriptors'],
+        graph = [self.source['points', 'points3d', 'descriptors', 'disparities'] >>
+                                            self.prepare_for_g2o['points', 'points3d', 'descriptors', 'disparities'],
                  self.source['Ts', 'quaternions', 'K'] >> self.g2o['Ts', 'quaternions', 'K'],
                  self.source['descriptors'] >> self.point_merger['descriptors'],
                 ]

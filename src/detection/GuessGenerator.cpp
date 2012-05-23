@@ -96,6 +96,8 @@ namespace tod
       inputs.declare < std::vector<ObjectId> > ("object_ids", "The ids used in the matches");
 
       outputs.declare(&GuessGenerator::pose_results_, "pose_results", "The results of object recognition");
+      outputs.declare(&GuessGenerator::Rs_, "Rs", "The rotations of the poses (useful for visualization)");
+      outputs.declare(&GuessGenerator::Ts_, "Ts", "The translations of the poses (useful for visualization)");
     }
 
     void
@@ -139,6 +141,8 @@ namespace tod
 
       // Get the outputs
       pose_results_->clear();
+      Rs_->clear();
+      Ts_->clear();
       if (point_cloud.empty())
       {
         // Only use 2d to 3d matching
@@ -217,6 +221,8 @@ namespace tod
             pose_result.set_T(tvec);
             pose_result.set_object_id(*db_, object_id);
             pose_results_->push_back(pose_result);
+            Rs_->push_back(R_mat);
+            Ts_->push_back(tvec);
             std::cout << R_mat << std::endl;
             std::cout << tvec << std::endl;
 
@@ -267,6 +273,10 @@ BOOST_FOREACH          (const std::vector<int> & indices, query_iterator->second
   private:
     /** List of very different colors, for debugging purposes */
     std::vector<cv::Scalar> colors_;
+    /** Rotations of the poses */
+    ecto::spore<std::vector<cv::Mat> > Rs_;
+    /** Translations of the poses */
+    ecto::spore<std::vector<cv::Mat> > Ts_;
     /** flag indicating whether we run in debug mode */
     ecto::spore<bool> visualize_;
     /** The minimum number of inliers in order to do pose matching */

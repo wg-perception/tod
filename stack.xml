@@ -1,0 +1,21 @@
+<stack>
+  <name>object_recognition_tod</name>
+  <version>0.2.7</version>
+  <description>Textured Object Recognition a standard bag of features approach</description>
+  <author email="vrabaud@willowgarage.com">Vincent Rabaud</author>
+  <author email="erublee@willowgarage.com">Ethan Rublee</author>
+  <maintainer email="vrabaud@willowgarage.com">Vincent Rabaud</maintainer>
+  <license>BSD</license>
+  <copyright>Willow Garage</copyright>
+
+  <url>http://ecto.willowgarage.com</url>
+  <build_depends>catkin</build_depends>
+  <build_depends>ecto</build_depends>
+  <build_depends>ecto_opencv</build_depends>
+  <build_depends>ecto_pcl</build_depends>
+  <build_depends>object_recognition_core</build_depends>
+  <depends>ecto</depends>
+  <depends>ecto_opencv</depends>
+  <depends>ecto_pcl</depends>
+  <depends>object_recognition_core</depends>
+</stack>

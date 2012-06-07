@@ -10,8 +10,6 @@ catkin_project(object_recognition_tod
 #install targets for all things python
 catkin_python_setup()
 
-set(PYTHON_PACKAGES_PATH gen/py)
-
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
@@ -41,3 +39,17 @@ if(BUILD_TEST)
   enable_testing()
   add_subdirectory(test)
 endif()
+
+if (ROS_ELECTRIC_FOUND)
+# install the applications
+install(PROGRAMS ${PROJECT_SOURCE_DIR}/apps/feature_viewer
+        DESTINATION bin
+)
+else()
+# install the applications
+install(PROGRAMS ${PROJECT_SOURCE_DIR}/apps/feature_viewer
+        DESTINATION share/${PROJECT_NAME}/bin
+)
+endif()
+
+

@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef GUESS_GENERATOR_H_
-#define GUESS_GENERATOR_H_
+#ifndef ADJACENCY_RANSAC_H_
+#define ADJACENCY_RANSAC_H_
 
 #include <vector>
 
@@ -156,4 +156,4 @@ namespace tod
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
-#endif /* GUESS_GENERATOR_H_ */
+#endif // ADJACENCY_RANSAC_H_ 

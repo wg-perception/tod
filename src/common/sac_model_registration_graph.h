@@ -36,8 +36,10 @@
 #ifndef SAC_MODEL_REGISTRATION_GRAPH_H_
 #define SAC_MODEL_REGISTRATION_GRAPH_H_
 
+#include <boost/unordered_map.hpp>
+#include "pcl/common/centroid.h"
+#include "pcl/common/eigen.h"
 #include "sac_model.h"
-#include "sac_model_registration.h"
 
 #include "maximum_clique.h"
 
@@ -48,13 +50,17 @@ namespace tod
    * (and some points cannot be connected together)
    */
   template<typename PointT>
-  class SampleConsensusModelRegistrationGraph: public pcl::SampleConsensusModelRegistration<PointT>
+  class SampleConsensusModelRegistrationGraph: public pcl::SampleConsensusModel<PointT>
   {
+    using pcl::SampleConsensusModel<PointT>::input_;
+    using pcl::SampleConsensusModel<PointT>::indices_;
+
   public:
-    typedef typename pcl::SampleConsensusModelRegistration<PointT>::PointCloud PointCloud;
-    typedef typename pcl::SampleConsensusModelRegistration<PointT>::PointCloudPtr PointCloudPtr;
-    typedef typename pcl::SampleConsensusModelRegistration<PointT>::PointCloudConstPtr PointCloudConstPtr;
+    typedef typename pcl::SampleConsensusModel<PointT>::PointCloud PointCloud;
+    typedef typename pcl::SampleConsensusModel<PointT>::PointCloudPtr PointCloudPtr;
+    typedef typename pcl::SampleConsensusModel<PointT>::PointCloudConstPtr PointCloudConstPtr;
     typedef boost::shared_ptr<SampleConsensusModelRegistrationGraph> Ptr;
+    typedef const Eigen::Map<const Eigen::Vector4f, Eigen::Aligned> Vector4fMapConst;
 
     using pcl::SampleConsensusModel<PointT>::drawIndexSample;
 
@@ -64,12 +70,14 @@ namespace tod
     SampleConsensusModelRegistrationGraph(const PointCloudConstPtr &cloud,
                                           const maximum_clique::Graph & graph, float threshold)
         :
-          pcl::SampleConsensusModelRegistration<PointT>(cloud),
+          pcl::SampleConsensusModel<PointT>(cloud),
           physical_adjacency_(graph.adjacency()),
           best_inlier_number_(0),
-          input_(cloud),
           threshold_(threshold)
     {
+      setInputCloud (cloud);
+      computeOriginalIndexMapping();
+
       BuildNeighbors();
     }
 
@@ -82,15 +90,68 @@ namespace tod
         const maximum_clique::AdjacencyMatrix & physical_adjacency,
         const maximum_clique::AdjacencyMatrix &sample_adjacency)
         :
-          pcl::SampleConsensusModelRegistration<PointT>(cloud, indices),
+          pcl::SampleConsensusModel<PointT>(cloud, indices),
           physical_adjacency_(physical_adjacency),
           sample_adjacency_(sample_adjacency),
-          indices_(indices),
           best_inlier_number_(0),
-          input_(cloud),
           threshold_(threshold)
     {
+      computeOriginalIndexMapping();
+      input_ = cloud;
+      computeSampleDistanceThreshold (cloud);
+
       BuildNeighbors();
+    }
+
+
+    /** \brief Computes an "optimal" sample distance threshold based on the
+      * principal directions of the input cloud.
+      * \param cloud the const boost shared pointer to a PointCloud message
+      */
+    inline void
+    computeSampleDistanceThreshold (const PointCloudConstPtr &cloud)
+    {
+      // Compute the principal directions via PCA
+      Eigen::Vector4f xyz_centroid;
+      compute3DCentroid (*cloud, xyz_centroid);
+      EIGEN_ALIGN16 Eigen::Matrix3f covariance_matrix;
+      computeCovarianceMatrixNormalized (*cloud, xyz_centroid, covariance_matrix);
+      EIGEN_ALIGN16 Eigen::Vector3f eigen_values;
+      EIGEN_ALIGN16 Eigen::Matrix3f eigen_vectors;
+      pcl::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
+
+      // Compute the distance threshold for sample selection
+      sample_dist_thresh_ = eigen_values.array ().sqrt ().sum () / 3.0;
+      sample_dist_thresh_ *= sample_dist_thresh_;
+      PCL_DEBUG ("[pcl::SampleConsensusModelRegistration::setInputCloud] Estimated a sample selection distance threshold of: %f\n", sample_dist_thresh_);
+    }
+
+    /** \brief Set the input point cloud target.
+      * \param target the input point cloud target
+      */
+    inline void
+    setInputTarget (const PointCloudConstPtr &target)
+    {
+      target_ = target;
+      // Cache the size and fill the target indices
+      unsigned int target_size = target->size();
+      indices_tgt_->resize(target_size);
+      for (unsigned int i = 0; i < target_size; ++i)
+        indices_tgt_->push_back(i);
+      computeOriginalIndexMapping();
+    }
+
+
+    /** \brief Set the input point cloud target.
+      * \param target the input point cloud target
+      * \param indices_tgt a vector of point indices to be used from \a target
+      */
+    inline void
+    setInputTarget (const PointCloudConstPtr &target, const std::vector<int> &indices_tgt)
+    {
+      target_ = target;
+      indices_tgt_.reset (new std::vector<int> (indices_tgt));
+      computeOriginalIndexMapping();
     }
 
     bool
@@ -142,19 +203,62 @@ namespace tod
       return is_good;
     }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    inline bool
+    isModelValid (const Eigen::VectorXf &model_coefficients)
+    {
+      // Needs a valid model coefficients
+      if (model_coefficients.size () != 16)
+        return (false);
+
+      return (true);
+    }
+
     void
     getDistancesToModel(const Eigen::VectorXf &model_coefficients, std::vector<double> &distances)
     {
-      pcl::SampleConsensusModelRegistration < PointT > ::getDistancesToModel(model_coefficients, distances);
+      if (indices_->size () != indices_tgt_->size ())
+      {
+        PCL_ERROR ("[pcl::SampleConsensusModelRegistration::getDistancesToModel] Number of source indices (%lu) differs than number of target indices (%lu)!\n", (unsigned long)indices_->size (), (unsigned long)indices_tgt_->size ());
+        distances.clear ();
+        return;
+      }
+      // Check if the model is valid given the user constraints
+      if (!isModelValid (model_coefficients))
+      {
+        distances.clear ();
+        return;
+      }
+      distances.resize (indices_->size ());
+
+      // Get the 4x4 transformation
+      Eigen::Matrix4f transform;
+      transform.row (0) = model_coefficients.segment<4>(0);
+      transform.row (1) = model_coefficients.segment<4>(4);
+      transform.row (2) = model_coefficients.segment<4>(8);
+      transform.row (3) = model_coefficients.segment<4>(12);
+
+      for (size_t i = 0; i < indices_->size (); ++i)
+      {
+        Vector4fMapConst pt_src = input_->points[(*indices_)[i]].getVector4fMap ();
+        Vector4fMapConst pt_tgt = target_->points[(*indices_tgt_)[i]].getVector4fMap ();
+        Eigen::Vector4f p_tr = transform * pt_src;
+        // Calculate the distance from the transformed point to its correspondence
+        // need to compute the real norm here to keep MSAC and friends general
+        distances[i] = (p_tr - pt_tgt).norm ();
+      }
+
+
+
+
 
       // Assign a maximum distance for all the points that cannot belong to a clique including the sample
-      for (size_t i = 0; i < indices_.size(); ++i)
+      for (size_t i = 0; i < indices_->size(); ++i)
       {
 BOOST_FOREACH      (int sample, samples_)
       {
-        if (sample == indices_[i])
+        if (sample == (*indices_)[i])
         continue;
-        if (!physical_adjacency_.test(indices_[i], sample))
+        if (!physical_adjacency_.test((*indices_)[i], sample))
         {
           distances[i] = std::numeric_limits<double>::max();
           break;
@@ -167,18 +271,56 @@ BOOST_FOREACH      (int sample, samples_)
   void
   selectWithinDistance(const Eigen::VectorXf &model_coefficients, double threshold, std::vector<int> &in_inliers)
   {
-    std::vector<int> possible_inliers;
-    pcl::SampleConsensusModelRegistration<PointT>::selectWithinDistance(model_coefficients, threshold,
-        possible_inliers);
+    std::vector<int> inliers;
+    if (indices_->size () != indices_tgt_->size ())
+    {
+      PCL_ERROR ("[pcl::SampleConsensusModelRegistration::selectWithinDistance] Number of source indices (%lu) differs than number of target indices (%lu)!\n", (unsigned long)indices_->size (), (unsigned long)indices_tgt_->size ());
+      inliers.clear ();
+      return;
+    }
+
+    double thresh = threshold * threshold;
+
+    // Check if the model is valid given the user constraints
+    if (!isModelValid (model_coefficients))
+    {
+      inliers.clear ();
+      return;
+    }
+
+    inliers.resize (indices_->size ());
+
+    Eigen::Matrix4f transform;
+    transform.row (0) = model_coefficients.segment<4>(0);
+    transform.row (1) = model_coefficients.segment<4>(4);
+    transform.row (2) = model_coefficients.segment<4>(8);
+    transform.row (3) = model_coefficients.segment<4>(12);
+
+    int nr_p = 0;
+    for (size_t i = 0; i < indices_->size (); ++i)
+    {
+      Vector4fMapConst pt_src = input_->points[(*indices_)[i]].getVector4fMap ();
+      Vector4fMapConst pt_tgt = target_->points[(*indices_tgt_)[i]].getVector4fMap ();
+      Eigen::Vector4f p_tr  = transform * pt_src;
+      // Calculate the distance from the transformed point to its correspondence
+      if ((p_tr - pt_tgt).squaredNorm () < thresh)
+        inliers[nr_p++] = (*indices_)[i];
+    }
+    inliers.resize (nr_p);
+
+
+
+
+
 
     in_inliers.clear();
     // Make sure the sample belongs to the inliers
     BOOST_FOREACH(int sample, samples_)
-    if (std::find(possible_inliers.begin(), possible_inliers.end(), sample) == possible_inliers.end())
+    if (std::find(inliers.begin(), inliers.end(), sample) == inliers.end())
     return;
 
     // Remove all the points that cannot belong to a clique including the samples
-    BOOST_FOREACH(int inlier, possible_inliers)
+    BOOST_FOREACH(int inlier, inliers)
     {
       bool is_good = true;
       BOOST_FOREACH(int sample, samples_)
@@ -227,6 +369,69 @@ BOOST_FOREACH      (int sample, samples_)
     return in_inliers.size();
   }
 
+  bool
+  computeModelCoefficients (const std::vector<int> &samples, Eigen::VectorXf &model_coefficients)
+  {
+    // Need 3 samples
+    if (samples.size () != 3)
+      return (false);
+
+    std::vector<int> indices_src (3);
+    std::vector<int> indices_tgt (3);
+    for (int i = 0; i < 3; ++i)
+    {
+      indices_src[i] = samples[i];
+      indices_tgt[i] = original_index_mapping_[samples[i]];
+    }
+
+    estimateRigidTransformationSVD(*input_, indices_src, *target_, indices_tgt, model_coefficients);
+
+    return (true);
+  }
+
+
+  bool
+  doSamplesVerifyModel (const std::set<int> &indices, const Eigen::VectorXf &model_coefficients, double threshold)
+  {
+    PCL_ERROR ("[pcl::SampleConsensusModelRegistration::doSamplesVerifyModel] called!\n");
+    return (false);
+  }
+
+  void
+  projectPoints (const std::vector<int> &inliers,
+                 const Eigen::VectorXf &model_coefficients,
+                 PointCloud &projected_points, bool copy_data_fields = true)
+  {};
+
+  void
+  optimizeModelCoefficients (const std::vector<int> &inliers, const Eigen::VectorXf &model_coefficients, Eigen::VectorXf &optimized_coefficients)
+  {
+    if (indices_->size () != indices_tgt_->size ())
+    {
+      PCL_ERROR ("[pcl::SampleConsensusModelRegistration::optimizeModelCoefficients] Number of source indices (%lu) differs than number of target indices (%lu)!\n", (unsigned long)indices_->size (), (unsigned long)indices_tgt_->size ());
+      optimized_coefficients = model_coefficients;
+      return;
+    }
+
+    // Check if the model is valid given the user constraints
+    if (!isModelValid (model_coefficients))
+    {
+      optimized_coefficients = model_coefficients;
+      return;
+    }
+
+    std::vector<int> indices_src (inliers.size ());
+    std::vector<int> indices_tgt (inliers.size ());
+    for (size_t i = 0; i < inliers.size (); ++i)
+    {
+      // NOTE: not tested!
+      indices_src[i] = (*indices_)[inliers[i]];
+      indices_tgt[i] = (*indices_tgt_)[inliers[i]];
+    }
+
+    estimateRigidTransformationSVD(*input_, indices_src, *target_, indices_tgt, optimized_coefficients);
+  }
+
   void
   optimizeModelCoefficients(const PointCloudConstPtr &target, const std::vector<int> &inliers,
       const Eigen::VectorXf &model_coefficients, Eigen::VectorXf &optimized_coefficients)
@@ -236,6 +441,15 @@ BOOST_FOREACH      (int sample, samples_)
 
   mutable std::vector<int> samples_;
 private:
+  /** \brief compute mappings between original indices of the input_/target_ clouds */
+  void
+  computeOriginalIndexMapping() {
+    if ((!indices_tgt_) || (!indices_) || (indices_->empty()) || (indices_->size()!=indices_tgt_->size()))
+      return;
+    for (unsigned int i = 0; i < indices_->size(); ++i)
+      original_index_mapping_[indices_->operator[](i)] = indices_tgt_->operator[](i);
+  }
+
   /** \brief Estimate a rigid transformation between a source and a target point cloud using an SVD closed-form
    * solution of absolute orientation using unit quaternions
    * \param[in] cloud_src the source point cloud dataset
@@ -310,10 +524,10 @@ private:
       if (size >= 3)
       sample_pool_.push_back(j);
     }
-    if (!indices_.empty())
+    if (!indices_->empty())
     {
       std::vector<int>::iterator end = std::set_intersection(sample_pool_.begin(), sample_pool_.end(),
-          indices_.begin(), indices_.end(),
+          indices_->begin(), indices_->end(),
           sample_pool_.begin());
       sample_pool_.resize(end - sample_pool_.begin());
     }
@@ -321,11 +535,23 @@ private:
 
   const maximum_clique::AdjacencyMatrix physical_adjacency_;
   const maximum_clique::AdjacencyMatrix sample_adjacency_;
-  std::vector<int> indices_;
   std::vector<int> sample_pool_;
   size_t best_inlier_number_;
-  PointCloudConstPtr input_;
   float threshold_;
-};}
+
+
+  /** \brief A boost shared pointer to the target point cloud data array. */
+  PointCloudConstPtr target_;
+
+  /** \brief A pointer to the vector of target point indices to use. */
+  boost::shared_ptr <std::vector<int> > indices_tgt_;
+
+  /** \brief Given the index in the original point cloud, give the matching original index in the target cloud */
+  boost::unordered_map<int, int> original_index_mapping_;
+
+  /** \brief Internal distance threshold used for the sample selection step. */
+  double sample_dist_thresh_;
+
+  };}
 
 #endif

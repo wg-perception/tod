@@ -267,7 +267,6 @@ namespace tod
         new SampleConsensusModelRegistrationGraph<pcl::PointXYZ>(query_points, valid_indices, sensor_error,
                                                                  physical_adjacency_, sample_adjacency_));
     pcl::RandomSampleConsensus<pcl::PointXYZ> sample_consensus(model);
-    Eigen::VectorXf coefficients;
 
     model->setInputTarget(training_points, valid_indices);
     sample_consensus.setDistanceThreshold(sensor_error);
@@ -294,7 +293,7 @@ namespace tod
     BOOST_FOREACH(unsigned int inl, inliers_in)inliers.push_back(inl);
     sample_consensus.getInliers(inliers);
     std::sort(inliers.begin(), inliers.end());
-    sample_consensus.getModelCoefficients(coefficients);
+    sample_consensus.getModelCoefficients(R, T);
     std::vector<unsigned int> valid_indices_vect = valid_indices_;
     std::vector<unsigned int>::iterator valid_end = std::set_difference(valid_indices_vect.begin(),
                                                                         valid_indices_vect.end(), inliers.begin(),
@@ -307,17 +306,9 @@ namespace tod
     // Also, for the last iteration (when we cannot add points anymore), we get a looser threshold
     while (true)
     {
-      {
-        Eigen::VectorXf new_coefficients = coefficients;
-        model->optimizeModelCoefficients(training_points, inliers, coefficients, new_coefficients);
-        coefficients = new_coefficients;
-      }
+      model->optimizeModelCoefficients(training_points, inliers, R, T);
 
       // Check if the model is valid given the user constraints
-      R = cv::Matx33f(coefficients(0), coefficients(1), coefficients(2), coefficients(4), coefficients(5),
-                      coefficients(6), coefficients(8), coefficients(9), coefficients(10));
-      T = cv::Vec3f(coefficients(3), coefficients(7), coefficients(11));
-
       std::vector<int> extra_inliers;
       BOOST_FOREACH(int index, valid_indices_vect){
       const cv::Vec3f &pt_src = query_points_[index];
@@ -347,9 +338,6 @@ namespace tod
       }
 
     }
-    R = cv::Matx33f(coefficients(0), coefficients(1), coefficients(2), coefficients(4), coefficients(5),
-                    coefficients(6), coefficients(8), coefficients(9), coefficients(10));
-    T = cv::Vec3f(coefficients(3), coefficients(7), coefficients(11));
     R = R.t();
     T = -R * T;
     BOOST_FOREACH(int inl, inliers)inliers_in.push_back(query_indices_[inl]);

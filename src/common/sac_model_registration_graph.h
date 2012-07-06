@@ -36,6 +36,7 @@
 #ifndef SAC_MODEL_REGISTRATION_GRAPH_H_
 #define SAC_MODEL_REGISTRATION_GRAPH_H_
 
+#include <opencv2/core/core.hpp>
 #include "pcl/common/centroid.h"
 #include "pcl/common/eigen.h"
 #include "sac_model.h"
@@ -170,7 +171,7 @@ namespace tod
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void
-  selectWithinDistance(const Eigen::VectorXf &model_coefficients, double threshold, std::vector<int> &in_inliers)
+  selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f&T, double threshold, std::vector<int> &in_inliers)
   {
     std::vector<int> inliers;
     if (indices_->size () != indices_tgt_->size ())
@@ -184,20 +185,14 @@ namespace tod
 
     inliers.resize (indices_->size ());
 
-    Eigen::Matrix4f transform;
-    transform.row (0) = model_coefficients.segment<4>(0);
-    transform.row (1) = model_coefficients.segment<4>(4);
-    transform.row (2) = model_coefficients.segment<4>(8);
-    transform.row (3) = model_coefficients.segment<4>(12);
-
     int nr_p = 0;
     for (size_t i = 0; i < indices_->size (); ++i)
     {
       Vector4fMapConst pt_src = input_->points[(*indices_)[i]].getVector4fMap ();
       Vector4fMapConst pt_tgt = target_->points[(*indices_tgt_)[i]].getVector4fMap ();
-      Eigen::Vector4f p_tr  = transform * pt_src;
+      cv::Vec3f p_tr  = R * cv::Vec3f(pt_src(0), pt_src(1), pt_src(2)) + T;
       // Calculate the distance from the transformed point to its correspondence
-      if ((p_tr - pt_tgt).squaredNorm () < thresh)
+      if (cv::norm(p_tr - cv::Vec3f(pt_tgt(0), pt_tgt(1), pt_tgt(2)))*cv::norm(p_tr-cv::Vec3f(pt_tgt(0), pt_tgt(1), pt_tgt(2))) < thresh)
         inliers[nr_p++] = (*indices_)[i];
     }
     inliers.resize (nr_p);
@@ -255,22 +250,22 @@ namespace tod
   }
 
   bool
-  computeModelCoefficients (const std::vector<int> &samples, Eigen::VectorXf &model_coefficients)
+  computeModelCoefficients (const std::vector<int> &samples, cv::Matx33f &R, cv::Vec3f&T)
   {
     // Need 3 samples
     if (samples.size () != 3)
       return (false);
 
-    estimateRigidTransformationSVD(*input_, samples, *target_, samples, model_coefficients);
+    estimateRigidTransformationSVD(*input_, samples, *target_, samples, R, T);
 
     return (true);
   }
 
   void
   optimizeModelCoefficients(const PointCloudConstPtr &target, const std::vector<int> &inliers,
-      const Eigen::VectorXf &model_coefficients, Eigen::VectorXf &optimized_coefficients)
+      cv::Matx33f&R, cv::Vec3f&T)
   {
-    estimateRigidTransformationSVD(*input_, inliers, *target, inliers, optimized_coefficients);
+    estimateRigidTransformationSVD(*input_, inliers, *target, inliers, R, T);
   }
 
   mutable std::vector<int> samples_;
@@ -291,9 +286,8 @@ namespace tod
   estimateRigidTransformationSVD(const typename pcl::PointCloud<PointT> &cloud_src,
       const std::vector<int> &indices_src,
       const typename pcl::PointCloud<PointT> &cloud_tgt,
-      const std::vector<int> &indices_tgt, Eigen::VectorXf &transform)
+      const std::vector<int> &indices_tgt, cv::Matx33f &R_in, cv::Vec3f&T)
   {
-    transform.resize(16);
     Eigen::Vector4f centroid_src, centroid_tgt;
     // Estimate the centroids of source, target
     compute3DCentroid(cloud_src, indices_src, centroid_src);
@@ -324,18 +318,12 @@ namespace tod
     Eigen::Matrix3f R = v * u.transpose();
 
     // Return the correct transformation
-    transform.segment<3>(0) = R.row(0);
-    transform[12] = 0;
-    transform.segment<3>(4) = R.row(1);
-    transform[13] = 0;
-    transform.segment<3>(8) = R.row(2);
-    transform[14] = 0;
-
     Eigen::Vector3f t = centroid_tgt.head<3>() - R * centroid_src.head<3>();
-    transform[3] = t[0];
-    transform[7] = t[1];
-    transform[11] = t[2];
-    transform[15] = 1.0;
+    for(unsigned char j=0;j<3;++j) {
+      for(unsigned char i=0;i<3;++i)
+        R_in(j,i) = R(j,i);
+      T[j] = t[j];
+    }
   }
   private:
   void

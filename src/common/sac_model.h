@@ -140,8 +140,7 @@ namespace pcl
         * \param model_coefficients the computed model coefficients
         */
       virtual bool 
-      computeModelCoefficients (const std::vector<int> &samples, 
-                                Eigen::VectorXf &model_coefficients) = 0;
+      computeModelCoefficients (const std::vector<int> &samples, cv::Matx33f &R, cv::Vec3f&T) = 0;
 
       /** \brief Select all the points which respect the given model
         * coefficients as inliers. Pure virtual.
@@ -153,7 +152,7 @@ namespace pcl
         * \param inliers the resultant model inliers
         */
       virtual void 
-      selectWithinDistance (const Eigen::VectorXf &model_coefficients, 
+      selectWithinDistance (const cv::Matx33f &R, const cv::Vec3f&T,
                             double threshold,
                             std::vector<int> &inliers) = 0;
 

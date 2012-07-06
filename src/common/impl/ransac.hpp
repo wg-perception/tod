@@ -56,7 +56,8 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
 
   std::vector<int> inliers;
   std::vector<int> selection;
-  Eigen::VectorXf model_coefficients;
+  cv::Matx33f R;
+  cv::Vec3f T;
 
   int n_inliers_count = 0;
 
@@ -73,14 +74,14 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
     }
 
     // Search for inliers in the point cloud for the current plane model M
-    if (!sac_model_->computeModelCoefficients (selection, model_coefficients))
+    if (!sac_model_->computeModelCoefficients (selection, R, T))
     {
       //++iterations_;
       continue;
     }
 
     // Select the inliers that are within threshold_ from the model
-    sac_model_->selectWithinDistance (model_coefficients, threshold_, inliers);
+    sac_model_->selectWithinDistance (R, T, threshold_, inliers);
     //if (inliers.empty () && k > 1.0)
     //  continue;
 
@@ -94,7 +95,8 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
       // Save the current model/inlier/coefficients selection as being the best so far
       inliers_            = inliers;
       model_              = selection;
-      model_coefficients_ = model_coefficients;
+      R_ = R;
+      T_ = T;
 
       // Compute the k parameter (k=log(z)/log(1-w^n))
       double w = (double)((double)n_best_inliers_count / (double)sac_model_->getIndices ()->size ());

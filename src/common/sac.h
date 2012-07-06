@@ -38,6 +38,7 @@
 #ifndef PCL_SAMPLE_CONSENSUS_H_
 #define PCL_SAMPLE_CONSENSUS_H_
 
+#include <opencv2/core/core.hpp>
 #include "sac_model.h"
 #include <set>
 
@@ -138,7 +139,7 @@ namespace pcl
       /** \brief Return the model coefficients of the best model found so far. 
         * \param model_coefficients the resultant model coefficients
         */
-      inline void getModelCoefficients (Eigen::VectorXf &model_coefficients) { model_coefficients = model_coefficients_; }
+      inline void getModelCoefficients (cv::Matx33f &R, cv::Vec3f&TT) { R = R_; TT=T_;}
 
     protected:
       /** \brief The underlying data model used (i.e. what is it that we attempt to search for). */
@@ -151,7 +152,8 @@ namespace pcl
       std::vector<int> inliers_;
 
       /** \brief The coefficients of our model computed directly from the model found. */
-      Eigen::VectorXf model_coefficients_;
+      cv::Matx33f R_;
+      cv::Vec3f T_;
 
       /** \brief Desired probability of choosing at least one sample free from outliers. */
       double probability_;

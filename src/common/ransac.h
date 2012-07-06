@@ -58,7 +58,8 @@ namespace pcl
     using SampleConsensus<PointT>::iterations_;
     using SampleConsensus<PointT>::sac_model_;
     using SampleConsensus<PointT>::model_;
-    using SampleConsensus<PointT>::model_coefficients_;
+    using SampleConsensus<PointT>::R_;
+    using SampleConsensus<PointT>::T_;
     using SampleConsensus<PointT>::inliers_;
     using SampleConsensus<PointT>::probability_;
 

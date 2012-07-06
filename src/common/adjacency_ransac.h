@@ -38,8 +38,7 @@
 
 #include <vector>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
+#include <opencv2/core/core.hpp>
 
 #include <object_recognition_core/db/db.h>
 #include "maximum_clique.h"
@@ -49,34 +48,25 @@ namespace tod
   class AdjacencyRansac
   {
   public:
+    typedef unsigned int Index;
+    typedef std::vector<Index> IndexVector;
     AdjacencyRansac()
+        :
+          object_index_(0),
+          min_sample_size_(3)
     {
-      query_points_ = boost::shared_ptr < pcl::PointCloud<pcl::PointXYZ> > (new pcl::PointCloud<pcl::PointXYZ>());
-      training_points_ = boost::shared_ptr < pcl::PointCloud<pcl::PointXYZ> > (new pcl::PointCloud<pcl::PointXYZ>());
     }
-
-    void
-    clear_adjacency();
 
     void
     FillAdjacency(const std::vector<cv::KeyPoint> & keypoints, float object_span, float sensor_error);
 
     void
-    AddPoints(const cv::Point3f &training_point, const cv::Point3f & query_point, unsigned int query_index);
+    AddPoints(const cv::Vec3f &training_point, const cv::Vec3f & query_point, unsigned int query_index);
 
     void
-    InvalidateIndices(std::vector<unsigned int> &indices);
+    InvalidateQueryIndices(IndexVector &query_indices);
 
-    void
-    InvalidateQueryIndices(std::vector<unsigned int> &query_indices);
-
-    unsigned int
-    n_points() const
-    {
-      return query_indices_.size();
-    }
-
-    inline const std::vector<unsigned int> &
+    inline const IndexVector &
     query_indices() const
     {
       return query_indices_;
@@ -88,18 +78,8 @@ namespace tod
       return query_indices_[index];
     }
 
-    const std::vector<int>
-    valid_indices() const
-    {
-      std::vector<int> valid_indices(valid_indices_.size());
-      for (unsigned int i = 0; i < valid_indices_.size(); ++i)
-        valid_indices[i] = valid_indices_[i];
-
-      return valid_indices;
-    }
-
-    Eigen::VectorXf
-    Ransac(float sensor_error, unsigned int n_ransac_iterations, std::vector<int>& inliers);
+    void
+    Ransac(float sensor_error, unsigned int n_ransac_iterations, IndexVector& inliers, cv::Matx33f &R, cv::Vec3f &T);
 
     object_recognition_core::db::ObjectId object_id_;
     size_t object_index_;
@@ -111,33 +91,36 @@ namespace tod
     maximum_clique::AdjacencyMatrix sample_adjacency_;
 
   private:
-    inline pcl::PointCloud<pcl::PointXYZ>::Ptr
-    training_points() const
-    {
-      return training_points_;
-    }
-    inline pcl::PointXYZ &
-    training_points(unsigned int index) const
-    {
-      return training_points_->points[index];
-    }
+    bool
+    DrawSample(IndexVector & valid_samples, unsigned int n_samples, IndexVector & samples) const;
 
-    inline pcl::PointCloud<pcl::PointXYZ>::Ptr
-    query_points() const
-    {
-      return query_points_;
-    }
-    inline pcl::PointXYZ &
-    query_points(unsigned int index) const
-    {
-      return query_points_->points[index];
-    }
+    /** Remove a set of indices from the valid indices and clean the remaining valid indices
+     * @param indices the indices to invalidate
+     */
+    void
+    InvalidateIndices(const IndexVector &indices);
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr query_points_;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr training_points_;
-    std::vector<unsigned int> query_indices_;
+    void
+    SelectWithinDistance(const cv::Matx33f & R, const cv::Vec3f &T, const IndexVector &samples, float threshold,
+                         std::map<Index, Index> &query_inliers);
+
+    /** Estimate the rigid transformation between the training and query points of the sample
+     * @param samples the indices of the points forming the samples
+     * @param threshold the threshold within which the transformation is valid
+     * @param R the output pose rotation
+     * @param T the output pose translation
+     * @return true if a rigid transformation was found
+     */
+    bool
+    EstimateRigidTransformationSVD(const IndexVector samples, float threshold, cv::Matx33f & R, cv::Vec3f &T) const;
+
+    std::vector<cv::Vec3f> query_points_;
+    std::vector<cv::Vec3f> training_points_;
+    IndexVector query_indices_;
     /** The list of indices that are actually valid in the current data structures */
-    std::vector<unsigned int> valid_indices_;
+    IndexVector valid_indices_;
+    /** The minimum sample size when performing RANSAC: 3 is good enough for a rigid pose */
+    size_t min_sample_size_;
   };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

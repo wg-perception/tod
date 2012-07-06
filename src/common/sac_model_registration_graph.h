@@ -36,9 +36,8 @@
 #ifndef SAC_MODEL_REGISTRATION_GRAPH_H_
 #define SAC_MODEL_REGISTRATION_GRAPH_H_
 
-#include <pcl/sample_consensus/sac_model.h>
-#include <pcl/sample_consensus/sac_model_registration.h>
-#include <pcl/sample_consensus/model_types.h>
+#include "sac_model.h"
+#include "sac_model_registration.h"
 
 #include "maximum_clique.h"
 
@@ -52,6 +51,8 @@ namespace tod
   class SampleConsensusModelRegistrationGraph: public pcl::SampleConsensusModelRegistration<PointT>
   {
   public:
+    typedef typename pcl::SampleConsensusModelRegistration<PointT>::PointCloud PointCloud;
+    typedef typename pcl::SampleConsensusModelRegistration<PointT>::PointCloudPtr PointCloudPtr;
     typedef typename pcl::SampleConsensusModelRegistration<PointT>::PointCloudConstPtr PointCloudConstPtr;
     typedef boost::shared_ptr<SampleConsensusModelRegistrationGraph> Ptr;
 
@@ -215,6 +216,15 @@ BOOST_FOREACH      (int sample, samples_)
     }
 
     best_inlier_number_ = std::max(in_inliers.size(), best_inlier_number_);
+  }
+
+  int
+        countWithinDistance (const Eigen::VectorXf &model_coefficients,
+                             const double threshold)
+  {
+    std::vector<int> in_inliers;
+    selectWithinDistance(model_coefficients, threshold, in_inliers);
+    return in_inliers.size();
   }
 
   void

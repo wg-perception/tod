@@ -34,95 +34,105 @@
  */
 
 #include <boost/foreach.hpp>
-
-#include <pcl/sample_consensus/prosac.h>
-#include <pcl/sample_consensus/ransac.h>
-#include <pcl/sample_consensus/sac_model_registration.h>
-
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
 #include "adjacency_ransac.h"
+#include "ransac.h"
 #include "sac_model_registration_graph.h"
-
 #ifdef DEBUG
 #include <valgrind/callgrind.h>
 #endif
 
+namespace
+{
+  inline
+  float
+  distSq(const cv::Vec3f & vec1, const cv::Vec3f & vec2)
+  {
+    cv::Vec3f diff = vec1 - vec2;
+    return diff.dot(diff);
+  }
+}
+
 namespace tod
 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  void
-  AdjacencyRansac::clear_adjacency()
-  {
-    physical_adjacency_.clear();
-    sample_adjacency_.clear();
-  }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   void
-  AdjacencyRansac::AddPoints(const cv::Point3f &training_point, const cv::Point3f & query_point,
-                             unsigned int query_index)
+  AdjacencyRansac::AddPoints(const cv::Vec3f &training_point, const cv::Vec3f & query_point, unsigned int query_index)
   {
     valid_indices_.push_back(query_indices_.size());
 
-    training_points_->push_back(pcl::PointXYZ(training_point.x, training_point.y, training_point.z));
-    query_points_->push_back(pcl::PointXYZ(query_point.x, query_point.y, query_point.z));
+    training_points_.push_back(training_point);
+    query_points_.push_back(query_point);
     query_indices_.push_back(query_index);
   }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   void
-  AdjacencyRansac::InvalidateIndices(std::vector<unsigned int> &indices)
+  AdjacencyRansac::InvalidateIndices(const IndexVector &indices)
   {
-    std::sort(indices.begin(), indices.end());
-    indices.resize(std::unique(indices.begin(), indices.end()) - indices.begin());
+    IndexVector indices_to_invalidate = indices;
 
-    std::vector<unsigned int>::iterator end = std::set_difference(valid_indices_.begin(), valid_indices_.end(),
-                                                                  indices.begin(), indices.end(),
-                                                                  valid_indices_.begin());
-    valid_indices_.resize(end - valid_indices_.begin());
+    while (!indices_to_invalidate.empty())
+    {
+      // Remove the indices from the valid ones
+      std::sort(indices_to_invalidate.begin(), indices_to_invalidate.end());
+      indices_to_invalidate.resize(
+          std::unique(indices_to_invalidate.begin(), indices_to_invalidate.end()) - indices_to_invalidate.begin());
 
-    // Reset the matrices
-    physical_adjacency_.InvalidateCluster(indices);
-    sample_adjacency_.InvalidateCluster(indices);
+      IndexVector::iterator end = std::set_difference(valid_indices_.begin(), valid_indices_.end(),
+                                                      indices_to_invalidate.begin(), indices_to_invalidate.end(),
+                                                      valid_indices_.begin());
+      valid_indices_.resize(end - valid_indices_.begin());
+
+      // Reset the matrices
+      physical_adjacency_.InvalidateCluster(indices_to_invalidate);
+      sample_adjacency_.InvalidateCluster(indices_to_invalidate);
+
+      // Go over the valid indices and remove the ones that do not have enough neighbors
+      indices_to_invalidate.clear();
+      BOOST_FOREACH(Index index, valid_indices_)if (sample_adjacency_.neighbors(index).size() < min_sample_size_)
+      indices_to_invalidate.push_back(index);
+    }
   }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   void
-  AdjacencyRansac::InvalidateQueryIndices(std::vector<unsigned int> &query_indices)
+  AdjacencyRansac::InvalidateQueryIndices(IndexVector &query_indices)
   {
     if (query_indices.empty())
       return;
     // Figure out the points with those query indices
     std::sort(query_indices.begin(), query_indices.end());
-    std::vector<unsigned int>::iterator end = std::unique(query_indices.begin(), query_indices.end());
+    IndexVector::iterator end = std::unique(query_indices.begin(), query_indices.end());
     query_indices.resize(end - query_indices.begin());
 
-    std::vector<unsigned int> indices_to_remove;
+    IndexVector indices_to_remove;
     indices_to_remove.reserve(query_indices_.size());
-    std::vector<unsigned int>::const_iterator iter = query_indices.begin();
-    BOOST_FOREACH(unsigned int index, valid_indices_)
+    IndexVector::const_iterator iter = query_indices.begin();
+    BOOST_FOREACH(unsigned int index, valid_indices_){
+    unsigned int query_index = query_indices_[index];
+    if (query_index < *iter)
+    continue;
+    // If the match has a keypoint in the inliers, remove the match
+    while ((iter != end) && (query_index > *iter))
+    ++iter;
+    if (query_index == *iter)
     {
-      unsigned int query_index = query_indices_[index];
-      if (query_index < *iter)
+      indices_to_remove.push_back(index);
       continue;
-      // If the match has a keypoint in the inliers, remove the match
-      while ((iter != end) && (query_index > *iter))
-      ++iter;
-      if (query_index == *iter)
-      {
-        indices_to_remove.push_back(index);
-        continue;
-      }
-
-      if (iter == end)
-      break;
     }
+
+    if (iter == end)
+    break;
+  }
     InvalidateIndices(indices_to_remove);
   }
 
@@ -132,32 +142,25 @@ namespace tod
   AdjacencyRansac::FillAdjacency(const std::vector<cv::KeyPoint> & keypoints, float object_span, float sensor_error)
   {
     // The error the 3d sensor makes, distance wise
-    unsigned int n_matches = training_points_->size();
+    unsigned int n_matches = training_points_.size();
     physical_adjacency_ = maximum_clique::AdjacencyMatrix(n_matches);
     sample_adjacency_ = maximum_clique::AdjacencyMatrix(n_matches);
-    pcl::PointCloud<pcl::PointXYZ>::const_iterator query_point_1 = query_points_->points.begin(), training_point_1 =
-        training_points_->points.begin(), query_point_2;
+    std::vector<cv::Vec3f>::const_iterator query_point_1 = query_points_.begin(), training_point_1 =
+        training_points_.begin(), query_point_2;
     for (unsigned int i = 0; i < n_matches; ++i, ++query_point_1, ++training_point_1)
     {
       // For every other match that might end up in the same cluster
       query_point_2 = query_point_1 + 1;
       for (unsigned int j = i + 1; j < n_matches; ++j, ++query_point_2)
       {
-        // Two matches with the same query point cannot be connected
-        // They should not, but in practice, there is so much noise in the training that we should allow it
-        // (as two points in the training might actually be two noisy versions of the same one)
-        //if (query_indices[i] == query_indices[j])
-        //continue;
         // Two training points can be connected if they are within the span of an object
-        float dist_query = pcl::squaredEuclideanDistance(*query_point_1, *query_point_2);
-        //distances(i, j) = dist2;
-        //distances(j, i) = dist2;
+        float dist_query = distSq(*query_point_1, *query_point_2);
         if (dist_query > (object_span + 2 * sensor_error) * (object_span + 2 * sensor_error))
           continue;
         dist_query = std::sqrt(dist_query);
 
-        const pcl::PointXYZ & training_point_2 = training_points_->points[j];
-        float dist_training = pcl::euclideanDistance(*training_point_1, training_point_2);
+        const cv::Vec3f & training_point_2 = training_points_[j];
+        float dist_training = cv::norm(*training_point_1 - training_point_2);
         // Make sure the distance between two points is somewhat conserved
         if (std::abs(dist_training - dist_query) > 4 * sensor_error)
           continue;
@@ -167,7 +170,7 @@ namespace tod
 
         const cv::KeyPoint & keypoint1 = keypoints[query_indices_[i]], &keypoint2 = keypoints[query_indices_[j]];
         if ((((keypoint1.pt.x - keypoint2.pt.x) * (keypoint1.pt.x - keypoint2.pt.x)
-              + (keypoint1.pt.y - keypoint2.pt.y) * (keypoint1.pt.y - keypoint2.pt.y))
+            + (keypoint1.pt.y - keypoint2.pt.y) * (keypoint1.pt.y - keypoint2.pt.y))
              > 20 * 20)
             && (std::abs(dist_training - dist_query) < 2 * sensor_error))
         //((dist_query >= 5 * sensor_error) && (dist_training >= 5 * sensor_error))
@@ -176,6 +179,10 @@ namespace tod
         }
       }
     }
+
+    // Clean the valid indices
+    IndexVector indices;
+    InvalidateIndices(indices);
   }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -189,11 +196,11 @@ namespace tod
     {
       // Figure out the 3d query point
       const cv::KeyPoint & keypoint = keypoints[query_index];
-      const cv::Point3f &query_point = point_cloud.at < cv::Point3f > (keypoint.pt.y, keypoint.pt.x);
+      const cv::Vec3f &query_point = point_cloud.at<cv::Vec3f>(keypoint.pt.y, keypoint.pt.x);
 
       // Make sure it does not contain any NaN's
       // We could have a solver that would consider Nan's as missing entries
-      if ((query_point.x != query_point.x) || (query_point.y != query_point.y) || (query_point.z != query_point.z))
+      if (cvIsNaN(query_point[0]))
         continue;
 
       const std::vector<cv::DMatch> &local_matches = matches[query_index];
@@ -202,7 +209,7 @@ namespace tod
       // Get the matches for that point
       for (unsigned int match_index = 0; match_index < local_matches.size(); ++match_index)
       {
-        const cv::Vec3f & training_point = local_matches_3d.at < cv::Vec3f > (0, match_index);
+        const cv::Vec3f & training_point = local_matches_3d.at<cv::Vec3f>(0, match_index);
 
         // Fill in the clouds
         size_t opencv_object_id = local_matches[match_index].imgIdx;
@@ -221,10 +228,10 @@ namespace tod
     for (OpenCVIdToObjectPoints::const_iterator query_iterator = object_points.begin();
         query_iterator != object_points.end(); ++query_iterator)
     {
-      std::vector<unsigned int> query_indices = query_iterator->second.query_indices();
-      std::vector<unsigned int>::iterator end = std::unique(query_indices.begin(), query_indices.end());
+      AdjacencyRansac::IndexVector query_indices = query_iterator->second.query_indices();
+      AdjacencyRansac::IndexVector::iterator end = std::unique(query_indices.begin(), query_indices.end());
       query_indices.resize(end - query_indices.begin());
-      std::vector < cv::KeyPoint > local_keypoints(query_indices.size());
+      std::vector<cv::KeyPoint> local_keypoints(query_indices.size());
       for (unsigned int j = 0; j < query_indices.size(); ++j)
         local_keypoints[j] = keypoints[query_indices[j]];
       cv::drawKeypoints(out_img, local_keypoints, out_img, colors[i]);
@@ -238,20 +245,31 @@ namespace tod
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  Eigen::VectorXf
-  AdjacencyRansac::Ransac(float sensor_error, unsigned int n_ransac_iterations, std::vector<int>& inliers)
+  void
+  AdjacencyRansac::Ransac(float sensor_error, unsigned int n_ransac_iterations, IndexVector& inliers_in, cv::Matx33f &R,
+                          cv::Vec3f &T)
   {
 #ifdef DEBUG
     CALLGRIND_START_INSTRUMENTATION;
 #endif
 
+    std::vector<int> valid_indices;
+    BOOST_FOREACH(unsigned int val, valid_indices_)valid_indices.push_back(val);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr query_points(new pcl::PointCloud<pcl::PointXYZ>());
+    BOOST_FOREACH(cv::Vec3f val, query_points_)query_points->push_back(pcl::PointXYZ(val[0],val[1],val[2]));
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr training_points(new pcl::PointCloud<pcl::PointXYZ>());
+    BOOST_FOREACH(cv::Vec3f val, training_points_)training_points->push_back(pcl::PointXYZ(val[0],val[1],val[2]));
+
     // Perform RANSAC on the input clouds, making sure to include adjacent pairs in the samples
     SampleConsensusModelRegistrationGraph<pcl::PointXYZ>::Ptr model(
-        new SampleConsensusModelRegistrationGraph<pcl::PointXYZ>(query_points_, valid_indices(), sensor_error,
+        new SampleConsensusModelRegistrationGraph<pcl::PointXYZ>(query_points, valid_indices, sensor_error,
                                                                  physical_adjacency_, sample_adjacency_));
-    pcl::RandomSampleConsensus < pcl::PointXYZ > sample_consensus(model);
+    pcl::RandomSampleConsensus<pcl::PointXYZ> sample_consensus(model);
     Eigen::VectorXf coefficients;
-    model->setInputTarget(training_points_, valid_indices());
+
+    model->setInputTarget(training_points, valid_indices);
     sample_consensus.setDistanceThreshold(sensor_error);
     sample_consensus.setMaxIterations(n_ransac_iterations);
 
@@ -268,17 +286,19 @@ namespace tod
      }
      std::cout << "];";*/
 
-    inliers.clear();
+    inliers_in.clear();
     if (!sample_consensus.computeModel())
-      return coefficients;
+      return;
 
+    std::vector<int> inliers;
+    BOOST_FOREACH(unsigned int inl, inliers_in)inliers.push_back(inl);
     sample_consensus.getInliers(inliers);
     std::sort(inliers.begin(), inliers.end());
     sample_consensus.getModelCoefficients(coefficients);
-    std::vector<int> valid_indices_vect = valid_indices();
-    std::vector<int>::iterator valid_end = std::set_difference(valid_indices_vect.begin(), valid_indices_vect.end(),
-                                                               inliers.begin(), inliers.end(),
-                                                               valid_indices_vect.begin());
+    std::vector<unsigned int> valid_indices_vect = valid_indices_;
+    std::vector<unsigned int>::iterator valid_end = std::set_difference(valid_indices_vect.begin(),
+                                                                        valid_indices_vect.end(), inliers.begin(),
+                                                                        inliers.end(), valid_indices_vect.begin());
     valid_indices_vect.resize(valid_end - valid_indices_vect.begin());
 
     bool do_final = false;
@@ -289,29 +309,26 @@ namespace tod
     {
       {
         Eigen::VectorXf new_coefficients = coefficients;
-        model->optimizeModelCoefficients(training_points_, inliers, coefficients, new_coefficients);
+        model->optimizeModelCoefficients(training_points, inliers, coefficients, new_coefficients);
         coefficients = new_coefficients;
       }
 
       // Check if the model is valid given the user constraints
-      Eigen::Matrix4f transform;
-      transform.row(0) = coefficients.segment < 4 > (0);
-      transform.row(1) = coefficients.segment < 4 > (4);
-      transform.row(2) = coefficients.segment < 4 > (8);
-      transform.row(3) = coefficients.segment < 4 > (12);
+      R = cv::Matx33f(coefficients(0), coefficients(1), coefficients(2), coefficients(4), coefficients(5),
+                      coefficients(6), coefficients(8), coefficients(9), coefficients(10));
+      T = cv::Vec3f(coefficients(3), coefficients(7), coefficients(11));
 
       std::vector<int> extra_inliers;
-      BOOST_FOREACH(int index, valid_indices_vect)
-      {
-        const Eigen::Map<Eigen::Vector4f, Eigen::Aligned> &pt_src = query_points(index).getVector4fMap();
-        const Eigen::Map<Eigen::Vector4f, Eigen::Aligned> &pt_tgt = training_points(index).getVector4fMap();
-        Eigen::Vector4f p_tr = transform * pt_src;
-        // Calculate the distance from the transformed point to its correspondence
-        if ((p_tr - pt_tgt).squaredNorm() < thresh)
-        extra_inliers.push_back(index);
-      }
+      BOOST_FOREACH(int index, valid_indices_vect){
+      const cv::Vec3f &pt_src = query_points_[index];
+      const cv::Vec3f &pt_tgt = training_points_[index];
+      cv::Vec3f p_tr = R * pt_src + T;
+      // Calculate the distance from the transformed point to its correspondence
+      if (cv::norm(p_tr - pt_tgt)*cv::norm(p_tr - pt_tgt) < thresh)
+      extra_inliers.push_back(index);
+    }
 
-      // Add those extra inliers to the inliers and remove them from the valid indices
+    // Add those extra inliers to the inliers and remove them from the valid indices
       {
         std::vector<int> tmp_inliers = inliers;
         inliers.resize(inliers.size() + extra_inliers.size());
@@ -330,9 +347,16 @@ namespace tod
       }
 
     }
+    R = cv::Matx33f(coefficients(0), coefficients(1), coefficients(2), coefficients(4), coefficients(5),
+                    coefficients(6), coefficients(8), coefficients(9), coefficients(10));
+    T = cv::Vec3f(coefficients(3), coefficients(7), coefficients(11));
+    R = R.t();
+    T = -R * T;
+    BOOST_FOREACH(int inl, inliers)inliers_in.push_back(query_indices_[inl]);
+    std::sort(inliers_in.begin(), inliers_in.end());
+    inliers_in.resize(std::unique(inliers_in.begin(), inliers_in.end()) - inliers_in.begin());
 #ifdef DEBUG
     CALLGRIND_STOP_INSTRUMENTATION;
 #endif
-    return coefficients;
   }
 }

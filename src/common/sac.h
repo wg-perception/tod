@@ -111,19 +111,19 @@ namespace pcl
         * \param indices_subset the resultant output set of randomly selected indices
         */
       inline void
-      getRandomSamples (const boost::shared_ptr <std::vector<int> > &indices, 
+      getRandomSamples (const std::vector<unsigned int> &indices,
                         size_t nr_samples, 
-                        std::set<int> &indices_subset)
+                        std::set<unsigned int> &indices_subset)
       {
         indices_subset.clear ();
         while (indices_subset.size () < nr_samples)
-          indices_subset.insert ((*indices)[(int) (indices->size () * (rand () / (RAND_MAX + 1.0)))]);
+          indices_subset.insert (indices[(unsigned int) (indices.size () * (rand () / (RAND_MAX + 1.0)))]);
       }
 
       /** \brief Return the best set of inliers found so far for this model. 
         * \param inliers the resultant set of inliers
         */
-      inline void getInliers (std::vector<int> &inliers) { inliers = inliers_; }
+      inline void getInliers (std::vector<unsigned int> &inliers) { inliers = inliers_; }
 
       /** \brief Return the model coefficients of the best model found so far. 
         * \param model_coefficients the resultant model coefficients
@@ -135,7 +135,7 @@ namespace pcl
       SampleConsensusModelPtr sac_model_;
 
       /** \brief The indices of the points that were chosen as inliers after the last computeModel () call. */
-      std::vector<int> inliers_;
+      std::vector<unsigned int> inliers_;
 
       /** \brief The coefficients of our model computed directly from the model found. */
       cv::Matx33f R_;

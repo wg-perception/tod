@@ -54,8 +54,8 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
   int n_best_inliers_count = -INT_MAX;
   double k = 1.0;
 
-  std::vector<int> inliers;
-  std::vector<int> selection;
+  std::vector<unsigned int> inliers;
+  std::vector<unsigned int> selection;
   cv::Matx33f R;
   cv::Vec3f T;
 
@@ -98,7 +98,7 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
       T_ = T;
 
       // Compute the k parameter (k=log(z)/log(1-w^n))
-      double w = (double)((double)n_best_inliers_count / (double)sac_model_->getIndices ()->size ());
+      double w = (double)((double)n_best_inliers_count / (double)sac_model_->getIndices ().size ());
       double p_no_outliers = 1.0 - pow (w, (double)selection.size ());
       p_no_outliers = (std::max) (std::numeric_limits<double>::epsilon (), p_no_outliers);       // Avoid division by -Inf
       p_no_outliers = (std::min) (1.0 - std::numeric_limits<double>::epsilon (), p_no_outliers);   // Avoid division by 0.

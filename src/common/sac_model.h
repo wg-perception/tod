@@ -52,12 +52,13 @@ namespace pcl
     * \author Radu Bogdan Rusu
     * \ingroup sample_consensus
     */
-  template <typename PointT>
+  template<typename PointT>
   class SampleConsensusModel
   {
-    public:
-      typedef boost::shared_ptr<SampleConsensusModel> Ptr;
-      typedef boost::shared_ptr<const SampleConsensusModel> ConstPtr;
+  public:
+    typedef boost::shared_ptr<SampleConsensusModel> Ptr;
+    typedef boost::shared_ptr<const SampleConsensusModel> ConstPtr;
+    typedef std::vector<unsigned int> IndexVector;
 
       /** \brief Destructor for base SampleConsensusModel. */
       virtual ~SampleConsensusModel () {};
@@ -68,13 +69,13 @@ namespace pcl
         * \param samples the resultant model samples
         */
       void 
-      getSamples (int &iterations, std::vector<int> &samples)
+      getSamples (int &iterations, std::vector<unsigned int> &samples)
       {
         // We're assuming that indices_ have already been set in the constructor
-        if (indices_->size () < 3)
+        if (indices_.size () < 3)
         {
           PCL_ERROR ("[pcl::SampleConsensusModel::getSamples] Can not select %lu unique points out of %lu!\n",
-                     (unsigned long)samples.size (), (unsigned long)indices_->size ());
+                     (unsigned long)samples.size (), (unsigned long)indices_.size ());
           // one of these will make it stop :)
           samples.clear ();
           iterations = INT_MAX - 1;
@@ -103,35 +104,37 @@ namespace pcl
         * for creating a valid model 
         * \param model_coefficients the computed model coefficients
         */
-      virtual bool 
-      computeModelCoefficients (const std::vector<int> &samples, cv::Matx33f &R, cv::Vec3f&T) = 0;
+      virtual bool
+      computeModelCoefficients (const IndexVector &samples, cv::Matx33f &R, cv::Vec3f&T) = 0;
+
+      virtual
+      void
+      optimizeModelCoefficients(const IndexVector &inliers, cv::Matx33f&R, cv::Vec3f&T) =0;
 
       /** \brief Select all the points which respect the given model
         * coefficients as inliers. Pure virtual.
-        * 
+        *
         * \param model_coefficients the coefficients of a model that we need to
         * compute distances to
         * \param threshold a maximum admissible distance threshold for
         * determining the inliers from the outliers
         * \param inliers the resultant model inliers
         */
-      virtual void 
-      selectWithinDistance (const cv::Matx33f &R, const cv::Vec3f&T,
-                            double threshold,
-                            std::vector<int> &inliers) = 0;
+    virtual void
+    selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f&T, double threshold, IndexVector &inliers) = 0;
 
       /** \brief Provide the vector of indices that represents the input data.
         * \param indices the vector of indices that represents the input data.
         */
       inline void 
-      setIndices (std::vector<int> &indices) 
+      setIndices (IndexVector &indices)
       { 
-        indices_.reset (new std::vector<int> (indices));
+        indices_ = indices;
         shuffled_indices_ = indices;
       }
 
       /** \brief Get a pointer to the vector of indices used. */
-      inline boost::shared_ptr <std::vector<int> >
+      inline const IndexVector &
       getIndices () const { return (indices_); }
 
     protected:
@@ -141,7 +144,7 @@ namespace pcl
         * \param sample the set of indices of target_ to analyze
         */
       inline void
-      drawIndexSample (std::vector<int> & sample)
+      drawIndexSample (IndexVector & sample)
       {
         size_t sample_size = sample.size ();
         size_t index_size = shuffled_indices_.size ();
@@ -157,16 +160,16 @@ namespace pcl
         * \param samples the resultant index samples
         */
       virtual bool
-      isSampleGood (const std::vector<int> &samples) const = 0;
+      isSampleGood (const IndexVector &samples) const = 0;
 
       /** \brief A pointer to the vector of point indices to use. */
-      boost::shared_ptr <std::vector<int> > indices_;
+      IndexVector indices_;
 
       /** The maximum number of samples to try until we get a good one */
       static const unsigned int max_sample_checks_ = 1000;
 
       /** Data containing a shuffled version of the indices. This is used and modified when drawing samples. */
-      std::vector<int> shuffled_indices_;
+      IndexVector shuffled_indices_;
   };
 }
 

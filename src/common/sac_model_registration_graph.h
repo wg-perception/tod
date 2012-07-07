@@ -55,46 +55,33 @@ namespace tod
     using pcl::SampleConsensusModel<PointT>::shuffled_indices_;
 
   public:
-    typedef std::vector<cv::Vec3f> PointCloudPtr;
-    typedef std::vector<cv::Vec3f> PointCloudConstPtr;
-    typedef boost::shared_ptr<SampleConsensusModelRegistrationGraph> Ptr;
-    typedef const Eigen::Map<const Eigen::Vector4f, Eigen::Aligned> Vector4fMapConst;
-
     using pcl::SampleConsensusModel<PointT>::drawIndexSample;
+    typedef unsigned int Index;
+    typedef std::vector<Index> IndexVector;
 
     /** \brief Constructor for base SampleConsensusModelRegistration.
      * \param cloud the input point cloud dataset
      * \param indices a vector of point indices to be used from \a cloud
      */
-    SampleConsensusModelRegistrationGraph(
-        const std::vector<cv::Vec3f> &query_points, const std::vector<int> &indices, float threshold,
-        const maximum_clique::AdjacencyMatrix & physical_adjacency,
-        const maximum_clique::AdjacencyMatrix &sample_adjacency)
+    SampleConsensusModelRegistrationGraph(const std::vector<cv::Vec3f> &query_points,
+                                          const std::vector<cv::Vec3f> &target, const IndexVector &indices,
+                                          float threshold, const maximum_clique::AdjacencyMatrix & physical_adjacency,
+                                          const maximum_clique::AdjacencyMatrix &sample_adjacency)
         :
           physical_adjacency_(physical_adjacency),
           sample_adjacency_(sample_adjacency),
           best_inlier_number_(0),
           threshold_(threshold)
     {
-      indices_.reset (new std::vector<int> (indices));
+      indices_ = indices;
       shuffled_indices_ = indices;
       query_points_ = query_points;
+      training_points_ = target;
       BuildNeighbors();
     }
 
-    /** \brief Set the input point cloud target.
-      * \param target the input point cloud target
-      * \param indices_tgt a vector of point indices to be used from \a target
-      */
-    inline void
-    setInputTarget (const std::vector<cv::Vec3f> &target, const std::vector<int> &indices_tgt)
-    {
-      indices_tgt_.reset (new std::vector<int> (indices_tgt));
-      training_points_ = target;
-    }
-
     bool
-    drawIndexSampleHelper(std::vector<int> & valid_samples, unsigned int n_samples, std::vector<int> & samples) const
+    drawIndexSampleHelper(IndexVector & valid_samples, unsigned int n_samples, IndexVector & samples) const
     {
       if (n_samples == 0)
         return true;
@@ -103,13 +90,13 @@ namespace tod
       while (true)
       {
         int sample = valid_samples[rand() % valid_samples.size()];
-        std::vector<int> new_valid_samples(valid_samples.size());
-        std::vector<int>::iterator end = std::set_intersection(valid_samples.begin(), valid_samples.end(),
+        IndexVector new_valid_samples(valid_samples.size());
+        IndexVector::iterator end = std::set_intersection(valid_samples.begin(), valid_samples.end(),
                                                                sample_adjacency_.neighbors(sample).begin(),
                                                                sample_adjacency_.neighbors(sample).end(),
                                                                new_valid_samples.begin());
         new_valid_samples.resize(end - new_valid_samples.begin());
-        std::vector<int> new_samples;
+        IndexVector new_samples;
         if (drawIndexSampleHelper(new_valid_samples, n_samples - 1, new_samples))
         {
           samples = new_samples;
@@ -119,7 +106,7 @@ namespace tod
         }
         else
         {
-          std::vector<int>::iterator end = std::remove(valid_samples.begin(), valid_samples.end(), sample);
+          IndexVector::iterator end = std::remove(valid_samples.begin(), valid_samples.end(), sample);
           valid_samples.resize(end - valid_samples.begin());
           if (valid_samples.empty())
             return false;
@@ -129,10 +116,10 @@ namespace tod
     }
 
     bool
-    isSampleGood(const std::vector<int> &samples) const
+    isSampleGood(const IndexVector &samples) const
     {
-      std::vector<int> valid_samples = sample_pool_;
-      std::vector<int> &new_samples = const_cast<std::vector<int> &>(samples);
+      IndexVector valid_samples = sample_pool_;
+      IndexVector &new_samples = const_cast<IndexVector &>(samples);
       size_t sample_size = new_samples.size();
       bool is_good = drawIndexSampleHelper(valid_samples, sample_size, new_samples);
 
@@ -144,29 +131,23 @@ namespace tod
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void
-  selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f&T, double threshold, std::vector<int> &in_inliers)
+  selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f&T, double threshold, IndexVector &in_inliers)
   {
-    std::vector<int> inliers;
-    if (indices_->size () != indices_tgt_->size ())
-    {
-      PCL_ERROR ("[pcl::SampleConsensusModelRegistration::selectWithinDistance] Number of source indices (%lu) differs than number of target indices (%lu)!\n", (unsigned long)indices_->size (), (unsigned long)indices_tgt_->size ());
-      inliers.clear ();
-      return;
-    }
+    IndexVector inliers;
 
     double thresh = threshold * threshold;
 
-    inliers.resize (indices_->size ());
+      inliers.resize(indices_.size());
 
-    int nr_p = 0;
-    for (size_t i = 0; i < indices_->size (); ++i)
-    {
-      const cv::Vec3f & pt_src = query_points_[(*indices_)[i]];
-      const cv::Vec3f & pt_tgt = training_points_[(*indices_tgt_)[i]];
+      int nr_p = 0;
+      for (size_t i = 0; i < indices_.size(); ++i)
+      {
+      const cv::Vec3f & pt_src = query_points_[indices_[i]];
+      const cv::Vec3f & pt_tgt = training_points_[indices_[i]];
       cv::Vec3f p_tr  = R * pt_src + T;
       // Calculate the distance from the transformed point to its correspondence
       if (cv::norm(p_tr - pt_tgt)*cv::norm(p_tr-pt_tgt) < thresh)
-        inliers[nr_p++] = (*indices_)[i];
+        inliers[nr_p++] = indices_[i];
     }
     inliers.resize (nr_p);
 
@@ -223,23 +204,22 @@ namespace tod
   }
 
     bool
-    computeModelCoefficients (const std::vector<int> &samples, cv::Matx33f &R, cv::Vec3f&T)
+    computeModelCoefficients(const IndexVector &samples, cv::Matx33f &R, cv::Vec3f&T)
     {
       // Need 3 samples
-      if (samples.size () != 3)
-      return (false);
+      if (samples.size() != 3)
+        return (false);
 
       return estimateRigidTransformationSVD(samples, R, T);
     }
 
     void
-    optimizeModelCoefficients(const std::vector<int> &inliers,
-        cv::Matx33f&R, cv::Vec3f&T)
+    optimizeModelCoefficients(const IndexVector &inliers, cv::Matx33f&R, cv::Vec3f&T)
     {
       estimateRigidTransformationSVD(inliers, R, T);
     }
 
-    mutable std::vector<int> samples_;
+    mutable IndexVector samples_;
 
     /** \brief Estimate a rigid transformation between a source and a target point cloud using an SVD closed-form
      * solution of absolute orientation using unit quaternions
@@ -252,13 +232,11 @@ namespace tod
      * THIS IS COPIED STRAIGHT UP FROM PCL AS THEY CHANGED THE API ANDMADE IT PRIVATE
      */
     bool
-    estimateRigidTransformationSVD(
-        const std::vector<int> &indices_src, cv::Matx33f &R_in, cv::Vec3f&T)
+    estimateRigidTransformationSVD(const IndexVector &indices_src, cv::Matx33f &R_in, cv::Vec3f&T)
     {
-      if (indices_src.size()<3)
-      return false;
+      if (indices_src.size() < 3)
+        return false;
 
-      typedef unsigned int Index;
       cv::Vec3f centroid_training(0, 0, 0), centroid_query(0, 0, 0);
 
       // Estimate the centroids of source, target
@@ -318,27 +296,23 @@ namespace tod
       if (size >= 3)
       sample_pool_.push_back(j);
     }
-    if (!indices_->empty())
+    if (!indices_.empty())
     {
-      std::vector<int>::iterator end = std::set_intersection(sample_pool_.begin(), sample_pool_.end(),
-          indices_->begin(), indices_->end(),
-          sample_pool_.begin());
-      sample_pool_.resize(end - sample_pool_.begin());
+        IndexVector::iterator end = std::set_intersection(sample_pool_.begin(), sample_pool_.end(), indices_.begin(),
+                                                          indices_.end(), sample_pool_.begin());
+        sample_pool_.resize(end - sample_pool_.begin());
     }
   }
 
   const maximum_clique::AdjacencyMatrix physical_adjacency_;
   const maximum_clique::AdjacencyMatrix sample_adjacency_;
-  std::vector<int> sample_pool_;
+  IndexVector sample_pool_;
   size_t best_inlier_number_;
   float threshold_;
 
-  std::vector<cv::Vec3f> query_points_;
-  std::vector<cv::Vec3f> training_points_;
-
-
-  /** \brief A pointer to the vector of target point indices to use. */
-  boost::shared_ptr <std::vector<int> > indices_tgt_;
-  };}
+    std::vector<cv::Vec3f> query_points_;
+    std::vector<cv::Vec3f> training_points_;
+  };
+}
 
 #endif

@@ -252,17 +252,12 @@ namespace tod
 #ifdef DEBUG
     CALLGRIND_START_INSTRUMENTATION;
 #endif
-
-    std::vector<int> valid_indices;
-    BOOST_FOREACH(unsigned int val, valid_indices_)valid_indices.push_back(val);
-
     // Perform RANSAC on the input clouds, making sure to include adjacent pairs in the samples
     SampleConsensusModelRegistrationGraph<pcl::PointXYZ>::Ptr model(
-        new SampleConsensusModelRegistrationGraph<pcl::PointXYZ>(query_points_, valid_indices, sensor_error,
-                                                                 physical_adjacency_, sample_adjacency_));
+        new SampleConsensusModelRegistrationGraph<pcl::PointXYZ>(query_points_, training_points_, valid_indices_,
+                                                                 sensor_error, physical_adjacency_, sample_adjacency_));
     pcl::RandomSampleConsensus<pcl::PointXYZ> sample_consensus(model);
 
-    model->setInputTarget(training_points_, valid_indices);
     sample_consensus.setDistanceThreshold(sensor_error);
     sample_consensus.setMaxIterations(n_ransac_iterations);
 
@@ -270,7 +265,7 @@ namespace tod
     if (!sample_consensus.computeModel())
       return;
 
-    std::vector<int> inliers;
+    std::vector<unsigned int> inliers;
     BOOST_FOREACH(unsigned int inl, inliers_in)inliers.push_back(inl);
     sample_consensus.getInliers(inliers);
     std::sort(inliers.begin(), inliers.end());
@@ -302,7 +297,7 @@ namespace tod
 
     // Add those extra inliers to the inliers and remove them from the valid indices
       {
-        std::vector<int> tmp_inliers = inliers;
+        std::vector<unsigned int> tmp_inliers = inliers;
         inliers.resize(inliers.size() + extra_inliers.size());
         std::merge(tmp_inliers.begin(), tmp_inliers.end(), extra_inliers.begin(), extra_inliers.end(), inliers.begin());
       }
@@ -321,7 +316,7 @@ namespace tod
     }
     R = R.t();
     T = -R * T;
-    BOOST_FOREACH(int inl, inliers)inliers_in.push_back(query_indices_[inl]);
+    BOOST_FOREACH(unsigned int inl, inliers)inliers_in.push_back(query_indices_[inl]);
     std::sort(inliers_in.begin(), inliers_in.end());
     inliers_in.resize(std::unique(inliers_in.begin(), inliers_in.end()) - inliers_in.begin());
 #ifdef DEBUG

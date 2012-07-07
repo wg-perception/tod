@@ -262,7 +262,6 @@ namespace tod
                                                   physical_adjacency_, sample_adjacency_));
     pcl::RandomSampleConsensus sample_consensus(model);
 
-    sample_consensus.setDistanceThreshold(sensor_error);
     sample_consensus.setMaxIterations(n_ransac_iterations);
 
     inliers_in.clear();

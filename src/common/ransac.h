@@ -61,7 +61,7 @@ namespace pcl
     using SampleConsensus::inliers_;
     using SampleConsensus::probability_;
 
-    typedef typename SampleConsensusModel::Ptr SampleConsensusModelPtr;
+    typedef SampleConsensusModel::Ptr SampleConsensusModelPtr;
 
     public:
       /** \brief RANSAC (RAndom SAmple Consensus) main constructor
@@ -70,18 +70,6 @@ namespace pcl
     RandomSampleConsensus(const SampleConsensusModelPtr &model)
         :
           SampleConsensus(model)
-    {
-        // Maximum number of trials before we give up.
-        max_iterations_ = 10000;
-      }
-
-      /** \brief RANSAC (RAndom SAmple Consensus) main constructor
-        * \param model a Sample Consensus model
-        * \param threshold distance to model threshold
-     */
-    RandomSampleConsensus(const SampleConsensusModelPtr &model, double threshold)
-        :
-          SampleConsensus(model, threshold)
     {
         // Maximum number of trials before we give up.
         max_iterations_ = 10000;

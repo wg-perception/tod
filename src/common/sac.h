@@ -45,14 +45,13 @@
 namespace pcl
 {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //template <typename ... T> // variadic templates don't work yet
   /** \brief @b SampleConsensus represents the base class. All sample consensus methods must inherit from this class.
    * \author Radu Bogdan Rusu
     * \ingroup sample_consensus
    */
   class SampleConsensus
   {
-    typedef typename SampleConsensusModel::Ptr SampleConsensusModelPtr;
+    typedef SampleConsensusModel::Ptr SampleConsensusModelPtr;
 
     private:
       /** \brief Constructor for base SAC. */
@@ -60,7 +59,6 @@ namespace pcl
 
     public:
       typedef boost::shared_ptr<SampleConsensus> Ptr;
-      typedef boost::shared_ptr<const SampleConsensus> ConstPtr;
 
       /** \brief Constructor for base SAC.
         * \param model a Sample Consensus model
@@ -69,37 +67,14 @@ namespace pcl
                                                                iterations_ (0), threshold_ (DBL_MAX), max_iterations_ (1000)
       { /* srand ((unsigned)time (0)); // set a random seed */ };
 
-      /** \brief Constructor for base SAC.
-        * \param model a Sample Consensus model
-        * \param threshold distance to model threshold
-        */
-      SampleConsensus (const SampleConsensusModelPtr &model, double threshold) : sac_model_(model), probability_ (0.99),
-                                                                                 iterations_ (0), threshold_ (threshold),
-                                                                                 max_iterations_ (1000)
-                                                                                 {};
-
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Destructor for base SAC. */
       virtual ~SampleConsensus () {};
-
-      /** \brief Set the distance to model threshold.
-        * \param threshold distance to model threshold
-        */
-      inline void setDistanceThreshold (double threshold)  { threshold_ = threshold; }
-
-      /** \brief Get the distance to model threshold, as set by the user. */
-      inline double getDistanceThreshold () { return (threshold_); }
 
       /** \brief Set the maximum number of iterations.
         * \param max_iterations maximum number of iterations
         */
       inline void setMaxIterations (int max_iterations) { max_iterations_ = max_iterations; }
-
-      /** \brief Set the desired probability of choosing at least one sample free from outliers.
-        * \param probability the desired probability of choosing at least one sample free from outliers
-        * \note internally, the probability is set to 99% (0.99) by default.
-        */
-      inline void setProbability (double probability) { probability_ = probability; }
 
       /** \brief Compute the actual model. Pure virtual. */
       virtual bool computeModel () = 0;

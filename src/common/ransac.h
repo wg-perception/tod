@@ -87,10 +87,11 @@ namespace pcl
         max_iterations_ = 10000;
       }
 
-      /** \brief Compute the actual model and find the inliers
-        * \param debug_verbosity_level enable/disable on-screen debug information and set the verbosity level
-        */
-      bool computeModel (int debug_verbosity_level = 0);
+    /** \brief Compute the actual model and find the inliers
+     * \param debug_verbosity_level enable/disable on-screen debug information and set the verbosity level
+     */
+    bool
+    computeModel();
   };
 }
 

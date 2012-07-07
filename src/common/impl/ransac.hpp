@@ -41,15 +41,8 @@
 
 //////////////////////////////////////////////////////////////////////////
 bool
-pcl::RandomSampleConsensus::computeModel(int debug_verbosity_level)
+pcl::RandomSampleConsensus::computeModel()
 {
-  // Warn and exit if no threshold was set
-  if (threshold_ == DBL_MAX)
-  {
-    PCL_ERROR ("[pcl::RandomSampleConsensus::computeModel] No threshold set!\n");
-    return (false);
-  }
-
   iterations_ = 0;
   int n_best_inliers_count = -INT_MAX;
   double k = 1.0;
@@ -66,12 +59,6 @@ pcl::RandomSampleConsensus::computeModel(int debug_verbosity_level)
   {
     // Get X samples which satisfy the model criteria
     sac_model_->getSamples (iterations_, selection);
-
-    if (selection.empty ()) 
-    {
-      PCL_ERROR ("[pcl::RandomSampleConsensus::computeModel] No samples could be selected!\n");
-      break;
-    }
 
     // Search for inliers in the point cloud for the current plane model M
     if (!sac_model_->computeModelCoefficients (selection, R, T))
@@ -106,14 +93,8 @@ pcl::RandomSampleConsensus::computeModel(int debug_verbosity_level)
     }
 
     ++iterations_;
-    if (debug_verbosity_level > 1)
-      PCL_DEBUG ("[pcl::RandomSampleConsensus::computeModel] Trial %d out of %f: %d inliers (best is: %d so far).\n", iterations_, k, n_inliers_count, n_best_inliers_count);
     if (iterations_ > max_iterations_)
-    {
-      if (debug_verbosity_level > 0)
-        PCL_DEBUG ("[pcl::RandomSampleConsensus::computeModel] RANSAC reached the maximum number of trials.\n");
       break;
-    }
   }
 
   if (inliers_.empty ())

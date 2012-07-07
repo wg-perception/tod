@@ -102,7 +102,7 @@ namespace pcl
       inline void setProbability (double probability) { probability_ = probability; }
 
       /** \brief Compute the actual model. Pure virtual. */
-      virtual bool computeModel (int debug_verbosity_level = 0) = 0;
+      virtual bool computeModel () = 0;
 
       /** \brief Get a set of randomly selected indices.
         * \param indices the input indices vector

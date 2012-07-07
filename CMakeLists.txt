@@ -22,16 +22,12 @@ find_package(Boost REQUIRED system filesystem serialization)
 find_package(ecto REQUIRED)
 find_package(ecto_opencv REQUIRED)
 find_package(OpenCV REQUIRED)
-find_pcl_package()
 
 rosbuild_lite_init()
 
 set_ecto_install_package_name(${PROJECT_NAME})
 
-include_directories(SYSTEM
-                    ${PCL_INCLUDE_DIRS}
-                    ${ecto_opencv_INCLUDE_DIRS}
-)
+include_directories(SYSTEM ${ecto_opencv_INCLUDE_DIRS})
 
 add_subdirectory(src)
 option(BUILD_TEST "Build tests" ON)

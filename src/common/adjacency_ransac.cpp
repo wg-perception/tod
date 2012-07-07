@@ -34,8 +34,7 @@
  */
 
 #include <boost/foreach.hpp>
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -252,6 +251,11 @@ namespace tod
 #ifdef DEBUG
     CALLGRIND_START_INSTRUMENTATION;
 #endif
+    if (valid_indices_.size() < 3) {
+      inliers_in.clear();
+      return;
+    }
+
     // Perform RANSAC on the input clouds, making sure to include adjacent pairs in the samples
     SampleConsensusModelRegistrationGraph::Ptr model(
         new SampleConsensusModelRegistrationGraph(query_points_, training_points_, valid_indices_, sensor_error,

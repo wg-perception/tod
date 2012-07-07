@@ -42,8 +42,6 @@
 #include <limits.h>
 #include <set>
 
-#include "pcl/point_types.h"
-
 namespace pcl
 {
   /** \brief @b SampleConsensusModel represents the base model class. All sample consensus models must inherit from 
@@ -69,17 +67,6 @@ namespace pcl
       void 
       getSamples (int &iterations, std::vector<unsigned int> &samples)
       {
-        // We're assuming that indices_ have already been set in the constructor
-        if (indices_.size () < 3)
-        {
-          PCL_ERROR ("[pcl::SampleConsensusModel::getSamples] Can not select %lu unique points out of %lu!\n",
-                     (unsigned long)samples.size (), (unsigned long)indices_.size ());
-          // one of these will make it stop :)
-          samples.clear ();
-          iterations = INT_MAX - 1;
-          return;
-        }
-
         // Get a second point which is different than the first
         samples.resize (3);
         for (unsigned int iter = 0; iter < max_sample_checks_; ++iter)
@@ -91,7 +78,6 @@ namespace pcl
           if (isSampleGood (samples))
             return;
         }
-        PCL_DEBUG ("[pcl::SampleConsensusModel::getSamples] WARNING: Could not select %d sample points in %d iterations!\n", 3, max_sample_checks_);
         samples.clear ();
       }
 

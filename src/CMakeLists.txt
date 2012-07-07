@@ -16,7 +16,6 @@ link_ecto(ecto_detection ${OpenCV_LIBRARIES}
                          ${object_recognition_core_LIBRARIES} 
                          ${Boost_LIBRARIES}
                          ${ecto_opencv_LIBRARIES}
-                         ${PCL_LIBRARIES}
 )
 
 install_ecto_module(ecto_detection)
@@ -37,7 +36,6 @@ ectomodule(ecto_training training/CameraToWorld.cpp
 link_ecto(ecto_training ${object_recognition_core_LIBRARIES}
                         ${OpenCV_LIBRARIES}
                         ${ecto_opencv_LIBRARIES}
-                         ${PCL_LIBRARIES}
 )
 
 install_ecto_module(ecto_training)

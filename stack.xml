@@ -12,10 +12,8 @@
   <build_depends>catkin</build_depends>
   <build_depends>ecto</build_depends>
   <build_depends>ecto_opencv</build_depends>
-  <build_depends>ecto_pcl</build_depends>
   <build_depends>object_recognition_core</build_depends>
   <depends>ecto</depends>
   <depends>ecto_opencv</depends>
-  <depends>ecto_pcl</depends>
   <depends>object_recognition_core</depends>
 </stack>

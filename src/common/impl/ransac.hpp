@@ -40,8 +40,8 @@
 
 
 //////////////////////////////////////////////////////////////////////////
-template <typename PointT> bool
-pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
+bool
+pcl::RandomSampleConsensus::computeModel(int debug_verbosity_level)
 {
   // Warn and exit if no threshold was set
   if (threshold_ == DBL_MAX)

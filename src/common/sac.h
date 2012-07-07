@@ -50,10 +50,9 @@ namespace pcl
    * \author Radu Bogdan Rusu
     * \ingroup sample_consensus
    */
-  template <typename T>
   class SampleConsensus
   {
-    typedef typename SampleConsensusModel<T>::Ptr SampleConsensusModelPtr;
+    typedef typename SampleConsensusModel::Ptr SampleConsensusModelPtr;
 
     private:
       /** \brief Constructor for base SAC. */

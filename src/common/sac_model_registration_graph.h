@@ -48,14 +48,13 @@ namespace tod
    * Class that computes the registration between two point clouds in the specific case where we have an adjacency graph
    * (and some points cannot be connected together)
    */
-  template<typename PointT>
-  class SampleConsensusModelRegistrationGraph: public pcl::SampleConsensusModel<PointT>
+  class SampleConsensusModelRegistrationGraph: public pcl::SampleConsensusModel
   {
-    using pcl::SampleConsensusModel<PointT>::indices_;
-    using pcl::SampleConsensusModel<PointT>::shuffled_indices_;
+    using pcl::SampleConsensusModel::indices_;
+    using pcl::SampleConsensusModel::shuffled_indices_;
 
   public:
-    using pcl::SampleConsensusModel<PointT>::drawIndexSample;
+    using pcl::SampleConsensusModel::drawIndexSample;
     typedef unsigned int Index;
     typedef std::vector<Index> IndexVector;
 

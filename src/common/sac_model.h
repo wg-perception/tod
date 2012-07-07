@@ -46,13 +46,11 @@
 
 namespace pcl
 {
-  // Forward declaration
   /** \brief @b SampleConsensusModel represents the base model class. All sample consensus models must inherit from 
     * this class.
     * \author Radu Bogdan Rusu
     * \ingroup sample_consensus
     */
-  template<typename PointT>
   class SampleConsensusModel
   {
   public:
@@ -87,7 +85,7 @@ namespace pcl
         for (unsigned int iter = 0; iter < max_sample_checks_; ++iter)
         {
           // Choose the random indices
-          SampleConsensusModel<PointT>::drawIndexSample (samples);
+          SampleConsensusModel::drawIndexSample (samples);
 
           // If it's a good sample, stop here
           if (isSampleGood (samples))

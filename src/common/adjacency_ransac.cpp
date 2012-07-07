@@ -253,10 +253,10 @@ namespace tod
     CALLGRIND_START_INSTRUMENTATION;
 #endif
     // Perform RANSAC on the input clouds, making sure to include adjacent pairs in the samples
-    SampleConsensusModelRegistrationGraph<pcl::PointXYZ>::Ptr model(
-        new SampleConsensusModelRegistrationGraph<pcl::PointXYZ>(query_points_, training_points_, valid_indices_,
-                                                                 sensor_error, physical_adjacency_, sample_adjacency_));
-    pcl::RandomSampleConsensus<pcl::PointXYZ> sample_consensus(model);
+    SampleConsensusModelRegistrationGraph::Ptr model(
+        new SampleConsensusModelRegistrationGraph(query_points_, training_points_, valid_indices_, sensor_error,
+                                                  physical_adjacency_, sample_adjacency_));
+    pcl::RandomSampleConsensus sample_consensus(model);
 
     sample_consensus.setDistanceThreshold(sensor_error);
     sample_consensus.setMaxIterations(n_ransac_iterations);

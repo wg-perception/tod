@@ -50,26 +50,27 @@ namespace pcl
     * \author Radu Bogdan Rusu
     * \ingroup sample_consensus
     */
-  template <typename PointT>
-  class RandomSampleConsensus : public SampleConsensus<PointT>
+  class RandomSampleConsensus : public SampleConsensus
   {
-    using SampleConsensus<PointT>::max_iterations_;
-    using SampleConsensus<PointT>::threshold_;
-    using SampleConsensus<PointT>::iterations_;
-    using SampleConsensus<PointT>::sac_model_;
-    using SampleConsensus<PointT>::R_;
-    using SampleConsensus<PointT>::T_;
-    using SampleConsensus<PointT>::inliers_;
-    using SampleConsensus<PointT>::probability_;
+    using SampleConsensus::max_iterations_;
+    using SampleConsensus::threshold_;
+    using SampleConsensus::iterations_;
+    using SampleConsensus::sac_model_;
+    using SampleConsensus::R_;
+    using SampleConsensus::T_;
+    using SampleConsensus::inliers_;
+    using SampleConsensus::probability_;
 
-    typedef typename SampleConsensusModel<PointT>::Ptr SampleConsensusModelPtr;
+    typedef typename SampleConsensusModel::Ptr SampleConsensusModelPtr;
 
     public:
       /** \brief RANSAC (RAndom SAmple Consensus) main constructor
         * \param model a Sample Consensus model
-        */
-      RandomSampleConsensus (const SampleConsensusModelPtr &model) : SampleConsensus<PointT> (model)
-      {
+     */
+    RandomSampleConsensus(const SampleConsensusModelPtr &model)
+        :
+          SampleConsensus(model)
+    {
         // Maximum number of trials before we give up.
         max_iterations_ = 10000;
       }
@@ -77,9 +78,11 @@ namespace pcl
       /** \brief RANSAC (RAndom SAmple Consensus) main constructor
         * \param model a Sample Consensus model
         * \param threshold distance to model threshold
-        */
-      RandomSampleConsensus (const SampleConsensusModelPtr &model, double threshold) : SampleConsensus<PointT> (model, threshold)
-      {
+     */
+    RandomSampleConsensus(const SampleConsensusModelPtr &model, double threshold)
+        :
+          SampleConsensus(model, threshold)
+    {
         // Maximum number of trials before we give up.
         max_iterations_ = 10000;
       }

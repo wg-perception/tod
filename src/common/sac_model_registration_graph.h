@@ -52,11 +52,11 @@ namespace tod
   class SampleConsensusModelRegistrationGraph: public pcl::SampleConsensusModel<PointT>
   {
     using pcl::SampleConsensusModel<PointT>::indices_;
+    using pcl::SampleConsensusModel<PointT>::shuffled_indices_;
 
   public:
-    typedef typename pcl::SampleConsensusModel<PointT>::PointCloud PointCloud;
-    typedef typename pcl::SampleConsensusModel<PointT>::PointCloudPtr PointCloudPtr;
-    typedef typename pcl::SampleConsensusModel<PointT>::PointCloudConstPtr PointCloudConstPtr;
+    typedef std::vector<cv::Vec3f> PointCloudPtr;
+    typedef std::vector<cv::Vec3f> PointCloudConstPtr;
     typedef boost::shared_ptr<SampleConsensusModelRegistrationGraph> Ptr;
     typedef const Eigen::Map<const Eigen::Vector4f, Eigen::Aligned> Vector4fMapConst;
 
@@ -67,20 +67,18 @@ namespace tod
      * \param indices a vector of point indices to be used from \a cloud
      */
     SampleConsensusModelRegistrationGraph(
-        const PointCloudConstPtr &cloud, const std::vector<int> &indices, float threshold,
+        const std::vector<cv::Vec3f> &query_points, const std::vector<int> &indices, float threshold,
         const maximum_clique::AdjacencyMatrix & physical_adjacency,
         const maximum_clique::AdjacencyMatrix &sample_adjacency)
         :
-          pcl::SampleConsensusModel<PointT>(cloud, indices),
           physical_adjacency_(physical_adjacency),
           sample_adjacency_(sample_adjacency),
           best_inlier_number_(0),
           threshold_(threshold)
     {
-      query_points_.clear();
-      BOOST_FOREACH(const PointT &point, cloud->points)
-      query_points_.push_back(cv::Vec3f(point.x, point.y, point.z));
-
+      indices_.reset (new std::vector<int> (indices));
+      shuffled_indices_ = indices;
+      query_points_ = query_points;
       BuildNeighbors();
     }
 
@@ -89,12 +87,10 @@ namespace tod
       * \param indices_tgt a vector of point indices to be used from \a target
       */
     inline void
-    setInputTarget (const PointCloudConstPtr &target, const std::vector<int> &indices_tgt)
+    setInputTarget (const std::vector<cv::Vec3f> &target, const std::vector<int> &indices_tgt)
     {
       indices_tgt_.reset (new std::vector<int> (indices_tgt));
-      training_points_.clear();
-      BOOST_FOREACH(const PointT &point, target->points)
-      training_points_.push_back(cv::Vec3f(point.x, point.y, point.z));
+      training_points_ = target;
     }
 
     bool

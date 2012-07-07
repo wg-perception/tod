@@ -56,29 +56,8 @@ namespace pcl
   class SampleConsensusModel
   {
     public:
-      typedef typename pcl::PointCloud<PointT> PointCloud;
-      typedef typename pcl::PointCloud<PointT>::ConstPtr PointCloudConstPtr;
-      typedef typename pcl::PointCloud<PointT>::Ptr PointCloudPtr;
-
       typedef boost::shared_ptr<SampleConsensusModel> Ptr;
       typedef boost::shared_ptr<const SampleConsensusModel> ConstPtr;
-
-    private:
-      /** \brief Empty constructor for base SampleConsensusModel. */
-      SampleConsensusModel () {};
-
-    public:
-
-      /** \brief Constructor for base SampleConsensusModel.
-        * \param cloud the input point cloud dataset
-        * \param indices a vector of point indices to be used from \a cloud
-        */
-      SampleConsensusModel (const PointCloudConstPtr &cloud, const std::vector<int> &indices)
-    
-      {
-        indices_.reset (new std::vector<int> (indices));
-        shuffled_indices_ = *indices_;
-      };
 
       /** \brief Destructor for base SampleConsensusModel. */
       virtual ~SampleConsensusModel () {};

@@ -256,19 +256,13 @@ namespace tod
     std::vector<int> valid_indices;
     BOOST_FOREACH(unsigned int val, valid_indices_)valid_indices.push_back(val);
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr query_points(new pcl::PointCloud<pcl::PointXYZ>());
-    BOOST_FOREACH(cv::Vec3f val, query_points_)query_points->push_back(pcl::PointXYZ(val[0],val[1],val[2]));
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr training_points(new pcl::PointCloud<pcl::PointXYZ>());
-    BOOST_FOREACH(cv::Vec3f val, training_points_)training_points->push_back(pcl::PointXYZ(val[0],val[1],val[2]));
-
     // Perform RANSAC on the input clouds, making sure to include adjacent pairs in the samples
     SampleConsensusModelRegistrationGraph<pcl::PointXYZ>::Ptr model(
-        new SampleConsensusModelRegistrationGraph<pcl::PointXYZ>(query_points, valid_indices, sensor_error,
+        new SampleConsensusModelRegistrationGraph<pcl::PointXYZ>(query_points_, valid_indices, sensor_error,
                                                                  physical_adjacency_, sample_adjacency_));
     pcl::RandomSampleConsensus<pcl::PointXYZ> sample_consensus(model);
 
-    model->setInputTarget(training_points, valid_indices);
+    model->setInputTarget(training_points_, valid_indices);
     sample_consensus.setDistanceThreshold(sensor_error);
     sample_consensus.setMaxIterations(n_ransac_iterations);
 

@@ -91,11 +91,67 @@ namespace pcl
      * \param debug_verbosity_level enable/disable on-screen debug information and set the verbosity level
      */
     bool
-    computeModel();
+    computeModel()
+    {
+      iterations_ = 0;
+      int n_best_inliers_count = -INT_MAX;
+      double k = 1.0;
+
+      std::vector<unsigned int> inliers;
+      std::vector<unsigned int> selection;
+      cv::Matx33f R;
+      cv::Vec3f T;
+
+      int n_inliers_count = 0;
+
+      // Iterate
+      while (iterations_ < k)
+      {
+        // Get X samples which satisfy the model criteria
+        sac_model_->getSamples(iterations_, selection);
+
+        // Search for inliers in the point cloud for the current plane model M
+        if (!sac_model_->computeModelCoefficients(selection, R, T))
+          continue;
+
+        // Select the inliers that are within threshold_ from the model
+        sac_model_->selectWithinDistance(R, T, threshold_, inliers);
+        //if (inliers.empty () && k > 1.0)
+        //  continue;
+
+        n_inliers_count = inliers.size();
+
+        // Better match ?
+        if (n_inliers_count > n_best_inliers_count)
+        {
+          n_best_inliers_count = n_inliers_count;
+
+          // Save the current model/inlier/coefficients selection as being the best so far
+          inliers_ = inliers;
+          R_ = R;
+          T_ = T;
+
+          // Compute the k parameter (k=log(z)/log(1-w^n))
+          double w = (double) ((double) n_best_inliers_count / (double) sac_model_->getIndices().size());
+          double p_no_outliers = 1.0 - pow(w, (double) selection.size());
+          p_no_outliers = (std::max)(std::numeric_limits<double>::epsilon(), p_no_outliers); // Avoid division by -Inf
+          p_no_outliers = (std::min)(1.0 - std::numeric_limits<double>::epsilon(), p_no_outliers); // Avoid division by 0.
+          k = log(1.0 - probability_) / log(p_no_outliers);
+        }
+
+        ++iterations_;
+        if (iterations_ > max_iterations_)
+          break;
+      }
+
+      if (inliers_.empty())
+        return (false);
+
+      // Get the set of inliers that correspond to the best model found so far
+      //sac_model_->selectWithinDistance (model_coefficients_, threshold_, inliers_);
+      return (true);
+    }
   };
 }
 
-#include "impl/ransac.hpp"
-
 #endif  //#ifndef PCL_SAMPLE_CONSENSUS_RANSAC_H_
-

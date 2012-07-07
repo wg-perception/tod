@@ -68,29 +68,15 @@ namespace pcl
       SampleConsensusModel () {};
 
     public:
-      /** \brief Constructor for base SampleConsensusModel.
-        * \param cloud the input point cloud dataset
-        */
-      SampleConsensusModel (const PointCloudConstPtr &cloud)
-      {
-        // Sets the input cloud and creates a vector of "fake" indices
-        setInputCloud (cloud);
-      }
 
       /** \brief Constructor for base SampleConsensusModel.
         * \param cloud the input point cloud dataset
         * \param indices a vector of point indices to be used from \a cloud
         */
-      SampleConsensusModel (const PointCloudConstPtr &cloud, const std::vector<int> &indices) :
-                            input_ (cloud)
+      SampleConsensusModel (const PointCloudConstPtr &cloud, const std::vector<int> &indices)
     
       {
         indices_.reset (new std::vector<int> (indices));
-        if (indices_->size () > input_->points.size ())
-        {
-          PCL_ERROR ("[pcl::SampleConsensusModel] Invalid index vector given with size %lu while the input PointCloud has size %lu!\n", (unsigned long)indices_->size (), (unsigned long)input_->points.size ());
-          indices_->clear ();
-        }
         shuffled_indices_ = *indices_;
       };
 
@@ -155,29 +141,6 @@ namespace pcl
                             double threshold,
                             std::vector<int> &inliers) = 0;
 
-      /** \brief Provide a pointer to the input dataset
-        * \param cloud the const boost shared pointer to a PointCloud message
-        */
-      inline virtual void
-      setInputCloud (const PointCloudConstPtr &cloud)
-      {
-        input_ = cloud;
-        if (!indices_)
-          indices_.reset (new std::vector<int> ());
-        if (indices_->empty ())
-        {
-          // Prepare a set of indices to be used (entire cloud)
-          indices_->resize (cloud->points.size ());
-          for (size_t i = 0; i < cloud->points.size (); ++i) 
-            (*indices_)[i] = i;
-        }
-        shuffled_indices_ = *indices_;
-      }
-
-      /** \brief Get a pointer to the input point cloud dataset. */
-      inline PointCloudConstPtr
-      getInputCloud () const { return (input_); }
-
       /** \brief Provide a pointer to the vector of indices that represents the input data.
         * \param indices a pointer to the vector of indices that represents the input data.
         */
@@ -222,9 +185,6 @@ namespace pcl
         */
       virtual bool
       isSampleGood (const std::vector<int> &samples) const = 0;
-
-      /** \brief A boost shared pointer to the point cloud data array. */
-      PointCloudConstPtr input_;
 
       /** \brief A pointer to the vector of point indices to use. */
       boost::shared_ptr <std::vector<int> > indices_;

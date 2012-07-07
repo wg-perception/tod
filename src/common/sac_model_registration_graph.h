@@ -37,7 +37,7 @@
 #define SAC_MODEL_REGISTRATION_GRAPH_H_
 
 #include <opencv2/core/core.hpp>
-#include "pcl/common/centroid.h"
+
 #include "sac_model.h"
 
 #include "maximum_clique.h"
@@ -51,7 +51,6 @@ namespace tod
   template<typename PointT>
   class SampleConsensusModelRegistrationGraph: public pcl::SampleConsensusModel<PointT>
   {
-    using pcl::SampleConsensusModel<PointT>::input_;
     using pcl::SampleConsensusModel<PointT>::indices_;
 
   public:
@@ -78,7 +77,9 @@ namespace tod
           best_inlier_number_(0),
           threshold_(threshold)
     {
-      input_ = cloud;
+      query_points_.clear();
+      BOOST_FOREACH(const PointT &point, cloud->points)
+      query_points_.push_back(cv::Vec3f(point.x, point.y, point.z));
 
       BuildNeighbors();
     }
@@ -90,8 +91,10 @@ namespace tod
     inline void
     setInputTarget (const PointCloudConstPtr &target, const std::vector<int> &indices_tgt)
     {
-      target_ = target;
       indices_tgt_.reset (new std::vector<int> (indices_tgt));
+      training_points_.clear();
+      BOOST_FOREACH(const PointT &point, target->points)
+      training_points_.push_back(cv::Vec3f(point.x, point.y, point.z));
     }
 
     bool
@@ -162,11 +165,11 @@ namespace tod
     int nr_p = 0;
     for (size_t i = 0; i < indices_->size (); ++i)
     {
-      Vector4fMapConst pt_src = input_->points[(*indices_)[i]].getVector4fMap ();
-      Vector4fMapConst pt_tgt = target_->points[(*indices_tgt_)[i]].getVector4fMap ();
-      cv::Vec3f p_tr  = R * cv::Vec3f(pt_src(0), pt_src(1), pt_src(2)) + T;
+      const cv::Vec3f & pt_src = query_points_[(*indices_)[i]];
+      const cv::Vec3f & pt_tgt = training_points_[(*indices_tgt_)[i]];
+      cv::Vec3f p_tr  = R * pt_src + T;
       // Calculate the distance from the transformed point to its correspondence
-      if (cv::norm(p_tr - cv::Vec3f(pt_tgt(0), pt_tgt(1), pt_tgt(2)))*cv::norm(p_tr-cv::Vec3f(pt_tgt(0), pt_tgt(1), pt_tgt(2))) < thresh)
+      if (cv::norm(p_tr - pt_tgt)*cv::norm(p_tr-pt_tgt) < thresh)
         inliers[nr_p++] = (*indices_)[i];
     }
     inliers.resize (nr_p);
@@ -223,82 +226,90 @@ namespace tod
     best_inlier_number_ = std::max(in_inliers.size(), best_inlier_number_);
   }
 
-  bool
-  computeModelCoefficients (const std::vector<int> &samples, cv::Matx33f &R, cv::Vec3f&T)
-  {
-    // Need 3 samples
-    if (samples.size () != 3)
+    bool
+    computeModelCoefficients (const std::vector<int> &samples, cv::Matx33f &R, cv::Vec3f&T)
+    {
+      // Need 3 samples
+      if (samples.size () != 3)
       return (false);
 
-    estimateRigidTransformationSVD(*input_, samples, *target_, samples, R, T);
+      return estimateRigidTransformationSVD(samples, R, T);
+    }
 
-    return (true);
-  }
-
-  void
-  optimizeModelCoefficients(const PointCloudConstPtr &target, const std::vector<int> &inliers,
-      cv::Matx33f&R, cv::Vec3f&T)
-  {
-    estimateRigidTransformationSVD(*input_, inliers, *target, inliers, R, T);
-  }
-
-  mutable std::vector<int> samples_;
-
-  /** \brief Estimate a rigid transformation between a source and a target point cloud using an SVD closed-form
-   * solution of absolute orientation using unit quaternions
-   * \param[in] cloud_src the source point cloud dataset
-   * \param[in] indices_src the vector of indices describing the points of interest in cloud_src
-   * \param[in] cloud_tgt the target point cloud dataset
-   * \param[in] indices_tgt the vector of indices describing the correspondences of the interest points from
-   * indices_src
-   * \param[out] transform the resultant transformation matrix (as model coefficients)
-   *
-   * This method is an implementation of: Horn, B. “Closed-Form Solution of Absolute Orientation Using Unit Quaternions,” JOSA A, Vol. 4, No. 4, 1987
-   * THIS IS COPIED STRAIGHT UP FROM PCL AS THEY CHANGED THE API ANDMADE IT PRIVATE
-   */
-  void
-  estimateRigidTransformationSVD(const typename pcl::PointCloud<PointT> &cloud_src,
-      const std::vector<int> &indices_src,
-      const typename pcl::PointCloud<PointT> &cloud_tgt,
-      const std::vector<int> &indices_tgt, cv::Matx33f &R_in, cv::Vec3f&T)
-  {
-    Eigen::Vector4f centroid_src, centroid_tgt;
-    // Estimate the centroids of source, target
-    compute3DCentroid(cloud_src, indices_src, centroid_src);
-    compute3DCentroid(cloud_tgt, indices_tgt, centroid_tgt);
-
-    // Subtract the centroids from source, target
-    Eigen::MatrixXf cloud_src_demean;
-    demeanPointCloud(cloud_src, indices_src, centroid_src, cloud_src_demean);
-
-    Eigen::MatrixXf cloud_tgt_demean;
-    demeanPointCloud(cloud_tgt, indices_tgt, centroid_tgt, cloud_tgt_demean);
-
-    // Assemble the correlation matrix H = source * target'
-    Eigen::Matrix3f H = (cloud_src_demean * cloud_tgt_demean.transpose()).topLeftCorner<3, 3>();
-
-    // Compute the Singular Value Decomposition
-    Eigen::JacobiSVD<Eigen::Matrix3f> svd(H, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::Matrix3f u = svd.matrixU();
-    Eigen::Matrix3f v = svd.matrixV();
-
-    // Compute R = V * U'
-    if (u.determinant() * v.determinant() < 0)
+    void
+    optimizeModelCoefficients(const std::vector<int> &inliers,
+        cv::Matx33f&R, cv::Vec3f&T)
     {
-      for (int x = 0; x < 3; ++x)
-      v(x, 2) *= -1;
+      estimateRigidTransformationSVD(inliers, R, T);
     }
 
-    Eigen::Matrix3f R = v * u.transpose();
+    mutable std::vector<int> samples_;
 
-    // Return the correct transformation
-    Eigen::Vector3f t = centroid_tgt.head<3>() - R * centroid_src.head<3>();
-    for(unsigned char j=0;j<3;++j) {
-      for(unsigned char i=0;i<3;++i)
-        R_in(j,i) = R(j,i);
-      T[j] = t[j];
+    /** \brief Estimate a rigid transformation between a source and a target point cloud using an SVD closed-form
+     * solution of absolute orientation using unit quaternions
+     * \param[in] cloud_src the source point cloud dataset
+     * \param[in] indices_src the vector of indices describing the points of interest in cloud_src
+     * \param[in] cloud_tgt the target point cloud dataset
+     * \param[out] transform the resultant transformation matrix (as model coefficients)
+     *
+     * This method is an implementation of: Horn, B. “Closed-Form Solution of Absolute Orientation Using Unit Quaternions,” JOSA A, Vol. 4, No. 4, 1987
+     * THIS IS COPIED STRAIGHT UP FROM PCL AS THEY CHANGED THE API ANDMADE IT PRIVATE
+     */
+    bool
+    estimateRigidTransformationSVD(
+        const std::vector<int> &indices_src, cv::Matx33f &R_in, cv::Vec3f&T)
+    {
+      if (indices_src.size()<3)
+      return false;
+
+      typedef unsigned int Index;
+      cv::Vec3f centroid_training(0, 0, 0), centroid_query(0, 0, 0);
+
+      // Estimate the centroids of source, target
+      BOOST_FOREACH(Index index, indices_src)
+      {
+        centroid_training += training_points_[index];
+        centroid_query += query_points_[index];
+      }
+      centroid_training /= float(indices_src.size());
+      centroid_query /= float(indices_src.size());
+
+      // Subtract the centroids from source, target
+      cv::Mat_<cv::Vec3f> sub_training(indices_src.size(),1), sub_query(indices_src.size(),1);
+      unsigned int i = 0;
+      BOOST_FOREACH(Index index, indices_src)
+      {
+        sub_training(i) = training_points_[index] - centroid_training;
+        sub_query(i) = query_points_[index] - centroid_query;
+        ++i;
+      }
+
+      // Assemble the correlation matrix
+      cv::Mat H = sub_training.reshape(1, indices_src.size()).t() * sub_query.reshape(1, indices_src.size());
+
+      // Compute the Singular Value Decomposition
+      cv::SVD svd(H);
+
+      // Compute R = U * V'
+      cv::Mat_<float> vt = cv::Mat(svd.vt);
+      if (cv::determinant(svd.u) * cv::determinant(vt) < 0)
+      {
+        for (int x = 0; x < 3; ++x)
+        vt(2, x) *= -1;
+      }
+
+      R_in = cv::Mat(svd.u * vt);
+      T = centroid_training - R_in * centroid_query;
+
+      // Make sure the sample do verify the transform
+      /*BOOST_FOREACH(Index sample, samples){
+       if (distSq(R*training_points_[sample] + T, query_points_[sample])>threshold*threshold)
+       return false;
+       }*/
+
+      return true;
     }
-  }
+
   private:
   void
   BuildNeighbors()
@@ -326,9 +337,9 @@ namespace tod
   size_t best_inlier_number_;
   float threshold_;
 
+  std::vector<cv::Vec3f> query_points_;
+  std::vector<cv::Vec3f> training_points_;
 
-  /** \brief A boost shared pointer to the target point cloud data array. */
-  PointCloudConstPtr target_;
 
   /** \brief A pointer to the vector of target point indices to use. */
   boost::shared_ptr <std::vector<int> > indices_tgt_;

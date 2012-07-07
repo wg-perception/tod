@@ -306,7 +306,7 @@ namespace tod
     // Also, for the last iteration (when we cannot add points anymore), we get a looser threshold
     while (true)
     {
-      model->optimizeModelCoefficients(training_points, inliers, R, T);
+      model->optimizeModelCoefficients(inliers, R, T);
 
       // Check if the model is valid given the user constraints
       std::vector<int> extra_inliers;

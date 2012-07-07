@@ -96,17 +96,11 @@ namespace pcl
         */
       inline void setMaxIterations (int max_iterations) { max_iterations_ = max_iterations; }
 
-      /** \brief Get the maximum number of iterations, as set by the user. */
-      inline int getMaxIterations () { return (max_iterations_); }
-
       /** \brief Set the desired probability of choosing at least one sample free from outliers.
         * \param probability the desired probability of choosing at least one sample free from outliers
         * \note internally, the probability is set to 99% (0.99) by default.
         */
       inline void setProbability (double probability) { probability_ = probability; }
-
-      /** \brief Obtain the probability of choosing at least one sample free from outliers, as set by the user. */
-      inline double getProbability () { return (probability_); }
 
       /** \brief Compute the actual model. Pure virtual. */
       virtual bool computeModel (int debug_verbosity_level = 0) = 0;
@@ -126,11 +120,6 @@ namespace pcl
           indices_subset.insert ((*indices)[(int) (indices->size () * (rand () / (RAND_MAX + 1.0)))]);
       }
 
-      /** \brief Return the best model found so far. 
-        * \param model the resultant model
-        */
-      inline void getModel (std::vector<int> &model) { model = model_; }
-
       /** \brief Return the best set of inliers found so far for this model. 
         * \param inliers the resultant set of inliers
         */
@@ -144,9 +133,6 @@ namespace pcl
     protected:
       /** \brief The underlying data model used (i.e. what is it that we attempt to search for). */
       SampleConsensusModelPtr sac_model_;
-
-      /** \brief The model found after the last computeModel () as point cloud indices. */
-      std::vector<int> model_;
 
       /** \brief The indices of the points that were chosen as inliers after the last computeModel () call. */
       std::vector<int> inliers_;

@@ -94,7 +94,6 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
 
       // Save the current model/inlier/coefficients selection as being the best so far
       inliers_            = inliers;
-      model_              = selection;
       R_ = R;
       T_ = T;
 
@@ -117,14 +116,8 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
     }
   }
 
-  if (debug_verbosity_level > 0)
-    PCL_DEBUG ("[pcl::RandomSampleConsensus::computeModel] Model: %lu size, %d inliers.\n", (unsigned long)model_.size (), n_best_inliers_count);
-
-  if (model_.empty ())
-  {
-    inliers_.clear ();
+  if (inliers_.empty ())
     return (false);
-  }
 
   // Get the set of inliers that correspond to the best model found so far
   //sac_model_->selectWithinDistance (model_coefficients_, threshold_, inliers_);

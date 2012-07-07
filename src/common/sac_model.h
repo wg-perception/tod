@@ -141,12 +141,6 @@ namespace pcl
                             double threshold,
                             std::vector<int> &inliers) = 0;
 
-      /** \brief Provide a pointer to the vector of indices that represents the input data.
-        * \param indices a pointer to the vector of indices that represents the input data.
-        */
-      inline void 
-      setIndices (const boost::shared_ptr <std::vector<int> > &indices) { indices_ = indices; shuffled_indices_ = *indices_;}
-
       /** \brief Provide the vector of indices that represents the input data.
         * \param indices the vector of indices that represents the input data.
         */

@@ -57,7 +57,6 @@ namespace pcl
     using SampleConsensus<PointT>::threshold_;
     using SampleConsensus<PointT>::iterations_;
     using SampleConsensus<PointT>::sac_model_;
-    using SampleConsensus<PointT>::model_;
     using SampleConsensus<PointT>::R_;
     using SampleConsensus<PointT>::T_;
     using SampleConsensus<PointT>::inliers_;

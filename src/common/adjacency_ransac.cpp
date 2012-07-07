@@ -272,19 +272,6 @@ namespace tod
     sample_consensus.setDistanceThreshold(sensor_error);
     sample_consensus.setMaxIterations(n_ransac_iterations);
 
-    /*std::cout << "a=[";
-     BOOST_FOREACH(int i, good_indices) {
-     const pcl::PointXYZ &training_point =training_point_cloud->points[i];
-     std::cout << training_point.x << "," << training_point.y << "," << training_point.z << ";";
-     }
-     std::cout << "];"  << std::endl << "b=";
-     std::cout << "[";
-     BOOST_FOREACH(int i, good_indices) {
-     const pcl::PointXYZ &query_point =query_point_cloud->points[i];
-     std::cout << query_point.x << "," << query_point.y << "," << query_point.z << ";";
-     }
-     std::cout << "];";*/
-
     inliers_in.clear();
     if (!sample_consensus.computeModel())
       return;

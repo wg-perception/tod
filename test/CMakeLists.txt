@@ -8,25 +8,20 @@ if (object_recognition_core_FOUND)
 endif()
 
 # clique test
-find_package(GTest)
-
-if(NOT GTEST_FOUND)
-  message(STATUS "Disabling testing since gtest was not found.")
-  return()
-endif()
-
-include_directories(${GTEST_INCLUDE_DIRS})
+include_directories(SYSTEM ${GTEST_INCLUDE_DIRS}
+                           ${OpenCV_INCLUDE_DIRS}
+)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src/common)
 
-add_executable(tod-clique-test
-  main.cpp
-  test_maximum_clique.cpp
-  )
+add_executable(tod-clique-test main.cpp
+                               test_maximum_clique.cpp
+                               ../src/common/maximum_clique.cpp
+)
 
 find_package(PythonLibs REQUIRED)
 target_link_libraries(tod-clique-test ${GTEST_LIBRARIES}
                                       ${PYTHON_LIBRARIES}
-                                      tod_common
+                                      ${OpenCV_LIBRARIES}
 )
 
 add_test(tod_clique_tests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tod-clique-test)

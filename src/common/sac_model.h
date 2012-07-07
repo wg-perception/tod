@@ -43,7 +43,6 @@
 #include <set>
 
 #include "pcl/point_types.h"
-#include "pcl/ros/conversions.h"
 
 namespace pcl
 {

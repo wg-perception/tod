@@ -38,7 +38,6 @@
 
 #include <opencv2/core/core.hpp>
 #include "pcl/common/centroid.h"
-#include "pcl/common/eigen.h"
 #include "sac_model.h"
 
 #include "maximum_clique.h"
@@ -80,34 +79,9 @@ namespace tod
           threshold_(threshold)
     {
       input_ = cloud;
-      computeSampleDistanceThreshold (cloud);
 
       BuildNeighbors();
     }
-
-
-    /** \brief Computes an "optimal" sample distance threshold based on the
-      * principal directions of the input cloud.
-      * \param cloud the const boost shared pointer to a PointCloud message
-      */
-    inline void
-    computeSampleDistanceThreshold (const PointCloudConstPtr &cloud)
-    {
-      // Compute the principal directions via PCA
-      Eigen::Vector4f xyz_centroid;
-      compute3DCentroid (*cloud, xyz_centroid);
-      EIGEN_ALIGN16 Eigen::Matrix3f covariance_matrix;
-      computeCovarianceMatrixNormalized (*cloud, xyz_centroid, covariance_matrix);
-      EIGEN_ALIGN16 Eigen::Vector3f eigen_values;
-      EIGEN_ALIGN16 Eigen::Matrix3f eigen_vectors;
-      pcl::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
-
-      // Compute the distance threshold for sample selection
-      sample_dist_thresh_ = eigen_values.array ().sqrt ().sum () / 3.0;
-      sample_dist_thresh_ *= sample_dist_thresh_;
-      PCL_DEBUG ("[pcl::SampleConsensusModelRegistration::setInputCloud] Estimated a sample selection distance threshold of: %f\n", sample_dist_thresh_);
-    }
-
 
     /** \brief Set the input point cloud target.
       * \param target the input point cloud target
@@ -358,10 +332,6 @@ namespace tod
 
   /** \brief A pointer to the vector of target point indices to use. */
   boost::shared_ptr <std::vector<int> > indices_tgt_;
-
-  /** \brief Internal distance threshold used for the sample selection step. */
-  double sample_dist_thresh_;
-
   };}
 
 #endif

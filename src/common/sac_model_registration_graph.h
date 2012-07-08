@@ -76,7 +76,6 @@ namespace tod
       shuffled_indices_ = indices;
       query_points_ = query_points;
       training_points_ = target;
-      BuildNeighbors();
     }
 
     bool
@@ -117,7 +116,7 @@ namespace tod
     bool
     isSampleGood(const IndexVector &samples) const
     {
-      IndexVector valid_samples = sample_pool_;
+      IndexVector valid_samples = indices_;
       IndexVector &new_samples = const_cast<IndexVector &>(samples);
       size_t sample_size = new_samples.size();
       bool is_good = drawIndexSampleHelper(valid_samples, sample_size, new_samples);
@@ -284,28 +283,9 @@ namespace tod
     }
 
   private:
-  void
-  BuildNeighbors()
-  {
-    size_t max_neighbors_size = 10;
-    for (unsigned int j = 0; j < sample_adjacency_.size(); ++j)
-    {
-      size_t size = sample_adjacency_.neighbors(j).size();
-      max_neighbors_size = std::max(max_neighbors_size, size);
-      if (size >= 3)
-      sample_pool_.push_back(j);
-    }
-    if (!indices_.empty())
-    {
-        IndexVector::iterator end = std::set_intersection(sample_pool_.begin(), sample_pool_.end(), indices_.begin(),
-                                                          indices_.end(), sample_pool_.begin());
-        sample_pool_.resize(end - sample_pool_.begin());
-    }
-  }
 
   const maximum_clique::AdjacencyMatrix physical_adjacency_;
   const maximum_clique::AdjacencyMatrix sample_adjacency_;
-  IndexVector sample_pool_;
   size_t best_inlier_number_;
   float threshold_;
 

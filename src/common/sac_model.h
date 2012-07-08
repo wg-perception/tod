@@ -66,7 +66,15 @@ namespace pcl
         */
       void 
       getSamples (int &iterations, std::vector<unsigned int> &samples)
+    {
+      if (indices_.size() < 3)
       {
+        samples.clear();
+        iterations = INT_MAX - 1;
+
+        return;
+      }
+
         // Get a second point which is different than the first
         samples.resize (3);
         for (unsigned int iter = 0; iter < max_sample_checks_; ++iter)

@@ -98,6 +98,9 @@ namespace pcl
         // Get X samples which satisfy the model criteria
         sac_model_->getSamples(iterations_, selection);
 
+        if (selection.empty())
+          break;
+
         // Search for inliers in the point cloud for the current plane model M
         if (!sac_model_->computeModelCoefficients(selection, R, T))
           continue;

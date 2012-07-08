@@ -46,17 +46,6 @@
 #include <valgrind/callgrind.h>
 #endif
 
-namespace
-{
-  inline
-  float
-  distSq(const cv::Vec3f & vec1, const cv::Vec3f & vec2)
-  {
-    cv::Vec3f diff = vec1 - vec2;
-    return diff.dot(diff);
-  }
-}
-
 namespace tod
 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -42,6 +42,22 @@
 
 #include "maximum_clique.h"
 
+namespace
+{
+  /** Compute the squared distance between two vectors
+   * @param vec1
+   * @param vec2
+   * @return
+   */
+  inline
+  float
+  distSq(const cv::Vec3f &vec1, const cv::Vec3f & vec2)
+  {
+    cv::Vec3f tmp = vec1 - vec2;
+    return tmp[0] * tmp[0] + tmp[1] * tmp[1] + tmp[2] * tmp[2];
+  }
+}
+
 namespace tod
 {
   /**
@@ -128,27 +144,21 @@ namespace tod
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  void
-  selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f&T, double threshold, IndexVector &in_inliers)
-  {
-    IndexVector inliers;
-
-    double thresh = threshold * threshold;
-
-      inliers.resize(indices_.size());
+    void
+    selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f&T, double threshold, IndexVector &in_inliers)
+    {
+      IndexVector inliers(indices_.size());
 
       int nr_p = 0;
       for (size_t i = 0; i < indices_.size(); ++i)
       {
-      const cv::Vec3f & pt_src = query_points_[indices_[i]];
-      const cv::Vec3f & pt_tgt = training_points_[indices_[i]];
-      cv::Vec3f p_tr  = R * pt_src + T;
-      // Calculate the distance from the transformed point to its correspondence
-      if (cv::norm(p_tr - pt_tgt)*cv::norm(p_tr-pt_tgt) < thresh)
-        inliers[nr_p++] = indices_[i];
-    }
-    inliers.resize (nr_p);
-
+        const cv::Vec3f & pt_src = query_points_[indices_[i]];
+        const cv::Vec3f & pt_tgt = training_points_[indices_[i]];
+        // Calculate the distance from the transformed point to its correspondence
+        if (distSq(R * pt_src + T, pt_tgt) < threshold*threshold)
+          inliers[nr_p++] = indices_[i];
+      }
+      inliers.resize(nr_p);
 
 
 
@@ -208,7 +218,16 @@ namespace tod
       if (samples.size() != 3)
         return (false);
 
-      return estimateRigidTransformationSVD(samples, R, T);
+      if (!estimateRigidTransformationSVD(samples, R, T))
+        return false;
+
+      // Make sure the sample do verify the transform
+      /*BOOST_FOREACH(Index sample, samples){
+      if (distSq(R*query_points_[sample] + T, training_points_[sample])>threshold_*threshold_)
+      return false;
+    }*/
+
+      return true;
     }
 
     void
@@ -221,13 +240,11 @@ namespace tod
 
     /** \brief Estimate a rigid transformation between a source and a target point cloud using an SVD closed-form
      * solution of absolute orientation using unit quaternions
-     * \param[in] cloud_src the source point cloud dataset
      * \param[in] indices_src the vector of indices describing the points of interest in cloud_src
-     * \param[in] cloud_tgt the target point cloud dataset
-     * \param[out] transform the resultant transformation matrix (as model coefficients)
+     * \param[in] R the rotation part of the transform
+     * \param[out] T the translation part of the transform
      *
      * This method is an implementation of: Horn, B. “Closed-Form Solution of Absolute Orientation Using Unit Quaternions,” JOSA A, Vol. 4, No. 4, 1987
-     * THIS IS COPIED STRAIGHT UP FROM PCL AS THEY CHANGED THE API ANDMADE IT PRIVATE
      */
     bool
     estimateRigidTransformationSVD(const IndexVector &indices_src, cv::Matx33f &R_in, cv::Vec3f&T)
@@ -272,12 +289,6 @@ namespace tod
 
       R_in = cv::Mat(svd.u * vt);
       T = centroid_training - R_in * centroid_query;
-
-      // Make sure the sample do verify the transform
-      /*BOOST_FOREACH(Index sample, samples){
-       if (distSq(R*training_points_[sample] + T, query_points_[sample])>threshold*threshold)
-       return false;
-       }*/
 
       return true;
     }

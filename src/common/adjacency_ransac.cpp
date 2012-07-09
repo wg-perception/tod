@@ -42,9 +42,6 @@
 #include "adjacency_ransac.h"
 #include "ransac.h"
 #include "sac_model_registration_graph.h"
-#ifdef DEBUG
-#include <valgrind/callgrind.h>
-#endif
 
 namespace tod
 {
@@ -237,9 +234,6 @@ namespace tod
   AdjacencyRansac::Ransac(float sensor_error, unsigned int n_ransac_iterations, IndexVector& inliers_in, cv::Matx33f &R,
                           cv::Vec3f &T)
   {
-#ifdef DEBUG
-    CALLGRIND_START_INSTRUMENTATION;
-#endif
     if (valid_indices_.size() < 3) {
       inliers_in.clear();
       return;
@@ -311,8 +305,5 @@ namespace tod
     BOOST_FOREACH(unsigned int inl, inliers)inliers_in.push_back(query_indices_[inl]);
     std::sort(inliers_in.begin(), inliers_in.end());
     inliers_in.resize(std::unique(inliers_in.begin(), inliers_in.end()) - inliers_in.begin());
-#ifdef DEBUG
-    CALLGRIND_STOP_INSTRUMENTATION;
-#endif
   }
 }

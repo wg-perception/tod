@@ -51,6 +51,11 @@
 #include <object_recognition_core/common/pose_result.h>
 #include "adjacency_ransac.h"
 
+//#define DO_VALGRIND
+#ifdef DO_VALGRIND
+#include <valgrind/callgrind.h>
+#endif
+
 using ecto::tendrils;
 using object_recognition_core::db::ObjectId;
 using object_recognition_core::common::PoseResult;
@@ -151,6 +156,9 @@ namespace tod
       }
       else
       {
+#ifdef DO_VALGRIND
+    CALLGRIND_START_INSTRUMENTATION;
+#endif
         // Cluster the matches per object ID
         OpenCVIdToObjectPoints all_object_points;
         ClusterPerObject(keypoints, point_cloud, matches, matches_3d, all_object_points);
@@ -238,6 +246,9 @@ namespace tod
 
         std::cout << "********************* found " << pose_results_->size() << " poses" << std::endl;
       }
+#ifdef DO_VALGRIND
+    CALLGRIND_STOP_INSTRUMENTATION;
+#endif
 
       return ecto::OK;
     }

@@ -199,7 +199,7 @@ namespace tod
 
       // If that set is not bigger than the best so far, no need to refine it
       unsigned int minimal_size = 8;
-      if ((inliers.size() < best_inlier_number_) && (inliers.size() < minimal_size))
+      if ((inliers.size() <= best_inlier_number_) && (inliers.size() < minimal_size))
         return;
       std::sort(inliers.begin(), inliers.end());
 
@@ -212,11 +212,13 @@ namespace tod
         max_possible_clique = std::max(
             size_t(
                 std::set_intersection(sample_adjacency_.neighbors(j).begin(), sample_adjacency_.neighbors(j).end(),
-                                      inliers.begin() + j + 1, inliers.end(), neighbors.begin())
+                                      inliers.begin(), inliers.end(), neighbors.begin())
                 - neighbors.begin()),
             max_possible_clique);
+        if ((max_possible_clique >= minimal_size) && (max_possible_clique > best_inlier_number_))
+          break;
       }
-      if ((max_possible_clique < minimal_size) || (max_possible_clique < best_inlier_number_))
+      if ((max_possible_clique < minimal_size) || (max_possible_clique <= best_inlier_number_))
       {
         inliers.clear();
         return;
@@ -233,16 +235,12 @@ namespace tod
         neighbors.resize(inliers.size());
         std::vector<unsigned int>::iterator end = std::set_intersection(sample_adjacency_.neighbors(j).begin(),
                                                                         sample_adjacency_.neighbors(j).end(),
-                                                                        inliers.begin() + j, inliers.end(),
+                                                                        inliers.begin() + j + 1, inliers.end(),
                                                                         neighbors.begin());
         neighbors.resize(end - neighbors.begin());
 
-        BOOST_FOREACH(unsigned int neighbor, neighbors){
-        if (j== map_index_to_graph_index[neighbor])
-        continue;
-        graph.AddEdgeSorted(j, map_index_to_graph_index[neighbor]);
+        BOOST_FOREACH(unsigned int neighbor, neighbors)graph.AddEdgeSorted(j, map_index_to_graph_index[neighbor]);
       }
-    }
 
     // If we cannot even find enough points well distributed in the sample, stop here
       std::vector<unsigned int> vertices;

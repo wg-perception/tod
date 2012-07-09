@@ -39,7 +39,7 @@
 #define PCL_SAMPLE_CONSENSUS_RANSAC_H_
 
 #include "sac.h"
-#include "sac_model.h"
+#include "sac_model_registration_graph.h"
 
 namespace pcl
 {
@@ -60,8 +60,7 @@ namespace pcl
     using SampleConsensus::T_;
     using SampleConsensus::inliers_;
     using SampleConsensus::probability_;
-
-    typedef SampleConsensusModel::Ptr SampleConsensusModelPtr;
+    using SampleConsensus::SampleConsensusModelPtr;
 
     public:
       /** \brief RANSAC (RAndom SAmple Consensus) main constructor

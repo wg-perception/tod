@@ -38,8 +38,6 @@
 
 #include <opencv2/core/core.hpp>
 
-#include "sac_model.h"
-
 #include "maximum_clique.h"
 
 namespace
@@ -64,15 +62,12 @@ namespace tod
    * Class that computes the registration between two point clouds in the specific case where we have an adjacency graph
    * (and some points cannot be connected together)
    */
-  class SampleConsensusModelRegistrationGraph: public pcl::SampleConsensusModel
+  class SampleConsensusModelRegistrationGraph
   {
-    using pcl::SampleConsensusModel::indices_;
-    using pcl::SampleConsensusModel::shuffled_indices_;
-
   public:
-    using pcl::SampleConsensusModel::drawIndexSample;
     typedef unsigned int Index;
     typedef std::vector<Index> IndexVector;
+    typedef boost::shared_ptr<tod::SampleConsensusModelRegistrationGraph> Ptr;
 
     /** \brief Constructor for base SampleConsensusModelRegistration.
      * \param cloud the input point cloud dataset
@@ -86,13 +81,21 @@ namespace tod
           physical_adjacency_(physical_adjacency),
           sample_adjacency_(sample_adjacency),
           best_inlier_number_(8),
-          threshold_(threshold)
+          threshold_(threshold),
+          query_points_(query_points),
+          training_points_(target)
     {
       indices_ = indices;
-      shuffled_indices_ = indices;
-      query_points_ = query_points;
-      training_points_ = target;
     }
+
+    /** \brief Get a pointer to the vector of indices used. */
+    inline const IndexVector &
+    getIndices() const
+    {
+      return (indices_);
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     bool
     drawIndexSampleHelper(IndexVector & valid_samples, unsigned int n_samples) const
@@ -126,18 +129,40 @@ namespace tod
       return false;
     }
 
-    bool
-    isSampleGood(const IndexVector &samples) const
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** \brief Get a set of random data samples and return them as point
+     * indices. Pure virtual.
+     * \param iterations the internal number of iterations used by SAC methods
+     * \param samples the resultant model samples
+     */
+    void
+    getSamples(int &iterations, std::vector<unsigned int> &samples)
     {
-      IndexVector valid_samples = indices_;
-      size_t sample_size = samples.size();
-      const_cast<IndexVector &>(samples_).clear();
-      bool is_good = drawIndexSampleHelper(valid_samples, sample_size);
+      if (indices_.size() < 3)
+      {
+        samples.clear();
+        iterations = INT_MAX - 1;
 
-      if (is_good)
-        const_cast<IndexVector &>(samples) = samples_;
+        return;
+      }
 
-      return is_good;
+      // Get a second point which is different than the first
+      samples.resize(3);
+      for (unsigned int iter = 0; iter < max_sample_checks_; ++iter)
+      {
+        IndexVector valid_samples = indices_;
+        size_t sample_size = samples.size();
+        samples_.clear();
+        bool is_good = drawIndexSampleHelper(valid_samples, sample_size);
+
+        if (is_good)
+        {
+          samples = samples_;
+          return;
+        }
+      }
+      samples.clear();
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -256,8 +281,6 @@ namespace tod
       estimateRigidTransformationSVD(inliers, R, T);
     }
 
-    mutable IndexVector samples_;
-
     /** \brief Estimate a rigid transformation between a source and a target point cloud using an SVD closed-form
      * solution of absolute orientation using unit quaternions
      * \param[in] indices_src the vector of indices describing the points of interest in cloud_src
@@ -317,11 +340,20 @@ namespace tod
 
     const maximum_clique::AdjacencyMatrix &physical_adjacency_;
     const maximum_clique::AdjacencyMatrix &sample_adjacency_;
-  size_t best_inlier_number_;
-  float threshold_;
+    size_t best_inlier_number_;
+    float threshold_;
 
-    std::vector<cv::Vec3f> query_points_;
-    std::vector<cv::Vec3f> training_points_;
+    const std::vector<cv::Vec3f> &query_points_;
+    const std::vector<cv::Vec3f> &training_points_;
+
+    /** The current sample */
+    mutable IndexVector samples_;
+
+    /** \brief A pointer to the vector of point indices to use. */
+    IndexVector indices_;
+
+    /** The maximum number of samples to try until we get a good one */
+    static const unsigned int max_sample_checks_ = 1000;
   };
 }
 

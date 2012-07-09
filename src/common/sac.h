@@ -38,9 +38,11 @@
 #ifndef PCL_SAMPLE_CONSENSUS_H_
 #define PCL_SAMPLE_CONSENSUS_H_
 
-#include <opencv2/core/core.hpp>
-#include "sac_model.h"
 #include <set>
+
+#include <opencv2/core/core.hpp>
+
+#include "sac_model_registration_graph.h"
 
 namespace pcl
 {
@@ -51,7 +53,8 @@ namespace pcl
    */
   class SampleConsensus
   {
-    typedef SampleConsensusModel::Ptr SampleConsensusModelPtr;
+  public:
+    typedef  tod::SampleConsensusModelRegistrationGraph::Ptr SampleConsensusModelPtr;
 
     private:
       /** \brief Constructor for base SAC. */

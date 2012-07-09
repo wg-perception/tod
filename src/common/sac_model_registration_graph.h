@@ -85,7 +85,7 @@ namespace tod
         :
           physical_adjacency_(physical_adjacency),
           sample_adjacency_(sample_adjacency),
-          best_inlier_number_(0),
+          best_inlier_number_(8),
           threshold_(threshold)
     {
       indices_ = indices;
@@ -95,7 +95,7 @@ namespace tod
     }
 
     bool
-    drawIndexSampleHelper(IndexVector & valid_samples, unsigned int n_samples, IndexVector & samples) const
+    drawIndexSampleHelper(IndexVector & valid_samples, unsigned int n_samples) const
     {
       if (n_samples == 0)
         return true;
@@ -110,12 +110,9 @@ namespace tod
                                                                sample_adjacency_.neighbors(sample).end(),
                                                                new_valid_samples.begin());
         new_valid_samples.resize(end - new_valid_samples.begin());
-        IndexVector new_samples;
-        if (drawIndexSampleHelper(new_valid_samples, n_samples - 1, new_samples))
+        if (drawIndexSampleHelper(new_valid_samples, n_samples - 1))
         {
-          samples = new_samples;
-          valid_samples = new_valid_samples;
-          samples.push_back(sample);
+          samples_.push_back(sample);
           return true;
         }
         else
@@ -133,83 +130,106 @@ namespace tod
     isSampleGood(const IndexVector &samples) const
     {
       IndexVector valid_samples = indices_;
-      IndexVector &new_samples = const_cast<IndexVector &>(samples);
-      size_t sample_size = new_samples.size();
-      bool is_good = drawIndexSampleHelper(valid_samples, sample_size, new_samples);
+      size_t sample_size = samples.size();
+      const_cast<IndexVector &>(samples_).clear();
+      bool is_good = drawIndexSampleHelper(valid_samples, sample_size);
 
       if (is_good)
-        samples_ = new_samples;
+        const_cast<IndexVector &>(samples) = samples_;
 
       return is_good;
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     void
-    selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f&T, double threshold, IndexVector &in_inliers)
+    selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f&T, double threshold, IndexVector &inliers)
     {
-      IndexVector inliers(indices_.size());
+      if (samples_.empty())
+        return;
+
+      // First, figure out the common neighbors of all the samples
+      IndexVector possible_inliers = physical_adjacency_.neighbors(samples_[0]);
+      for (unsigned int i = 1; i < samples_.size(); ++i)
+        possible_inliers.resize(
+            std::set_intersection(possible_inliers.begin(), possible_inliers.end(),
+                                  physical_adjacency_.neighbors(samples_[i]).begin(),
+                                  physical_adjacency_.neighbors(samples_[i]).end(), possible_inliers.begin())
+            - possible_inliers.begin());
+      for (unsigned int i = 0; i < samples_.size(); ++i)
+        possible_inliers.push_back(samples_[i]);
+
+      // Then, check which ones of those verify the geometric constraint
+      inliers.resize(possible_inliers.size());
 
       int nr_p = 0;
-      for (size_t i = 0; i < indices_.size(); ++i)
+      for (size_t i = 0; i < possible_inliers.size(); ++i)
       {
-        const cv::Vec3f & pt_src = query_points_[indices_[i]];
-        const cv::Vec3f & pt_tgt = training_points_[indices_[i]];
+        const cv::Vec3f & pt_src = query_points_[possible_inliers[i]];
+        const cv::Vec3f & pt_tgt = training_points_[possible_inliers[i]];
         // Calculate the distance from the transformed point to its correspondence
-        if (distSq(R * pt_src + T, pt_tgt) < threshold*threshold)
-          inliers[nr_p++] = indices_[i];
+        if (distSq(R * pt_src + T, pt_tgt) < threshold * threshold)
+          inliers[nr_p++] = possible_inliers[i];
       }
       inliers.resize(nr_p);
 
+      // If that set is not bigger than the best so far, no need to refine it
+      unsigned int minimal_size = 8;
+      if ((inliers.size() < best_inlier_number_) && (inliers.size() < minimal_size))
+        return;
+      std::sort(inliers.begin(), inliers.end());
 
-
-
-
-    in_inliers.clear();
-    // Make sure the sample belongs to the inliers
-    BOOST_FOREACH(int sample, samples_)
-    if (std::find(inliers.begin(), inliers.end(), sample) == inliers.end())
-    return;
-
-    // Remove all the points that cannot belong to a clique including the samples
-    BOOST_FOREACH(int inlier, inliers)
-    {
-      bool is_good = true;
-      BOOST_FOREACH(int sample, samples_)
+      // We are now going to check that we can come up with a big enough sample adjacency clique
+      // As this rarely happens, first make sure that some inliers have enough neighbors
+      size_t max_possible_clique = 0;
+      std::vector<unsigned int> neighbors(inliers.size());
+      for (unsigned int j = 0; j < inliers.size() - 1; ++j)
       {
-        if (sample == inlier)
-        break;
-        if (!physical_adjacency_.test(inlier, sample))
-        {
-          is_good = false;
-          break;
-        }
+        max_possible_clique = std::max(
+            size_t(
+                std::set_intersection(sample_adjacency_.neighbors(j).begin(), sample_adjacency_.neighbors(j).end(),
+                                      inliers.begin() + j + 1, inliers.end(), neighbors.begin())
+                - neighbors.begin()),
+            max_possible_clique);
       }
-      if (is_good)
-      in_inliers.push_back(inlier);
+      if ((max_possible_clique < minimal_size) || (max_possible_clique < best_inlier_number_))
+      {
+        inliers.clear();
+        return;
+      }
+
+      // look for big enough cliques
+      std::map<unsigned int, unsigned int> map_index_to_graph_index;
+      for (unsigned int j = 0; j < inliers.size(); ++j)
+        map_index_to_graph_index[inliers[j]] = j;
+
+      maximum_clique::Graph graph(inliers.size());
+      for (unsigned int j = 0; j < inliers.size() - 1; ++j)
+      {
+        neighbors.resize(inliers.size());
+        std::vector<unsigned int>::iterator end = std::set_intersection(sample_adjacency_.neighbors(j).begin(),
+                                                                        sample_adjacency_.neighbors(j).end(),
+                                                                        inliers.begin() + j, inliers.end(),
+                                                                        neighbors.begin());
+        neighbors.resize(end - neighbors.begin());
+
+        BOOST_FOREACH(unsigned int neighbor, neighbors){
+        if (j== map_index_to_graph_index[neighbor])
+        continue;
+        graph.AddEdgeSorted(j, map_index_to_graph_index[neighbor]);
+      }
     }
-
-    // If that set is not bigger than the best so far, no need to refine it
-    if (in_inliers.size() < best_inlier_number_)
-    return;
-
-    maximum_clique::Graph graph(in_inliers.size());
-    for (unsigned int j = 0; j < in_inliers.size(); ++j)
-    for (unsigned int i = j + 1; i < in_inliers.size(); ++i)
-    if (sample_adjacency_.test(in_inliers[j], in_inliers[i]))
-    graph.AddEdgeSorted(j, i);
 
     // If we cannot even find enough points well distributed in the sample, stop here
-    unsigned int minimal_size = 8;
-    std::vector<unsigned int> vertices;
-    graph.FindClique(vertices, minimal_size);
-    if (vertices.size() < minimal_size)
-    {
-      in_inliers.clear();
-      return;
-    }
+      std::vector<unsigned int> vertices;
+      graph.FindClique(vertices, minimal_size);
+      if (vertices.size() < minimal_size)
+      {
+        inliers.clear();
+        return;
+      }
 
-    best_inlier_number_ = std::max(in_inliers.size(), best_inlier_number_);
-  }
+      best_inlier_number_ = std::max(inliers.size(), best_inlier_number_);
+    }
 
     bool
     computeModelCoefficients(const IndexVector &samples, cv::Matx33f &R, cv::Vec3f&T)
@@ -295,8 +315,8 @@ namespace tod
 
   private:
 
-  const maximum_clique::AdjacencyMatrix physical_adjacency_;
-  const maximum_clique::AdjacencyMatrix sample_adjacency_;
+    const maximum_clique::AdjacencyMatrix &physical_adjacency_;
+    const maximum_clique::AdjacencyMatrix &sample_adjacency_;
   size_t best_inlier_number_;
   float threshold_;
 

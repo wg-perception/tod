@@ -3,7 +3,9 @@
 Module defining the TOD detector to find objects in a scene
 """
 
+from ecto_image_pipeline.base import RescaledRegisteredDepth
 from ecto_opencv import features2d, highgui, imgproc, calib
+from ecto_opencv.calib import DepthTo3d
 from feature_descriptor import FeatureDescriptor
 from object_recognition_core.boost.interface import Models
 from object_recognition_core.db.object_db import ObjectDb
@@ -24,6 +26,8 @@ class TodDetector(ecto.BlackBox):
     descriptor_matcher = ecto_detection.DescriptorMatcher
     guess_generator = ecto_detection.GuessGenerator
     passthrough = ecto.PassthroughN
+    _depth_map = RescaledRegisteredDepth
+    _points3d = DepthTo3d
     if ECTO_ROS_FOUND:
         message_cvt = ecto_ros.ector_ros.Mat2Image
 
@@ -49,7 +53,7 @@ class TodDetector(ecto.BlackBox):
                                         )
         i.forward(['image', 'K'], cell_name='passthrough', cell_key=['image', 'K'])
         i.forward('mask', cell_name='feature_descriptor', cell_key='mask')
-        i.forward('points3d', cell_name='guess_generator', cell_key='points3d')
+        i.forward('depth', cell_name='_depth_map', cell_key='depth')
 
         o.forward('pose_results', cell_name='guess_generator', cell_key='pose_results')
         o.forward('keypoints', cell_name='feature_descriptor', cell_key='keypoints')
@@ -75,11 +79,18 @@ class TodDetector(ecto.BlackBox):
         guess_params['db'] = self._object_db
 
         self.guess_generator = ecto_detection.GuessGenerator("Guess Gen", **guess_params)
+        self._depth_map = RescaledRegisteredDepth()
+        self._points3d = DepthTo3d()
 
     def connections(self):
+        # Rescale the depth image and convert to 3d
+        connections = [ self.passthrough['image'] >> self._depth_map['image'],
+                       self._depth_map['depth'] >>  self._points3d['depth'],
+                       self.passthrough['K'] >> self._points3d['K'],
+                       self._points3d['points3d'] >> self.guess_generator['points3d'] ]
         # make sure the inputs reach the right cells
-        connections = [self.passthrough['image'] >> self.feature_descriptor['image'],
-                       self.passthrough['image'] >> self.guess_generator['image'], ]
+        connections += [self.passthrough['image'] >> self.feature_descriptor['image'],
+                       self.passthrough['image'] >> self.guess_generator['image'] ]
 
         connections += [ self.descriptor_matcher['spans'] >> self.guess_generator['spans'],
                        self.descriptor_matcher['object_ids'] >> self.guess_generator['object_ids'] ]

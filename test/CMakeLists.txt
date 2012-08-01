@@ -23,6 +23,8 @@ target_link_libraries(tod-clique-test ${GTEST_LIBRARIES}
                                       ${PYTHON_LIBRARIES}
                                       ${OpenCV_LIBRARIES}
 )
-set_target_properties(tod-clique-test PROPERTIES COMPILE_FLAGS "-pthread")
+#set_target_properties(tod-clique-test PROPERTIES COMPILE_FLAGS "-pthread")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 
 add_test(tod_clique_tests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tod-clique-test)

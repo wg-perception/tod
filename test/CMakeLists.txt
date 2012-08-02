@@ -8,23 +8,14 @@ if (object_recognition_core_FOUND)
 endif()
 
 # clique test
-include_directories(SYSTEM ${GTEST_INCLUDE_DIRS}
-                           ${OpenCV_INCLUDE_DIRS}
-)
+include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src/common)
 
-add_executable(tod-clique-test main.cpp
-                               test_maximum_clique.cpp
-                               ../src/common/maximum_clique.cpp
+add_gtest(test_tod_clique main.cpp test_maximum_clique.cpp
+                                   ../src/common/maximum_clique.cpp
 )
 
 find_package(PythonLibs REQUIRED)
-target_link_libraries(tod-clique-test ${GTEST_LIBRARIES}
-                                      ${PYTHON_LIBRARIES}
+target_link_libraries(test_tod_clique ${PYTHON_LIBRARIES}
                                       ${OpenCV_LIBRARIES}
 )
-#set_target_properties(tod-clique-test PROPERTIES COMPILE_FLAGS "-pthread")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-
-
-add_test(tod_clique_tests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tod-clique-test)

@@ -1,8 +1,14 @@
 source1:
-  type: ros_kinect
-#  type: openni
-  rgb_frame_id: '/camera_rgb_optical_frame'
-#  bag: /home/vrabaud/data/robot_power/poster_01.bag
+  type: openni
+  image_mode: 'SXGA_RES'
+  depth_mode: 'VGA_RES'
+  image_fps: 'FPS_15'
+  depth_fps: 'FPS_30'
+
+#Use this instead to receive images via ROS
+#source1:
+#  type: ros_kinect
+#  rgb_frame_id: '/camera_rgb_optical_frame'
 
 sink1:
   type: publisher
@@ -18,7 +24,7 @@ pipeline1:
   package: 'object_recognition_tod'
   submethod:
     descriptor:
-      type: 'ORB2'
+      type: 'ORB'
   sources: [source1]
   voters: [voter1]
   parameters:

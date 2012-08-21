@@ -3,12 +3,13 @@
 TOD
 ===
 
-TOD (Texture Obejct Detection) is based on a standard bag of features technique.
+TOD (Texture Object Detection) is based on a standard bag of features technique.
 
 Training
 --------
 
 In the config file you need to specify the feature/descriptor to use as well as the search parameters.
+
 The DB parameters are standard :ref:`ObjectDbParameters <object_recognition_core_db>` parameters.
 A typical config file looks like this:
 
@@ -30,7 +31,7 @@ Detection
 
 A typical config file looks like this:
 
-.. literalinclude:: ../../conf/config_training.tod
+.. literalinclude:: ../../conf/config_detection.tod
     :language: json
 
 During detection, features/descriptors are computed on the current image and compared to our database. Sets of seen

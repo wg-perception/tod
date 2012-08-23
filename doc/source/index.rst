@@ -1,9 +1,9 @@
 .. _tod:
 
-TOD
-===
+object_recognition_tod: Textured Object Detection
+=================================================
 
-TOD (Texture Object Detection) is based on a standard bag of features technique.
+Texture Object Detection (TOD) is based on a standard bag of features technique.
 
 Training
 --------

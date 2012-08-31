@@ -28,7 +28,6 @@ ectomodule(ecto_training training/CameraToWorld.cpp
                          training/ModelFiller.cpp
                          training/module.cpp
                          training/PointMerger.cpp
-                         training/PrepareForG2O.cpp
                          common/adjacency_ransac.cpp
                          common/maximum_clique.cpp
 )

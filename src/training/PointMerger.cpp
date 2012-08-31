@@ -58,8 +58,6 @@ namespace tod
     {
       inputs.declare < std::vector<cv::Mat> > ("descriptors", "The descriptors per image.").required(true);
       inputs.declare < VectorVector3d > ("points", "The 3d points.").required(true);
-      inputs.declare < std::vector<std::vector<size_t> >
-      > ("ids", "The SBA id of each input point, the first vector is per image.").required(true);
 
       outputs.declare < cv::Mat > ("descriptors", "The stacked descriptors.");
       outputs.declare < cv::Mat > ("points", "The 3d position of the points.");
@@ -70,7 +68,6 @@ namespace tod
     {
       in_points_ = inputs["points"];
       descriptors_ = inputs["descriptors"];
-      ids_ = inputs["ids"];
 
       out_points_ = outputs["points"];
       out_descriptors_ = outputs["descriptors"];
@@ -95,9 +92,8 @@ namespace tod
         cv::Mat sub_descriptors = out_descriptors_->rowRange(row_index, row_index + descriptors.rows);
         descriptors.copyTo(sub_descriptors);
         // Copy the 3d points
-BOOST_FOREACH      ( size_t id, (*ids_)[image_id])
+BOOST_FOREACH      ( const Eigen::Vector3d & vec, (*in_points_))
       {
-        const Eigen::Vector3d & vec = (*in_points_)[id];
         out_points_->at<cv::Vec3f>(0, row_index) = cv::Vec3f(vec[0], vec[1], vec[2]);
         ++row_index;
       }
@@ -108,7 +104,6 @@ BOOST_FOREACH      ( size_t id, (*ids_)[image_id])
   private:
     ecto::spore<VectorVector3d> in_points_;
     ecto::spore<std::vector<cv::Mat> > descriptors_;
-    ecto::spore<std::vector<std::vector<size_t> > > ids_;
     ecto::spore<cv::Mat> out_points_;
     ecto::spore<cv::Mat> out_descriptors_;
   };

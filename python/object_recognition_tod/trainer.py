@@ -5,7 +5,6 @@ Module defining the TOD trainer to train the TOD models
 
 from ecto_opencv import calib, features2d, highgui
 from feature_descriptor import FeatureDescriptor
-from ecto_image_pipeline.g2o import SbaDisparity
 from object_recognition_core.pipelines.training import TrainingPipeline
 from object_recognition_core.utils.json_helper import dict_to_cpp_json_str
 from object_recognition_tod import ecto_training
@@ -52,6 +51,7 @@ class TODModelBuilder(ecto.BlackBox):
                            self.source['image'] >> self.rescale_depth['image'],
                            self.source['mask'] >> self.feature_descriptor['mask'],
                            self.source['depth'] >> self.rescale_depth['depth'],
+                           self.rescale_depth[:], self.feature_descriptor[:],
                            self.source['K'] >> self.depth_to_3d_sparse['K']]
 
         # Make sure the keypoints are in the mask and with a valid depth
@@ -94,8 +94,6 @@ class TODModelBuilder(ecto.BlackBox):
 class TODPostProcessor(ecto.BlackBox):
     """
     """
-    prepare_for_g2o = ecto_training.PrepareForG2O
-    g2o = SbaDisparity
     point_merger = ecto_training.PointMerger
     model_filler = ecto_training.ModelFiller
 
@@ -117,23 +115,12 @@ class TODPostProcessor(ecto.BlackBox):
 
     def configure(self, p, i, o):
         self.point_merger = self.point_merger()
-        self.prepare_for_g2o = self.prepare_for_g2o(search_json_params=p.json_search_params)
-        self.g2o = self.g2o()
         self.model_filler = self.model_filler()
 
     def connections(self):
-        graph = [self.source['points', 'points3d', 'descriptors', 'disparities'] >>
-                                            self.prepare_for_g2o['points', 'points3d', 'descriptors', 'disparities'],
-                 self.source['Ts', 'quaternions', 'K'] >> self.g2o['Ts', 'quaternions', 'K'],
-                 self.source['descriptors'] >> self.point_merger['descriptors'],
-                ]
-        graph += [
-                 self.prepare_for_g2o['x', 'y', 'disparity', 'points'] >> self.g2o['x', 'y', 'disparity', 'points'],
-                 self.g2o['points'] >> self.point_merger['points'],
-                 self.prepare_for_g2o['ids'] >> self.point_merger['ids'],
+        return [ self.source['descriptors'] >> self.point_merger['descriptors'],
                  self.point_merger['points', 'descriptors'] >> self.model_filler['points', 'descriptors']
-                ]
-        return graph
+                 ]
 
 class TODTrainingPipeline(TrainingPipeline):
     '''Implements the training pipeline functions'''

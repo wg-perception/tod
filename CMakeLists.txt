@@ -24,8 +24,6 @@ find_package(OpenCV REQUIRED)
 
 rosbuild_lite_init()
 
-set_ecto_install_package_name(${PROJECT_NAME})
-
 include_directories(SYSTEM ${ecto_opencv_INCLUDE_DIRS})
 
 add_subdirectory(src)

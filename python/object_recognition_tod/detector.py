@@ -6,7 +6,7 @@ Module defining the TOD detector to find objects in a scene
 from ecto_image_pipeline.base import RescaledRegisteredDepth
 from ecto_opencv import features2d, highgui, imgproc, calib
 from ecto_opencv.calib import DepthTo3d
-from feature_descriptor import FeatureDescriptor
+from ecto_opencv.features2d import FeatureDescriptor
 from object_recognition_core.boost.interface import Models
 from object_recognition_core.db.object_db import ObjectDb
 from object_recognition_core.pipelines.detection import DetectionPipeline
@@ -59,15 +59,17 @@ class TodDetector(ecto.BlackBox):
         o.forward('keypoints', cell_name='feature_descriptor', cell_key='keypoints')
 
     def configure(self, p, _i, _o):
-        feature_params = self._parameters.get("feature", False)
-        if not feature_params:
-            raise RuntimeError("You must supply feature_descriptor parameters for TOD.")
-        # merge it with the subtype
-        feature_descriptor_params = { 'feature': feature_params, 'descriptor': self._parameters.get('descriptor', {}) }
-        from object_recognition_tod import merge_dict
-        feature_descriptor_params = merge_dict(feature_descriptor_params, self._submethod)
+        # get the feature parameters
+        if 'feature' not in self._parameters:
+            raise RuntimeError("You must supply feature parameters for TOD.")
+        feature_params = self._parameters.get("feature")
+        # get the descriptor parameters
+        if 'descriptor' not in self._parameters:
+            raise RuntimeError("You must supply descriptor parameters for TOD.")
+        descriptor_params = self._parameters.get('descriptor')
 
-        self.feature_descriptor = FeatureDescriptor(json_params=json_helper.dict_to_cpp_json_str(feature_descriptor_params))
+        self.feature_descriptor = FeatureDescriptor(json_feature_params=json_helper.dict_to_cpp_json_str(feature_params),
+                                json_descriptor_params=json_helper.dict_to_cpp_json_str(descriptor_params))
         self.descriptor_matcher = ecto_detection.DescriptorMatcher("Matcher",
                                 search_json_params=json_helper.dict_to_cpp_json_str(self._parameters['search']),
                                 model_documents=self._model_documents)

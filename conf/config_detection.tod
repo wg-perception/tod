@@ -23,17 +23,20 @@ pipeline1:
   method: 'TOD'
   package: 'object_recognition_tod'
   submethod:
-    descriptor:
-      type: 'ORB'
+    type: 'ORB'
   sources: [source1]
   voters: [voter1]
   parameters:
     object_ids: "all"
     feature:
       type: 'ORB'
+      package: 'ecto_opencv.features2d'
       n_features: 5000
       n_levels: 3
       scale_factor: 1.2
+    descriptor:
+      type: 'ORB'
+      package: 'ecto_opencv.features2d'
     search:
       key_size: 16
       multi_probe_level: 1

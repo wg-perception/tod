@@ -4,7 +4,7 @@ Module defining the TOD trainer to train the TOD models
 """
 
 from ecto_opencv import calib, features2d, highgui
-from feature_descriptor import FeatureDescriptor
+from ecto_opencv.features2d import FeatureDescriptor
 from object_recognition_core.pipelines.training import TrainingPipeline
 from object_recognition_core.utils.json_helper import dict_to_cpp_json_str
 from object_recognition_tod import ecto_training
@@ -14,10 +14,11 @@ import ecto
 class TODModelBuilder(ecto.BlackBox):
     """
     """
+    feature_descriptor = FeatureDescriptor
     def declare_params(self, p):
-        self.feature_descriptor = FeatureDescriptor()
         p.declare('visualize', 'If true, displays images at runtime', False)
-        p.forward('json_feature_descriptor_params', cell_name='feature_descriptor', cell_key='json_params')
+        p.forward('json_feature_params', cell_name='feature_descriptor', cell_key='json_feature_params')
+        p.forward('json_descriptor_params', cell_name='feature_descriptor', cell_key='json_descriptor_params')
 
     def declare_io(self, p, i, o):
         self.source = ecto.PassthroughN(items=dict(image='An image',
@@ -47,11 +48,12 @@ class TODModelBuilder(ecto.BlackBox):
     def connections(self):
         graph = []
         # connect the input
+        if 'depth' in self.feature_descriptor.inputs.keys():
+            graph += [self.rescale_depth['depth'] >> self.feature_descriptor['depth']]
         graph += [self.source['image'] >> self.feature_descriptor['image'],
                            self.source['image'] >> self.rescale_depth['image'],
                            self.source['mask'] >> self.feature_descriptor['mask'],
                            self.source['depth'] >> self.rescale_depth['depth'],
-                           self.rescale_depth[:], self.feature_descriptor[:],
                            self.source['K'] >> self.depth_to_3d_sparse['K']]
 
         # Make sure the keypoints are in the mask and with a valid depth
@@ -98,7 +100,7 @@ class TODPostProcessor(ecto.BlackBox):
     model_filler = ecto_training.ModelFiller
 
     def declare_params(self, p):
-        p.forward('json_search_params', cell_name='prepare_for_g2o', cell_key='search_json_params')
+        pass
 
     def declare_io(self, p, i, o):
         self.source = ecto.PassthroughN(items=dict(K='The camera matrix',
@@ -135,17 +137,19 @@ class TODTrainingPipeline(TrainingPipeline):
         pipeline_params = kwargs['pipeline_params']
         args = kwargs['args']
         
-        feature_params = pipeline_params.get("feature", False)
-        if not feature_params:
-            raise RuntimeError("You must supply feature_descriptor parameters for TOD.")
-        # merge it with the subtype
-        feature_descriptor_params = { 'feature': feature_params, 'descriptor': pipeline_params.get('descriptor', {}) }
-        from object_recognition_tod import merge_dict
-        feature_descriptor_params = merge_dict(feature_descriptor_params, submethod)
+        # get the feature parameters
+        if 'feature' not in pipeline_params:
+            raise RuntimeError("You must supply feature parameters for TOD.")
+        feature_params = pipeline_params.get("feature")
+        # get the descriptor parameters
+        if 'descriptor' not in pipeline_params:
+            raise RuntimeError("You must supply descriptor parameters for TOD.")
+        descriptor_params = pipeline_params.get('descriptor')
 
         #grab visualize if works.
         visualize = getattr(args, 'visualize', False)
-        return TODModelBuilder(json_feature_descriptor_params=dict_to_cpp_json_str(feature_descriptor_params),
+        return TODModelBuilder(json_feature_params=dict_to_cpp_json_str(feature_params),
+                               json_descriptor_params=dict_to_cpp_json_str(descriptor_params),
                                visualize=visualize)
 
     @classmethod

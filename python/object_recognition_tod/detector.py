@@ -91,6 +91,8 @@ class TodDetector(ecto.BlackBox):
                        self.passthrough['K'] >> self._points3d['K'],
                        self._points3d['points3d'] >> self.guess_generator['points3d'] ]
         # make sure the inputs reach the right cells
+        if 'depth' in self.feature_descriptor.inputs.keys():
+            graph += [ self._depth_map['depth'] >> self.feature_descriptor['depth']]
         connections += [self.passthrough['image'] >> self.feature_descriptor['image'],
                        self.passthrough['image'] >> self.guess_generator['image'] ]
 

@@ -38,11 +38,17 @@ if (ROS_ELECTRIC_FOUND)
 install(PROGRAMS ${PROJECT_SOURCE_DIR}/apps/feature_viewer
         DESTINATION bin
 )
-else()
+endif()
+if (ROS_FUERTE_FOUND)
 # install the applications
 install(PROGRAMS ${PROJECT_SOURCE_DIR}/apps/feature_viewer
         DESTINATION share/${PROJECT_NAME}/bin
 )
 endif()
 
-
+if (ROS_GROOVY_OR_ABOVE_FOUND)
+# install the applications
+install(PROGRAMS ${PROJECT_SOURCE_DIR}/apps/feature_viewer
+        DESTINATION ${CATKIN_PROJECT_BIN_DESTINATION}
+)
+endif()

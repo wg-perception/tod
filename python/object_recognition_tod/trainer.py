@@ -133,10 +133,10 @@ class TODTrainingPipeline(TrainingPipeline):
 
     @classmethod
     def incremental_model_builder(cls, *args, **kwargs):
-        submethod = kwargs['submethod']
+        subtype = kwargs['subtype']
         pipeline_params = kwargs['pipeline_params']
         args = kwargs['args']
-        
+
         # get the feature parameters
         if 'feature' not in pipeline_params:
             raise RuntimeError("You must supply feature parameters for TOD.")

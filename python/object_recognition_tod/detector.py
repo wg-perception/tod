@@ -31,8 +31,8 @@ class TodDetector(ecto.BlackBox):
     if ECTO_ROS_FOUND:
         message_cvt = ecto_ros.ector_ros.Mat2Image
 
-    def __init__(self, submethod, parameters, model_documents, object_db, visualize=False, **kwargs):
-        self._submethod = submethod
+    def __init__(self, subtype, parameters, model_documents, object_db, visualize=False, **kwargs):
+        self._subtype = subtype
         self._parameters = parameters
         self._model_documents = model_documents
         self._object_db = object_db
@@ -142,15 +142,59 @@ class TodDetector(ecto.BlackBox):
 
 class TodDetectionPipeline(DetectionPipeline):
     @classmethod
+    def config_doc(cls):
+        return  """
+                    # The subtype can be any YAML that will help differentiate
+                    # between TOD methods: we usually use the descriptor name
+                    # but anything like parameters could be used
+                    subtype:
+                        type: ""
+                    # TOD requires several parameters
+                    parameters:
+                        feature:
+                            # a type is required, this is the name of the feature cell
+                            type: ""
+                            # you also need a module in which your feature cell is included
+                            # usually, that will be from 'ecto_opencv.features2d'
+                            module: ""
+                        descriptor:
+                            # same a type is required
+                            type: ""
+                            # same a module is required
+                            module: ""
+                        search:
+                            # a type is required for the nearest neighbor search
+                            # The only supported value is 'LSH' for now as we've only been playing with ORB
+                            # Other types could easily be implemented, please file a bug report
+                            type: ""
+                        guess:
+                            # This is the number of RANSAC iterations: we use 500 usually
+                            n_ransac_iterations: 500
+                            # The minimum number of inliers when performing RANSAC: that should not be too small
+                            # as is common with RANSAC in pose estimation. 8 works pretty well usually
+                            min_inliers: 8
+                        # This is the error we assume that comes from collecting the depth data, in meters
+                        sensor_error: 0.01
+                        # Then come the standard DB parameters
+                        db:
+                            # this can be from: 'CouchDB', 'filesystem'
+                            type: "CouchDB"
+                            # where the DB is located
+                            root: "http://localhost:5984"
+                            # the collection in which to store everything (training, capture data)
+                            collection: "object_recognition"
+                """
+
+    @classmethod
     def type_name(cls):
         return 'TOD'
 
     @classmethod
     def detector(self, *args, **kwargs):
         visualize = kwargs.pop('visualize', False)
-        submethod = kwargs.pop('submethod')
+        subtype = kwargs.pop('subtype')
         parameters = kwargs.pop('parameters')
         object_ids = parameters['object_ids']
         object_db = ObjectDb(parameters['db'])
-        model_documents = Models(object_db, object_ids, self.type_name(), json_helper.dict_to_cpp_json_str(submethod))
-        return TodDetector(submethod, parameters, model_documents, object_db, visualize, **kwargs)
+        model_documents = Models(object_db, object_ids, self.type_name(), json_helper.dict_to_cpp_json_str(subtype))
+        return TodDetector(subtype, parameters, model_documents, object_db, visualize, **kwargs)

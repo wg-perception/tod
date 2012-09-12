@@ -20,9 +20,9 @@ voter1:
   sinks: [sink1]
 
 pipeline1:
-  method: 'TOD'
-  package: 'object_recognition_tod'
-  submethod:
+  type: 'TOD'
+  module: 'object_recognition_tod'
+  subtype:
     type: 'ORB'
   sources: [source1]
   voters: [voter1]
@@ -38,12 +38,13 @@ pipeline1:
       type: 'ORB'
       package: 'ecto_opencv.features2d'
     search:
+      type: 'LSH'
+      module: 'ecto_opencv.features2d'
       key_size: 16
       multi_probe_level: 1
       n_tables: 10
       radius: 35
       ratio: 0.8
-      type: 'LSH'
     guess:
       n_ransac_iterations: 2500
       min_inliers: 8

@@ -24,7 +24,9 @@ find_package(OpenCV REQUIRED)
 
 rosbuild_lite_init()
 
-include_directories(SYSTEM ${ecto_opencv_INCLUDE_DIRS})
+include_directories(SYSTEM ${ecto_opencv_INCLUDE_DIRS}
+                           ${EIGEN_INCLUDE_DIRS}
+)
 
 add_subdirectory(src)
 option(BUILD_TEST "Build tests" ON)

@@ -2,9 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(object_recognition_tod)
 find_package(catkin REQUIRED)
 catkin_stack()
-catkin_project(object_recognition_tod
-               DEPENDS Boost Eigen OpenCV object_recognition_core
-)
+catkin_project(object_recognition_tod)
 
 #install targets for all things python
 catkin_python_setup()

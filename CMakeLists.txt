@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
 project(object_recognition_tod)
 find_package(catkin REQUIRED)
+if (${catkin_VERSION} VERSION_GREATER "0.5.26")
+catkin_package()
+catkin_package_export()
+else()
 catkin_stack()
 catkin_project(object_recognition_tod)
+endif()
 
 #install targets for all things python
 catkin_python_setup()
@@ -49,6 +54,6 @@ endif()
 if (ROS_GROOVY_OR_ABOVE_FOUND)
 # install the applications
 install(PROGRAMS ${PROJECT_SOURCE_DIR}/apps/feature_viewer
-        DESTINATION ${CATKIN_PROJECT_BIN_DESTINATION}
+        DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 endif()

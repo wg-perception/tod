@@ -1,3 +1,5 @@
+:orphan:
+
 .. _tod:
 
 object_recognition_tod: Textured Object Detection
@@ -14,7 +16,7 @@ The DB parameters are standard :ref:`ObjectDbParameters <object_recognition_core
 A typical config file looks like this:
 
 .. literalinclude:: ../../conf/config_training.tod
-    :language: json
+    :language: yaml
 
 During training, in the different views of the object features and descriptors are extracted.
 For each of those, if depth was also captured (which is the only supported method and is highly recommended
@@ -32,7 +34,7 @@ Detection
 A typical config file looks like this:
 
 .. literalinclude:: ../../conf/config_detection.tod
-    :language: json
+    :language: yaml
 
 During detection, features/descriptors are computed on the current image and compared to our database. Sets of seen
 descriptors are then checked with the nearest neighbors (descriptor-wise) for an analogous 3d configuration.

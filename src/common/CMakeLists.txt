@@ -2,8 +2,6 @@
 
 find_package(object_recognition_core REQUIRED)
 
-rosbuild_lite_init()
-
 include_directories(SYSTEM ${object_recognition_core_INCLUDE_DIRS})
 
 add_library(tod_common SHARED

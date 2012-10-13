@@ -24,8 +24,6 @@ find_package(ecto REQUIRED)
 find_package(ecto_opencv REQUIRED)
 find_package(OpenCV REQUIRED)
 
-rosbuild_lite_init()
-
 include_directories(SYSTEM ${ecto_opencv_INCLUDE_DIRS}
                            ${EIGEN_INCLUDE_DIRS}
 )
@@ -37,12 +35,6 @@ if(BUILD_TEST)
   add_subdirectory(test)
 endif()
 
-if (ROS_ELECTRIC_FOUND)
-# install the applications
-install(PROGRAMS ${PROJECT_SOURCE_DIR}/apps/feature_viewer
-        DESTINATION bin
-)
-endif()
 if (ROS_FUERTE_FOUND)
 # install the applications
 install(PROGRAMS ${PROJECT_SOURCE_DIR}/apps/feature_viewer

@@ -12,6 +12,7 @@ source1:
 
 sink1:
   type: publisher
+  module: 'object_recognition_ros.io'
   visualize: true
   object_ids: 'all'
 

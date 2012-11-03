@@ -15,7 +15,7 @@ from object_recognition_tod import ecto_detection
 import ecto
 
 try:
-    import ecto_ros.ector_ros
+    import ecto_ros.ecto_ros_main
     import ecto_ros.ecto_sensor_msgs as ecto_sensor_msgs
     ECTO_ROS_FOUND = True
 except ImportError:
@@ -29,7 +29,7 @@ class TodDetector(ecto.BlackBox):
     _depth_map = RescaledRegisteredDepth
     _points3d = DepthTo3d
     if ECTO_ROS_FOUND:
-        message_cvt = ecto_ros.ector_ros.Mat2Image
+        message_cvt = ecto_ros.ecto_ros_main.Mat2Image
 
     def __init__(self, subtype, parameters, model_documents, object_db, visualize=False, **kwargs):
         self._subtype = subtype
@@ -74,7 +74,7 @@ class TodDetector(ecto.BlackBox):
                                 search_json_params=json_helper.dict_to_cpp_json_str(self._parameters['search']),
                                 model_documents=self._model_documents)
         if ECTO_ROS_FOUND:
-            self.message_cvt = ecto_ros.Mat2Image()
+            self.message_cvt = ecto_ros.ecto_ros_main.Mat2Image()
 
         guess_params = self._parameters['guess'].copy()
         guess_params['visualize'] = self._visualize
@@ -86,28 +86,29 @@ class TodDetector(ecto.BlackBox):
 
     def connections(self):
         # Rescale the depth image and convert to 3d
-        connections = [ self.passthrough['image'] >> self._depth_map['image'],
-                       self._depth_map['depth'] >>  self._points3d['depth'],
-                       self.passthrough['K'] >> self._points3d['K'],
-                       self._points3d['points3d'] >> self.guess_generator['points3d'] ]
+        graph = [ self.passthrough['image'] >> self._depth_map['image'],
+                  self._depth_map['depth'] >>  self._points3d['depth'],
+                  self.passthrough['K'] >> self._points3d['K'],
+                  self._points3d['points3d'] >> self.guess_generator['points3d'] ]
         # make sure the inputs reach the right cells
         if 'depth' in self.feature_descriptor.inputs.keys():
             graph += [ self._depth_map['depth'] >> self.feature_descriptor['depth']]
-        connections += [self.passthrough['image'] >> self.feature_descriptor['image'],
-                       self.passthrough['image'] >> self.guess_generator['image'] ]
 
-        connections += [ self.descriptor_matcher['spans'] >> self.guess_generator['spans'],
-                       self.descriptor_matcher['object_ids'] >> self.guess_generator['object_ids'] ]
+        graph += [ self.passthrough['image'] >> self.feature_descriptor['image'],
+                   self.passthrough['image'] >> self.guess_generator['image'] ]
 
-        connections += [ self.feature_descriptor['keypoints'] >> self.guess_generator['keypoints'],
-                self.feature_descriptor['descriptors'] >> self.descriptor_matcher['descriptors'],
-                self.descriptor_matcher['matches', 'matches_3d'] >> self.guess_generator['matches', 'matches_3d'] ]
+        graph += [ self.descriptor_matcher['spans'] >> self.guess_generator['spans'],
+                   self.descriptor_matcher['object_ids'] >> self.guess_generator['object_ids'] ]
+
+        graph += [ self.feature_descriptor['keypoints'] >> self.guess_generator['keypoints'],
+                   self.feature_descriptor['descriptors'] >> self.descriptor_matcher['descriptors'],
+                   self.descriptor_matcher['matches', 'matches_3d'] >> self.guess_generator['matches', 'matches_3d'] ]
 
         cvt_color = imgproc.cvtColor(flag=imgproc.RGB2GRAY)
 
         if self._visualize or ECTO_ROS_FOUND:
             draw_keypoints = features2d.DrawKeypoints()
-            connections += [ self.passthrough['image'] >> cvt_color[:],
+            graph += [ self.passthrough['image'] >> cvt_color[:],
                            cvt_color[:] >> draw_keypoints['image'],
                            self.feature_descriptor['keypoints'] >> draw_keypoints['keypoints']
                            ]
@@ -118,25 +119,25 @@ class TodDetector(ecto.BlackBox):
             keypoints_view = highgui.imshow(name="Keypoints")
 
 
-            connections += [ self.passthrough['image'] >> image_view['image'],
-                           draw_keypoints['image'] >> keypoints_view['image']
+            graph += [ self.passthrough['image'] >> image_view['image'],
+                       draw_keypoints['image'] >> keypoints_view['image']
                            ]
 
             pose_view = highgui.imshow(name="Pose")
             pose_drawer = calib.PosesDrawer()
 
             # draw the poses
-            connections += [ self.passthrough['image', 'K'] >> pose_drawer['image', 'K'],
-                              self.guess_generator['Rs', 'Ts'] >> pose_drawer['Rs', 'Ts'],
-                              pose_drawer['output'] >> pose_view['image'] ]
+            graph += [ self.passthrough['image', 'K'] >> pose_drawer['image', 'K'],
+                       self.guess_generator['Rs', 'Ts'] >> pose_drawer['Rs', 'Ts'],
+                       pose_drawer['output'] >> pose_view['image'] ]
 
         if ECTO_ROS_FOUND:
             ImagePub = ecto_sensor_msgs.Publisher_Image
             pub_features = ImagePub("Features Pub", topic_name='features')
-            connections += [ draw_keypoints['image'] >> self.message_cvt[:],
-                           self.message_cvt[:] >> pub_features[:] ]
+            graph += [ draw_keypoints['image'] >> self.message_cvt[:],
+                       self.message_cvt[:] >> pub_features[:] ]
 
-        return connections
+        return graph
 
 ########################################################################################################################
 

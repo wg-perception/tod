@@ -121,6 +121,7 @@ class TODPostProcessor(ecto.BlackBox):
 
     def connections(self):
         return [ self.source['descriptors'] >> self.point_merger['descriptors'],
+                 self.source['points3d'] >> self.point_merger['points'],
                  self.point_merger['points', 'descriptors'] >> self.model_filler['points', 'descriptors']
                  ]
 

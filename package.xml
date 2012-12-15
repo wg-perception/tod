@@ -9,7 +9,6 @@
 
   <url>http://ecto.willowgarage.com</url>
 
-  <build_depend>catkin</build_depend>
   <build_depend>ecto</build_depend>
   <build_depend>ecto_opencv</build_depend>
   <build_depend>eigen</build_depend>
@@ -18,4 +17,6 @@
   <run_depend>ecto</run_depend>
   <run_depend>ecto_opencv</run_depend>
   <run_depend>object_recognition_core</run_depend>
+
+  <buildtool_depend>catkin</buildtool_depend>
 </package>

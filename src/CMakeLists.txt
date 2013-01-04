@@ -1,6 +1,3 @@
-find_package(object_recognition_core REQUIRED)
-
-include_directories(SYSTEM ${object_recognition_core_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/common)
 
 # deal with the detection TOD module
@@ -15,9 +12,8 @@ ectomodule(ecto_detection DESTINATION ${PROJECT_NAME}
 )
 
 link_ecto(ecto_detection ${OpenCV_LIBRARIES}
-                         ${object_recognition_core_LIBRARIES} 
+                         ${catkin_LIBRARIES} 
                          ${Boost_LIBRARIES}
-                         ${ecto_opencv_LIBRARIES}
 )
 
 
@@ -34,7 +30,6 @@ ectomodule(ecto_training DESTINATION ${PROJECT_NAME}
                          common/maximum_clique.cpp
 )
 
-link_ecto(ecto_training ${object_recognition_core_LIBRARIES}
+link_ecto(ecto_training ${catkin_LIBRARIES}
                         ${OpenCV_LIBRARIES}
-                        ${ecto_opencv_LIBRARIES}
 )

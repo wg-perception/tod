@@ -1,11 +1,20 @@
 cmake_minimum_required(VERSION 2.8)
 project(object_recognition_tod)
-find_package(catkin REQUIRED)
+
+find_package(catkin REQUIRED ecto ecto_opencv object_recognition_core opencv_candidate)
+
 if (${catkin_VERSION} VERSION_GREATER "0.5.28")
 catkin_package()
 else()
 catkin_stack()
 catkin_project(object_recognition_tod)
+find_package(ecto)
+find_package(object_recognition_core)
+find_package(opencv_candidate)
+list(APPEND catkin_INCLUDE_DIRS ${ecto_INCLUDE_DIRS} ${ecto_opencv_INCLUDE_DIRS} ${object_recognition_core_INCLUDE_DIRS}
+                                ${opencv_candidate_INCLUDE_DIRS})
+list(APPEND catkin_LIBRARIES ${ecto_LIBRARIES} ${ecto_opencv_LIBRARIES} ${object_recognition_core_LIBRARIES}
+                                ${opencv_candidate_LIBRARIES})
 endif()
 
 #install targets for all things python
@@ -20,13 +29,13 @@ endif()
 add_definitions("-Wno-pragmas -fno-strict-aliasing -Wall -Wl,--no-undefined")
 
 find_package(Boost REQUIRED system filesystem serialization)
-find_package(ecto REQUIRED)
-find_package(ecto_opencv REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
 
-include_directories(SYSTEM ${ecto_opencv_INCLUDE_DIRS}
+include_directories(SYSTEM ${BOOST_INCLUDE_DIRS}
+                           ${catkin_INCLUDE_DIRS}
                            ${EIGEN_INCLUDE_DIRS}
+                           ${OpenCV_INCLUDE_DIRS}
 )
 
 add_subdirectory(src)

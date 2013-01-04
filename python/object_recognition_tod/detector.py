@@ -3,6 +3,7 @@
 Module defining the TOD detector to find objects in a scene
 """
 
+from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
 from ecto_image_pipeline.base import RescaledRegisteredDepth
 from ecto_opencv import features2d, highgui, imgproc, calib
 from ecto_opencv.calib import DepthTo3d
@@ -22,15 +23,6 @@ except ImportError:
     ECTO_ROS_FOUND = False
 
 class TodDetector(ecto.BlackBox):
-    feature_descriptor = FeatureDescriptor
-    descriptor_matcher = ecto_detection.DescriptorMatcher
-    guess_generator = ecto_detection.GuessGenerator
-    passthrough = ecto.PassthroughN
-    _depth_map = RescaledRegisteredDepth
-    _points3d = DepthTo3d
-    if ECTO_ROS_FOUND:
-        message_cvt = ecto_ros.ecto_ros_main.Mat2Image
-
     def __init__(self, subtype, parameters, model_documents, object_db, visualize=False, **kwargs):
         self._subtype = subtype
         self._parameters = parameters
@@ -41,53 +33,47 @@ class TodDetector(ecto.BlackBox):
 
         ecto.BlackBox.__init__(self, **kwargs)
 
-    def declare_params(self, p):
-        if ECTO_ROS_FOUND:
-            p.forward('rgb_frame_id', cell_name='message_cvt', cell_key='frame_id')
-        #p.forward('model_documents', cell_name='descriptor_matcher', cell_key='model_documents')
-
-    def declare_io(self, _p, i, o):
-        self.passthrough = ecto.PassthroughN(items=dict(image='An image',
-                                                   K='The camera matrix'
-                                                   )
-                                        )
-        i.forward(['image', 'K'], cell_name='passthrough', cell_key=['image', 'K'])
-        i.forward('mask', cell_name='feature_descriptor', cell_key='mask')
-        i.forward('depth', cell_name='_depth_map', cell_key='depth')
-
-        o.forward('pose_results', cell_name='guess_generator', cell_key='pose_results')
-        o.forward('keypoints', cell_name='feature_descriptor', cell_key='keypoints')
-
-    def configure(self, p, _i, _o):
-        # get the feature parameters
-        if 'feature' not in self._parameters:
-            raise RuntimeError("You must supply feature parameters for TOD.")
-        feature_params = self._parameters.get("feature")
-        # get the descriptor parameters
-        if 'descriptor' not in self._parameters:
-            raise RuntimeError("You must supply descriptor parameters for TOD.")
-        descriptor_params = self._parameters.get('descriptor')
-
-        self.feature_descriptor = FeatureDescriptor(json_feature_params=json_helper.dict_to_cpp_json_str(feature_params),
-                                json_descriptor_params=json_helper.dict_to_cpp_json_str(descriptor_params))
-        self.descriptor_matcher = ecto_detection.DescriptorMatcher("Matcher",
-                                search_json_params=json_helper.dict_to_cpp_json_str(self._parameters['search']),
-                                model_documents=self._model_documents)
-        if ECTO_ROS_FOUND:
-            self.message_cvt = ecto_ros.ecto_ros_main.Mat2Image()
-
+    def declare_cells(self, _p):
         guess_params = self._parameters['guess'].copy()
         guess_params['visualize'] = self._visualize
         guess_params['db'] = self._object_db
 
-        self.guess_generator = ecto_detection.GuessGenerator("Guess Gen", **guess_params)
+        cells = {'depth_map': CellInfo(RescaledRegisteredDepth),
+                 'feature_descriptor': CellInfo(FeatureDescriptor),
+                 'guess_generator': CellInfo(ecto_detection.GuessGenerator, guess_params),
+                 'passthrough': CellInfo(ecto.PassthroughN, {'items':{'image':'An image', 'K':'The camera matrix'}})}
+        if ECTO_ROS_FOUND:
+            cells['message_cvt'] = CellInfo(ecto_ros.ecto_ros_main.Mat2Image)
+
+        return cells
+
+    @classmethod
+    def declare_forwards(self, _p):
+        p = {'feature_descriptor': [Forward('json_feature_params'),
+                                    Forward('json_descriptor_params')]}
+        if ECTO_ROS_FOUND:
+            p['message_cvt'] = [Forward('frame_id', 'rgb_frame_id')]
+        i = {'passthrough': [Forward('image'), Forward('K')],
+             'feature_descriptor': [Forward('mask')],
+             'depth_map': [Forward('depth')]}
+
+        o = {'feature_descriptor': [Forward('keypoints')],
+             'guess_generator': [Forward('pose_results')]}
+
+        return (p, i, o)
+
+    def configure(self, p, _i, _o):
+        self.descriptor_matcher = ecto_detection.DescriptorMatcher("Matcher",
+                                search_json_params=json_helper.dict_to_cpp_json_str(self._parameters['search']),
+                                model_documents=self._model_documents)
+
         self._depth_map = RescaledRegisteredDepth()
         self._points3d = DepthTo3d()
 
-    def connections(self):
+    def connections(self, p):
         # Rescale the depth image and convert to 3d
         graph = [ self.passthrough['image'] >> self._depth_map['image'],
-                  self._depth_map['depth'] >>  self._points3d['depth'],
+                  self._depth_map['depth'] >> self._points3d['depth'],
                   self.passthrough['K'] >> self._points3d['K'],
                   self._points3d['points3d'] >> self.guess_generator['points3d'] ]
         # make sure the inputs reach the right cells
@@ -117,7 +103,6 @@ class TodDetector(ecto.BlackBox):
             # visualize the found keypoints
             image_view = highgui.imshow(name="RGB")
             keypoints_view = highgui.imshow(name="Keypoints")
-
 
             graph += [ self.passthrough['image'] >> image_view['image'],
                        draw_keypoints['image'] >> keypoints_view['image']
@@ -198,4 +183,17 @@ class TodDetectionPipeline(DetectionPipeline):
         object_ids = parameters['object_ids']
         object_db = ObjectDb(parameters['db'])
         model_documents = Models(object_db, object_ids, self.type_name(), json_helper.dict_to_cpp_json_str(subtype))
-        return TodDetector(subtype, parameters, model_documents, object_db, visualize, **kwargs)
+
+        # get the feature parameters
+        extra_args = {}
+        if 'feature' not in parameters:
+            raise RuntimeError("You must supply feature parameters for TOD.")
+        extra_args['json_feature_params'] = json_helper.dict_to_cpp_json_str(parameters.get("feature"))
+        # get the descriptor parameters
+        if 'descriptor' not in parameters:
+            raise RuntimeError("You must supply descriptor parameters for TOD.")
+        extra_args['json_descriptor_params'] = json_helper.dict_to_cpp_json_str(parameters.get('descriptor'))
+
+        extra_args.update(kwargs)
+
+        return TodDetector(subtype, parameters, model_documents, object_db, visualize, **extra_args)

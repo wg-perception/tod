@@ -3,6 +3,7 @@
 Module defining the TOD trainer to train the TOD models
 """
 
+from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
 from ecto_opencv import calib, features2d, highgui
 from ecto_opencv.features2d import FeatureDescriptor
 from object_recognition_core.pipelines.training import TrainingPipeline
@@ -14,14 +15,10 @@ import ecto
 class TODModelBuilder(ecto.BlackBox):
     """
     """
-    feature_descriptor = FeatureDescriptor
-    def declare_params(self, p):
-        p.declare('visualize', 'If true, displays images at runtime', False)
-        p.forward('json_feature_params', cell_name='feature_descriptor', cell_key='json_feature_params')
-        p.forward('json_descriptor_params', cell_name='feature_descriptor', cell_key='json_descriptor_params')
-
-    def declare_io(self, p, i, o):
-        self.source = ecto.PassthroughN(items=dict(image='An image',
+    @classmethod
+    def declare_cells(cls, _p):
+        return {'feature_descriptor': CellInfo(FeatureDescriptor),
+                'source': ecto.PassthroughN(items=dict(image='An image',
                                                    depth='A depth image',
                                                    mask='A mask for valid object pixels.',
                                                    K='The camera matrix',
@@ -29,23 +26,31 @@ class TODModelBuilder(ecto.BlackBox):
                                                    T='The translation vector',
                                                    frame_number='The frame number.'
                                                    )
-                                        )
-        self.model_stacker = ecto_training.TodModelStacker()
+                                        ),
+                'model_stacker': ecto_training.TodModelStacker()
+               }
 
-        i.forward_all('source')
-        o.forward_all('model_stacker')
+    @staticmethod
+    def declare_direct_params(p):
+        p.declare('visualize', 'If true, displays images at runtime', False)
+
+    def declare_forwards(self, p):
+        p = {'feature_descriptor': [Forward('json_feature_params'), Forward('json_descriptor_params')]}
+        i = {'source': 'all'}
+        o = {'model_stacker': 'all'}
+
+        return (p, i, o)
 
     def configure(self, p, i, o):
         self.depth_to_3d_sparse = calib.DepthTo3dSparse()
         self.keypoints_to_mat = features2d.KeypointsToMat()
         self.camera_to_world = ecto_training.CameraToWorld()
-        self.model_stacker = ecto_training.TodModelStacker()
         from ecto_image_pipeline.base import RescaledRegisteredDepth
-        self.rescale_depth = RescaledRegisteredDepth() #this is for SXGA mode scale handling.
+        self.rescale_depth = RescaledRegisteredDepth()  # this is for SXGA mode scale handling.
         self.keypoint_validator = ecto_training.KeypointsValidator()
         self.visualize = p.visualize
 
-    def connections(self):
+    def connections(self, p):
         graph = []
         # connect the input
         if 'depth' in self.feature_descriptor.inputs.keys():
@@ -72,7 +77,7 @@ class TODModelBuilder(ecto.BlackBox):
 
         # store all the info
         graph += [ self.camera_to_world['points'] >> self.model_stacker['points3d'],
-                        self.keypoint_validator['points', 'descriptors', 'disparities'] >>
+                        self.keypoint_validator['points', 'descriptors', 'disparities'] >> 
                                                             self.model_stacker['points', 'descriptors', 'disparities'],
                         self.source['K', 'R', 'T'] >> self.model_stacker['K', 'R', 'T'],
                         ]
@@ -96,30 +101,27 @@ class TODModelBuilder(ecto.BlackBox):
 class TODPostProcessor(ecto.BlackBox):
     """
     """
-    point_merger = ecto_training.PointMerger
-    model_filler = ecto_training.ModelFiller
+    @classmethod
+    def declare_cells(cls, _p):
+        return {'model_filler': ecto_training.ModelFiller(),
+                'source': ecto.PassthroughN(items=dict(K='The camera matrix',
+                                            quaternions='A vector of quaternions',
+                                            Ts='A vector of translation vectors',
+                                            disparities='The disparities of the measurements',
+                                            descriptors='A stacked vector of descriptors',
+                                            points='The 2D measurements per point.',
+                                            points3d='The estimated 3d position of the points (3-channel matrices).'
+                                           )
+                                        )}
 
-    def declare_params(self, p):
-        pass
-
-    def declare_io(self, p, i, o):
-        self.source = ecto.PassthroughN(items=dict(K='The camera matrix',
-                                                   quaternions='A vector of quaternions',
-                                                   Ts='A vector of translation vectors',
-                                                   disparities='The disparities of the measurements',
-                                                   descriptors='A stacked vector of descriptors',
-                                                   points='The 2D measurements per point.',
-                                                   points3d='The estimated 3d position of the points (3-channel matrices).'
-                                                   )
-                                        )
-        i.forward_all('source')
-        o.forward_all('model_filler')
+    @classmethod
+    def declare_forwards(cls, _p):
+        return ({}, {'source': 'all'}, {'model_filler': 'all'})
 
     def configure(self, p, i, o):
-        self.point_merger = self.point_merger()
-        self.model_filler = self.model_filler()
+        self.point_merger = ecto_training.PointMerger()
 
-    def connections(self):
+    def connections(self, p):
         return [ self.source['descriptors'] >> self.point_merger['descriptors'],
                  self.source['points3d'] >> self.point_merger['points'],
                  self.point_merger['points', 'descriptors'] >> self.model_filler['points', 'descriptors']
@@ -134,7 +136,6 @@ class TODTrainingPipeline(TrainingPipeline):
 
     @classmethod
     def incremental_model_builder(cls, *args, **kwargs):
-        subtype = kwargs['subtype']
         pipeline_params = kwargs['pipeline_params']
         args = kwargs['args']
 
@@ -147,7 +148,7 @@ class TODTrainingPipeline(TrainingPipeline):
             raise RuntimeError("You must supply descriptor parameters for TOD.")
         descriptor_params = pipeline_params.get('descriptor')
 
-        #grab visualize if works.
+        # grab visualize if works.
         visualize = getattr(args, 'visualize', False)
         return TODModelBuilder(json_feature_params=dict_to_cpp_json_str(feature_params),
                                json_descriptor_params=dict_to_cpp_json_str(descriptor_params),

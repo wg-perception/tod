@@ -44,7 +44,7 @@ namespace tod
     {
       db_params_ = params["db_params"];
 
-      db_ = object_recognition_core::db::ObjectDb(*db_params_);
+      db_ = db_params_->generateDb();
     }
 
     int
@@ -63,7 +63,7 @@ namespace tod
 
       return ecto::OK;
     }
-    object_recognition_core::db::ObjectDb db_;
+    object_recognition_core::db::ObjectDbPtr db_;
     ecto::spore<object_recognition_core::db::ObjectDbParameters> db_params_;
   };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +89,7 @@ namespace tod
     configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs)
     {
       db_params_ = params["db_params"];
-      db_ = object_recognition_core::db::ObjectDb(*db_params_);
+      db_ = db_params_->generateDb();
 
       const boost::python::object & python_object_ids = params.get < boost::python::object > ("object_ids");
       boost::python::stl_input_iterator<std::string> begin(python_object_ids), end;
@@ -123,7 +123,7 @@ namespace tod
 
       return ecto::OK;
     }
-    object_recognition_core::db::ObjectDb db_;
+    object_recognition_core::db::ObjectDbPtr db_;
     ecto::spore<object_recognition_core::db::ObjectDbParameters> db_params_;
     std::vector<ModelId> model_ids_;
   };

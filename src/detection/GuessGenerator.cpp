@@ -270,7 +270,7 @@ namespace tod
     /** The object recognition results */
     ecto::spore<std::vector<object_recognition_core::common::PoseResult> > pose_results_;
     /** The DB */
-    ecto::spore<object_recognition_core::db::ObjectDb> db_;
+    ecto::spore<object_recognition_core::db::ObjectDbPtr> db_;
   }
   ;
 }

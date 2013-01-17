@@ -6,14 +6,58 @@ Module defining the TOD trainer to train the TOD models
 from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
 from ecto_opencv import calib, features2d, highgui
 from ecto_opencv.features2d import FeatureDescriptor
-from object_recognition_core.pipelines.training import TrainingPipeline
-from object_recognition_core.utils.json_helper import dict_to_cpp_json_str
+from object_recognition_core.pipelines.training import TrainerBase, ObservationDealer
 from object_recognition_tod import ecto_training
 import ecto
+from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
 
 ########################################################################################################################
-class TODModelBuilder(ecto.BlackBox):
+
+class TodTrainer(ecto.BlackBox, TrainerBase):
+    def __init__(self, *args, **kwargs):
+        ecto.BlackBox.__init__(self, *args, **kwargs)
+        TrainerBase.__init__(self, *args, **kwargs)
+
+    @classmethod
+    def declare_cells(cls, _p):
+        return {'model_writer': CellInfo(ModelWriter),
+                'observation_dealer': CellInfo(ObservationDealer),
+                'passthrough': ecto.PassthroughN(items={'json_db':'The DB parameters as a JSON string'})}
+
+    @classmethod
+    def declare_forwards(cls, _p):
+        p = {'model_writer': [Forward('json_submethod')],
+             'passthrough': 'all'}
+        i = {}
+        o = {}
+
+        return (p,i,o)
+
+    def configure(self, p, i, o):
+        self.incremental_model_builder = TodIncrementalModelBuilder()
+        self.post_processor = TodPostProcessor()
+
+    def connections(self, p):
+        connections = []
+        # Connect the model builder to the source
+        for key in self.observation_dealer.outputs.iterkeys():
+            if key in  self.incremental_model_builder.inputs.keys():
+                connections += [self.observation_dealer[key] >> self.incremental_model_builder[key]]
+
+        # connect the output to the post-processor
+        for key in set(self.incremental_model_builder.outputs.keys()).intersection(self.post_processor.inputs.keys()):
+            connections += [self.incremental_model_builder[key] >> self.post_processor[key]]
+
+        # and write everything to the DB
+        connections += [self.post_processor["db_document"] >> self.model_writer["db_document"]]
+
+        return connections
+
+########################################################################################################################
+
+class TodIncrementalModelBuilder(ecto.BlackBox):
     """
+    Given a set of observations, this BlackBox updates the current model
     """
     @classmethod
     def declare_cells(cls, _p):
@@ -97,9 +141,11 @@ class TODModelBuilder(ecto.BlackBox):
 
         return graph
 
+########################################################################################################################
 
-class TODPostProcessor(ecto.BlackBox):
+class TodPostProcessor(ecto.BlackBox):
     """
+    Once the different features are computed, the points are merged together and a mesh is computed
     """
     @classmethod
     def declare_cells(cls, _p):
@@ -126,39 +172,3 @@ class TODPostProcessor(ecto.BlackBox):
                  self.source['points3d'] >> self.point_merger['points'],
                  self.point_merger['points', 'descriptors'] >> self.model_filler['points', 'descriptors']
                  ]
-
-class TODTrainingPipeline(TrainingPipeline):
-    '''Implements the training pipeline functions'''
-
-    @classmethod
-    def type_name(cls):
-        return "TOD"
-
-    @classmethod
-    def incremental_model_builder(cls, *args, **kwargs):
-        pipeline_params = kwargs['pipeline_params']
-        args = kwargs['args']
-
-        # get the feature parameters
-        if 'feature' not in pipeline_params:
-            raise RuntimeError("You must supply feature parameters for TOD.")
-        feature_params = pipeline_params.get("feature")
-        # get the descriptor parameters
-        if 'descriptor' not in pipeline_params:
-            raise RuntimeError("You must supply descriptor parameters for TOD.")
-        descriptor_params = pipeline_params.get('descriptor')
-
-        # grab visualize if works.
-        visualize = getattr(args, 'visualize', False)
-        return TODModelBuilder(json_feature_params=dict_to_cpp_json_str(feature_params),
-                               json_descriptor_params=dict_to_cpp_json_str(descriptor_params),
-                               visualize=visualize)
-
-    @classmethod
-    def post_processor(cls, *args, **kwargs):
-        pipeline_params = kwargs['pipeline_params']
-        search_params = pipeline_params.get("search", False)
-
-        if not search_params:
-            raise RuntimeError("You must supply search parameters for TOD.")
-        return TODPostProcessor(json_search_params=dict_to_cpp_json_str(search_params))

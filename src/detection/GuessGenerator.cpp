@@ -49,6 +49,7 @@
 
 #include <object_recognition_core/common/types.h>
 #include <object_recognition_core/common/pose_result.h>
+#include <object_recognition_core/db/db_parameters.h>
 #include "adjacency_ransac.h"
 
 //#define DO_VALGRIND
@@ -84,7 +85,7 @@ namespace tod
       params.declare(&GuessGenerator::sensor_error_, "sensor_error", "The error (in meters) from the Kinect", 0.01);
       params.declare(&GuessGenerator::visualize_, "visualize", "If true, display temporary info through highgui",
                      false);
-      params.declare(&GuessGenerator::db_, "db", "The DB to get data from").required(true);
+      params.declare(&GuessGenerator::json_db_, "db", "The DB to get data from, as a JSON string").required(true);
     }
 
     static void
@@ -121,6 +122,9 @@ namespace tod
         colors_.push_back(cv::Scalar(170, 170, 170));
         colors_.push_back(cv::Scalar(255, 255, 255));
       }
+
+      // Set the DB
+      db_ = object_recognition_core::db::ObjectDbParameters(*json_db_).generateDb();
     }
 
     /** Get the 2d keypoints and figure out their 3D position from the depth map
@@ -228,7 +232,7 @@ namespace tod
             PoseResult pose_result;
             pose_result.set_R(cv::Mat(R_mat));
             pose_result.set_T(cv::Mat(tvec));
-            pose_result.set_object_id(*db_, object_id);
+            pose_result.set_object_id(db_, object_id);
             pose_results_->push_back(pose_result);
             Rs_->push_back(cv::Mat(R_mat));
             Ts_->push_back(cv::Mat(tvec));
@@ -270,7 +274,8 @@ namespace tod
     /** The object recognition results */
     ecto::spore<std::vector<object_recognition_core::common::PoseResult> > pose_results_;
     /** The DB */
-    ecto::spore<object_recognition_core::db::ObjectDbPtr> db_;
+    ecto::spore<std::string> json_db_;
+    object_recognition_core::db::ObjectDbPtr db_;
   }
   ;
 }

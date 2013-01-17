@@ -1,8 +1,8 @@
 find_package(object_recognition_core)
 if (object_recognition_core_FOUND)
     # pipeline tests
-    object_recognition_core_detection_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/config_detection.tod)
-    object_recognition_core_training_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/config_training.tod)
+    object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/config_detection.tod)
+    object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/config_training.tod)
 
     object_recognition_core_help_test(${CMAKE_CURRENT_SOURCE_DIR}/../apps/feature_viewer)
 endif()

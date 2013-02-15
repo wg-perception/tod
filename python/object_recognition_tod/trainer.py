@@ -6,6 +6,7 @@ Module defining the TOD trainer to train the TOD models
 from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
 from ecto_opencv import calib, features2d, highgui
 from ecto_opencv.features2d import FeatureDescriptor
+from object_recognition_core.db.cells import ModelWriter
 from object_recognition_core.pipelines.training import TrainerBase, ObservationDealer
 from object_recognition_tod import ecto_training
 import ecto
@@ -16,7 +17,7 @@ from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
 class TodTrainer(ecto.BlackBox, TrainerBase):
     def __init__(self, *args, **kwargs):
         ecto.BlackBox.__init__(self, *args, **kwargs)
-        TrainerBase.__init__(self, *args, **kwargs)
+        TrainerBase.__init__(self)
 
     @classmethod
     def declare_cells(cls, _p):

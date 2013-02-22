@@ -1,0 +1,243 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>object_recognition_tod: Textured Object Detection &mdash; object_recognition_tod</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="object_recognition_tod" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="#">object_recognition_tod</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">object_recognition_tod: Textured Object Detection</a><ul>
+<li><a class="reference internal" href="#training">Training</a></li>
+<li><a class="reference internal" href="#detection">Detection</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="object-recognition-tod-textured-object-detection">
+<span id="tod"></span><h1>object_recognition_tod: Textured Object Detection<a class="headerlink" href="#object-recognition-tod-textured-object-detection" title="Permalink to this headline">¶</a></h1>
+<p>Texture Object Detection (TOD) is based on a standard bag of features technique.</p>
+<div class="section" id="training">
+<h2>Training<a class="headerlink" href="#training" title="Permalink to this headline">¶</a></h2>
+<p>In the config file you need to specify the feature/descriptor to use as well as the search parameters.</p>
+<p>The DB parameters are standard <em class="xref std std-ref">ObjectDbParameters</em> parameters.
+A typical config file looks like this:</p>
+<div class="highlight-yaml"><div class="highlight"><pre><span class="c1"># info about the db</span>
+<span class="l-Scalar-Plain">pipeline1</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">TodTrainer</span>
+  <span class="l-Scalar-Plain">module</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">object_recognition_tod</span>
+  <span class="l-Scalar-Plain">submethod</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">descriptor</span><span class="p-Indicator">:</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="s">&#39;ORB&#39;</span>
+  <span class="l-Scalar-Plain">parameters</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">feature</span><span class="p-Indicator">:</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ORB</span>
+      <span class="l-Scalar-Plain">module</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ecto_opencv.features2d</span>
+      <span class="l-Scalar-Plain">n_features</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1000</span>
+      <span class="l-Scalar-Plain">n_levels</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">3</span>
+      <span class="l-Scalar-Plain">scale_factor</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1.2</span>
+    <span class="l-Scalar-Plain">descriptor</span><span class="p-Indicator">:</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ORB</span>
+      <span class="l-Scalar-Plain">module</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ecto_opencv.features2d</span>
+    <span class="l-Scalar-Plain">search</span><span class="p-Indicator">:</span>
+      <span class="l-Scalar-Plain">key_size</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">24</span>
+      <span class="l-Scalar-Plain">multi_probe_level</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">2</span>
+      <span class="l-Scalar-Plain">n_tables</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">8</span>
+      <span class="l-Scalar-Plain">radius</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">55</span>
+      <span class="l-Scalar-Plain">ratio</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0.8</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="s">&#39;LSH&#39;</span>
+    <span class="l-Scalar-Plain">db</span><span class="p-Indicator">:</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="s">&#39;CouchDB&#39;</span>
+      <span class="l-Scalar-Plain">root</span><span class="p-Indicator">:</span> <span class="s">&#39;http://localhost:5984&#39;</span>
+      <span class="l-Scalar-Plain">collection</span><span class="p-Indicator">:</span> <span class="s">&#39;object_recognition&#39;</span>
+
+    <span class="c1"># The list of object_ids to analyze</span>
+    <span class="l-Scalar-Plain">object_ids</span><span class="p-Indicator">:</span> <span class="s">&quot;all&quot;</span>
+</pre></div>
+</div>
+<p>During training, in the different views of the object features and descriptors are extracted.
+For each of those, if depth was also captured (which is the only supported method and is highly recommended
+anyway), the 3d position is also stored.</p>
+<p>You can also view the point cloud of the features by launching the <tt class="docutils literal"><span class="pre">apps/feature_viewer</span></tt> application</p>
+<div class="highlight-text"><div class="highlight"><pre>$ /home/vrabaud/workspace/recognition_kitchen_groovy/src/object_recognition_tod/doc/source/../../apps/feature_viewer --help
+usage: feature_viewer [-h] [--db_type DB_TYPE] [--db_root DB_ROOT_URL]
+                      [--db_collection DB_COLLECTION] [--commit]
+                      [--niter ITERATIONS] [--shell] [--gui]
+                      [--logfile LOGFILE] [--graphviz] [--dotfile DOTFILE]
+                      [--stats]
+                      object_id
+
+positional arguments:
+  object_id             The id of the object for which the TOD model will be
+                        displayed.
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+Database Parameters:
+  --db_type DB_TYPE     The type of database used: one of [CouchDB]. Default:
+                        CouchDB
+  --db_root DB_ROOT_URL
+                        The database root URL to connect to. Default:
+                        http://localhost:5984
+  --db_collection DB_COLLECTION
+                        The database root URL to connect to. Default:
+                        object_recognition
+  --commit              Commit the data to the database.
+
+Ecto runtime parameters:
+  --niter ITERATIONS    Run the graph for niter iterations. 0 means run until
+                        stopped by a cell or external forces. (default: 0)
+  --shell               &#39;Bring up an ipython prompt, and execute
+                        asynchronously.(default: False)
+  --gui                 Bring up a gui to help execute the plasm.
+  --logfile LOGFILE     Log to the given file, use tail -f LOGFILE to see the
+                        live output. May be useful in combination with --shell
+  --graphviz            Show the graphviz of the plasm. (default: False)
+  --dotfile DOTFILE     Output a graph in dot format to the given file. If no
+                        file is given, no output will be generated. (default:
+                        )
+  --stats               Show the runtime statistics of the plasm.
+</pre></div>
+</div>
+</div>
+<div class="section" id="detection">
+<h2>Detection<a class="headerlink" href="#detection" title="Permalink to this headline">¶</a></h2>
+<p>A typical config file looks like this:</p>
+<div class="highlight-yaml"><div class="highlight"><pre><span class="l-Scalar-Plain">source1</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="s">&#39;OpenNI&#39;</span>
+  <span class="l-Scalar-Plain">module</span><span class="p-Indicator">:</span> <span class="s">&#39;object_recognition_core.io.source&#39;</span>
+  <span class="l-Scalar-Plain">parameters</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">image_mode</span><span class="p-Indicator">:</span> <span class="s">&#39;SXGA_RES&#39;</span>
+    <span class="l-Scalar-Plain">depth_mode</span><span class="p-Indicator">:</span> <span class="s">&#39;VGA_RES&#39;</span>
+    <span class="l-Scalar-Plain">image_fps</span><span class="p-Indicator">:</span> <span class="s">&#39;FPS_15&#39;</span>
+    <span class="l-Scalar-Plain">depth_fps</span><span class="p-Indicator">:</span> <span class="s">&#39;FPS_30&#39;</span>
+
+<span class="c1">#Use this instead to receive images via ROS</span>
+<span class="c1">#source1:</span>
+<span class="c1">#  type: ros_kinect</span>
+<span class="c1">#  rgb_frame_id: &#39;/camera_rgb_optical_frame&#39;</span>
+
+<span class="l-Scalar-Plain">pipeline1</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="s">&#39;TodDetector&#39;</span>
+  <span class="l-Scalar-Plain">module</span><span class="p-Indicator">:</span> <span class="s">&#39;object_recognition_tod&#39;</span>
+  <span class="l-Scalar-Plain">subtype</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="s">&#39;ORB&#39;</span>
+  <span class="l-Scalar-Plain">inputs</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">source1</span><span class="p-Indicator">]</span>
+  <span class="l-Scalar-Plain">parameters</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">object_ids</span><span class="p-Indicator">:</span> <span class="s">&quot;all&quot;</span>
+    <span class="l-Scalar-Plain">feature</span><span class="p-Indicator">:</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ORB</span>
+      <span class="l-Scalar-Plain">module</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ecto_opencv.features2d</span>
+      <span class="l-Scalar-Plain">n_features</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">5000</span>
+      <span class="l-Scalar-Plain">n_levels</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">3</span>
+      <span class="l-Scalar-Plain">scale_factor</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1.2</span>
+    <span class="l-Scalar-Plain">descriptor</span><span class="p-Indicator">:</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ORB</span>
+      <span class="l-Scalar-Plain">module</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ecto_opencv.features2d</span>
+    <span class="l-Scalar-Plain">search</span><span class="p-Indicator">:</span> 
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">LSH</span>
+      <span class="l-Scalar-Plain">module</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">ecto_opencv.features2d</span>
+      <span class="l-Scalar-Plain">key_size</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">16</span>
+      <span class="l-Scalar-Plain">multi_probe_level</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1</span>
+      <span class="l-Scalar-Plain">n_tables</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">10</span>
+      <span class="l-Scalar-Plain">radius</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">35</span>
+      <span class="l-Scalar-Plain">ratio</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0.8</span>
+    <span class="l-Scalar-Plain">n_ransac_iterations</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">2500</span>
+    <span class="l-Scalar-Plain">min_inliers</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">8</span>
+    <span class="l-Scalar-Plain">sensor_error</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0.01</span>
+    <span class="l-Scalar-Plain">db</span><span class="p-Indicator">:</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">CouchDB</span>
+      <span class="l-Scalar-Plain">root</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">http://localhost:5984</span>
+      <span class="l-Scalar-Plain">collection</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">object_recognition</span>
+</pre></div>
+</div>
+<p>During detection, features/descriptors are computed on the current image and compared to our database. Sets of seen
+descriptors are then checked with the nearest neighbors (descriptor-wise) for an analogous 3d configuration.
+In the case of 3d input data, it is just a 3d to 3d comparison, but if the input is only 2d, it&#8217;s a PnP problem
+(for which we have not plugged the solvePnP from OpenCV).</p>
+<p>So basically, you can only get the pose of an object on an RGBD input for now.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="#">object_recognition_tod</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013,  Willow Garage, Inc.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

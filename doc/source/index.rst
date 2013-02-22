@@ -15,7 +15,7 @@ In the config file you need to specify the feature/descriptor to use as well as 
 The DB parameters are standard :ref:`ObjectDbParameters <object_recognition_core_db>` parameters.
 A typical config file looks like this:
 
-.. literalinclude:: ../../conf/config_training.tod
+.. literalinclude:: ../../conf/training.ork
     :language: yaml
 
 During training, in the different views of the object features and descriptors are extracted.
@@ -33,7 +33,7 @@ Detection
 
 A typical config file looks like this:
 
-.. literalinclude:: ../../conf/config_detection.tod
+.. literalinclude:: ../../conf/detection.ork
     :language: yaml
 
 During detection, features/descriptors are computed on the current image and compared to our database. Sets of seen

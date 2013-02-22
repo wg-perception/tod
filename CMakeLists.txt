@@ -51,6 +51,9 @@ if(BUILD_TEST)
   add_subdirectory(test)
 endif()
 
+# add docs
+ecto_sphinx(${CMAKE_CURRENT_SOURCE_DIR}/doc/source doc)
+
 # install the applications
 install(PROGRAMS ${PROJECT_SOURCE_DIR}/apps/feature_viewer
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

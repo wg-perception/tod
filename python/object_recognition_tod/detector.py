@@ -24,7 +24,8 @@ class TodDetector(ecto.BlackBox, DetectorBase):
         ecto.BlackBox.__init__(self, *args, **kwargs)
         DetectorBase.__init__(self)
 
-    def declare_cells(self, p):
+    @staticmethod
+    def declare_cells(p):
         guess_params = {}
         guess_params['visualize'] = p.visualize
         guess_params['db'] = p.db

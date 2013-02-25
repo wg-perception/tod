@@ -79,7 +79,8 @@ class TodIncrementalModelBuilder(ecto.BlackBox):
     def declare_direct_params(p):
         p.declare('visualize', 'If true, displays images at runtime', False)
 
-    def declare_forwards(self, p):
+    @staticmethod
+    def declare_forwards(p):
         p = {'feature_descriptor': [Forward('json_feature_params'), Forward('json_descriptor_params')]}
         i = {'source': 'all'}
         o = {'model_stacker': 'all'}

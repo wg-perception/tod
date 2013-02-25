@@ -28,7 +28,7 @@ class TodDetector(ecto.BlackBox, DetectorBase):
     def declare_cells(p):
         guess_params = {}
         guess_params['visualize'] = p.visualize
-        guess_params['db'] = p.db
+        guess_params['db'] = p.json_db
 
         cells = {'depth_map': CellInfo(RescaledRegisteredDepth),
                  'feature_descriptor': CellInfo(FeatureDescriptor),
@@ -59,15 +59,15 @@ class TodDetector(ecto.BlackBox, DetectorBase):
 
     @classmethod
     def declare_direct_params(self, p):
-        p.declare('db', 'The DB to get data from as a JSON string', '{}')
+        p.declare('json_db', 'The DB to get data from as a JSON string', '{}')
         p.declare('search', 'The search parameters as a JSON string', '{}')
-        p.declare('object_ids', 'The ids of the objects to find as a JSON list or the keyword "all".', 'all')
+        p.declare('json_object_ids', 'The ids of the objects to find as a JSON list or the keyword "all".', 'all')
         p.declare('visualize', 'If true, some windows pop up to see the progress', False)
 
     def configure(self, p, _i, _o):
         self.descriptor_matcher = ecto_detection.DescriptorMatcher("Matcher",
                             search_json_params=p['search'],
-                            json_object_ids=p['object_ids'])
+                            json_object_ids=p['json_object_ids'])
 
         self._depth_map = RescaledRegisteredDepth()
         self._points3d = DepthTo3d()

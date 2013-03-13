@@ -71,7 +71,7 @@ namespace tod
       unsigned int index = 0;
       BOOST_FOREACH(const object_recognition_core::db::Document & document, db_documents)
       {
-        ObjectId object_id = document.get_value<std::string>("object_id");
+        ObjectId object_id = document.get_field<std::string>("object_id");
         std::cout << "Loading model for object id: " << object_id << std::endl;
         cv::Mat descriptors;
         document.get_attachment<cv::Mat>("descriptors", descriptors);

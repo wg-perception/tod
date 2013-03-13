@@ -51,7 +51,10 @@ namespace tod
     process(const tendrils& inputs, const tendrils& outputs)
     {
       const std::string & model_id = inputs.get < std::string > ("model_id");
-      object_recognition_core::db::Document doc(db_, model_id);
+      object_recognition_core::db::Document doc;
+      doc.set_db(db_);
+      doc.set_document_id(model_id);
+      doc.load_fields();
 
       cv::Mat points, descriptors;
       doc.get_attachment < cv::Mat > ("points", points);
@@ -106,7 +109,10 @@ namespace tod
 
       BOOST_FOREACH(const ModelId & model_id, model_ids_)
       {
-        object_recognition_core::db::Document doc(db_, model_id);
+        object_recognition_core::db::Document doc;
+        doc.set_db(db_);
+        doc.set_document_id(model_id);
+        doc.load_fields();
 
         cv::Mat descriptors, points;
         doc.get_attachment<cv::Mat>("descriptors", descriptors);

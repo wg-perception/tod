@@ -6,7 +6,7 @@ Module defining the TOD trainer to train the TOD models
 from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
 from ecto_opencv import calib, features2d, highgui
 from ecto_opencv.features2d import FeatureDescriptor
-from object_recognition_core.db.cells import ModelWriter
+from object_recognition_core.ecto_cells.db import ModelWriter
 from object_recognition_core.pipelines.training import TrainerBase, ObservationDealer
 from object_recognition_tod import ecto_training
 import ecto
@@ -22,9 +22,8 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
     @classmethod
     def declare_cells(cls, _p):
         # passthrough cells
-        cells = {'json_db': CellInfo(ecto.Constant),
-                 'object_id': CellInfo(ecto.Constant)
-                 }
+        cells = {'object_id': CellInfo(ecto.Constant),
+                 'json_db': CellInfo(ecto.Constant)}
 
         # 'real cells'
         cells.update({'model_writer': CellInfo(ModelWriter),
@@ -36,7 +35,8 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
     def declare_forwards(cls, _p):
         p = {'json_db': [Forward('value', 'json_db')],
              'model_writer': [Forward('json_submethod'), Forward('method')],
-             'object_id': [Forward('value', 'object_id')]}
+             'object_id': [Forward('value', 'object_id')],
+             'observation_dealer': [Forward('observation_ids'), Forward('json_db_dealer')]}
         i = {}
         o = {}
 
@@ -49,9 +49,8 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
     def connections(self, p):
         connections = []
         # Connect the model builder to the source
-        for key in self.observation_dealer.outputs.iterkeys():
-            if key in  self.incremental_model_builder.inputs.keys():
-                connections += [self.observation_dealer[key] >> self.incremental_model_builder[key]]
+        for key in set(self.observation_dealer.outputs.keys()).intersection(set(self.incremental_model_builder.inputs.keys())):
+            connections += [self.observation_dealer[key] >> self.incremental_model_builder[key]]
 
         # connect the output to the post-processor
         for key in set(self.incremental_model_builder.outputs.keys()).intersection(self.post_processor.inputs.keys()):

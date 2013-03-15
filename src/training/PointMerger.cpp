@@ -80,6 +80,8 @@ namespace tod
       unsigned int n_points = 0, n_images = descriptors_->size();
       for (size_t image_id = 0; image_id < n_images; ++image_id)
         n_points += (*descriptors_)[image_id].rows;
+      if (n_points == 0)
+        return ecto::OK;
 
       // Fill the descriptors and 3d points
       *out_descriptors_ = cv::Mat(n_points, (*descriptors_)[0].cols, (*descriptors_)[0].depth());

@@ -21,14 +21,22 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
 
     @classmethod
     def declare_cells(cls, _p):
-        return {'model_writer': CellInfo(ModelWriter),
-                'observation_dealer': CellInfo(ObservationDealer),
-                'passthrough': ecto.PassthroughN(items={'json_db':'The DB parameters as a JSON string'})}
+        # passthrough cells
+        cells = {'json_db': CellInfo(ecto.Constant),
+                 'object_id': CellInfo(ecto.Constant)
+                 }
+
+        # 'real cells'
+        cells.update({'model_writer': CellInfo(ModelWriter),
+                      'observation_dealer': CellInfo(ObservationDealer)})
+
+        return cells
 
     @classmethod
     def declare_forwards(cls, _p):
-        p = {'model_writer': [Forward('json_submethod')],
-             'passthrough': 'all'}
+        p = {'json_db': [Forward('value', 'json_db')],
+             'model_writer': [Forward('json_submethod'), Forward('method')],
+             'object_id': [Forward('value', 'object_id')]}
         i = {}
         o = {}
 
@@ -50,7 +58,9 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
             connections += [self.incremental_model_builder[key] >> self.post_processor[key]]
 
         # and write everything to the DB
-        connections += [self.post_processor["db_document"] >> self.model_writer["db_document"]]
+        connections += [ self.json_db['out'] >> self.model_writer['json_db'],
+                         self.object_id['out'] >> self.model_writer['object_id'],
+                         self.post_processor["db_document"] >> self.model_writer["db_document"]]
 
         return connections
 

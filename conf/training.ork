@@ -5,6 +5,7 @@ pipeline1:
   submethod:
     descriptor:
       type: 'ORB'
+  method: TOD
   parameters:
     feature:
       type: ORB

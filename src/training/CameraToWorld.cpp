@@ -41,6 +41,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
+#include "training.h"
+
 using ecto::tendrils;
 
 /** Ecto module that transforms 3d points from camera coordinates to world coordinates
@@ -59,26 +61,11 @@ struct CameraToWorld
   int
   process(const tendrils& inputs, const tendrils& outputs)
   {
-    cv::Mat_<float> R, T, in_points;
-    inputs.get<cv::Mat>("R").convertTo(R, CV_32F);
-    inputs.get<cv::Mat>("T").reshape(1, 1).convertTo(T, CV_32F);
-    cv::Mat in_points_ori;
-    inputs["points"] >> in_points_ori;
-    if (in_points_ori.empty() == false)
-    {
-      in_points_ori.reshape(1, in_points_ori.size().area()).convertTo(in_points, CV_32F);
-      cv::Mat_<float> T_repeat;
-      cv::repeat(T, in_points.rows, 1, T_repeat);
+    cv::Mat points_out;
+    cameraToWorld(inputs.get<cv::Mat>("R"), inputs.get<cv::Mat>("T"), inputs.get<cv::Mat>("points"), points_out);
 
-      // Apply the inverse translation/rotation
-      cv::Mat points = (in_points - T_repeat) * R;
-      // Reshape to the original size
-      outputs["points"] << points.reshape(3, in_points_ori.rows);
-    }
-    else
-    {
-      outputs["points"] << cv::Mat();
-    }
+    outputs["points"] << points_out;
+
     return 0;
   }
 };

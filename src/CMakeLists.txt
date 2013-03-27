@@ -16,7 +16,6 @@ link_ecto(ecto_detection ${OpenCV_LIBRARIES}
                          ${Boost_LIBRARIES}
 )
 
-
 # deal with the training TOD modules
 ectomodule(ecto_training DESTINATION ${PROJECT_NAME}
                          INSTALL
@@ -26,6 +25,7 @@ ectomodule(ecto_training DESTINATION ${PROJECT_NAME}
                          training/ModelFiller.cpp
                          training/module.cpp
                          training/PointMerger.cpp
+                         training/training.cpp
                          common/adjacency_ransac.cpp
                          common/maximum_clique.cpp
 )

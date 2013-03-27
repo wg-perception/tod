@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2013, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -33,61 +33,20 @@
  *
  */
 
-#include <vector>
-
-#include <boost/foreach.hpp>
-
-#include <Eigen/Core>
-#include <Eigen/StdVector>
-
-#include <ecto/ecto.hpp>
-
 #include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
-#include <object_recognition_core/common/types_eigen.h>
+#ifndef TRAINING_H_
+#define TRAINING_H_
 
-#include "training.h"
+void validateKeyPoints(const std::vector<cv::KeyPoint> & in_keypoints, const cv::Mat &in_mask, const cv::Mat & depth,
+                       const cv::Mat &in_K, const cv::Mat & descriptors, cv::Mat final_points,
+                       cv::Mat & final_descriptors);
 
-namespace tod
-{
-  /** cell storing the 3d points and descriptors while a model is being computed
-   */
-  struct PointMerger
-  {
-  public:
-    static void
-    declare_io(const ecto::tendrils& params, ecto::tendrils& inputs, ecto::tendrils& outputs)
-    {
-      inputs.declare < std::vector<cv::Mat> > ("descriptors", "The descriptors per image.").required(true);
-      inputs.declare < std::vector<cv::Mat> > ("points", "The 3d points.").required(true);
+void mergePoints(const std::vector<cv::Mat> &in_descriptors, const std::vector<cv::Mat> &in_points,
+                 cv::Mat &out_descriptors, cv::Mat &out_points);
 
-      outputs.declare < cv::Mat > ("descriptors", "The stacked descriptors.");
-      outputs.declare < cv::Mat > ("points", "The 3d position of the points.");
-    }
+void cameraToWorld(const cv::Mat &R_in, const cv::Mat &T_in, const cv::Mat & in_points_ori,
+                   cv::Mat &points_out);
 
-    void
-    configure(const ecto::tendrils& params, const ecto::tendrils& inputs, const ecto::tendrils& outputs)
-    {
-      in_points_ = inputs["points"];
-      descriptors_ = inputs["descriptors"];
-
-      out_points_ = outputs["points"];
-      out_descriptors_ = outputs["descriptors"];
-    }
-
-    int
-    process(const ecto::tendrils& inputs, const ecto::tendrils& outputs)
-    {
-    mergePoints(*descriptors_, *in_points_, *out_descriptors_, *out_points_);
-
-      return ecto::OK;
-    }
-  private:
-    ecto::spore<std::vector<cv::Mat> > in_points_;
-    ecto::spore<std::vector<cv::Mat> > descriptors_;
-    ecto::spore<cv::Mat> out_points_;
-    ecto::spore<cv::Mat> out_descriptors_;
-  };
-}
-
-ECTO_CELL(ecto_training, tod::PointMerger, "PointMerger", "Merge the points and descriptor")
+#endif /* TRAINING_H_ */

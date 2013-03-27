@@ -47,6 +47,8 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/rgbd/rgbd.hpp>
 
+#include "training.h"
+
 using ecto::tendrils;
 
 namespace
@@ -64,12 +66,6 @@ namespace
   struct KeypointsValidator
   {
     static void
-    declare_params(ecto::tendrils& params)
-    {
-      params.declare<double>("baseline", "the baseline in meters", 0.075).required();
-    }
-
-    static void
     declare_io(const tendrils& params, tendrils& inputs, tendrils& outputs)
     {
       inputs.declare<std::vector<cv::KeyPoint> >("keypoints", "The keypoints").required(true);
@@ -79,131 +75,28 @@ namespace
       inputs.declare<cv::Mat>("depth", "The depth image (with a size similar to the mask one).").required(true);
 
       outputs.declare(&KeypointsValidator::points_out_, "points", "The valid keypoints: 1 x n_points x 2 channels (x in pixels, y in pixels)");
-      outputs.declare(&KeypointsValidator::disparities_, "disparities",
-                      "The valid keypoints: 1 x n_points (disparity in pixels)");
-      outputs.declare<cv::Mat>("descriptors", "The matching descriptors, n_points x feature_length");
-    }
-
-    void
-    configure(const ecto::tendrils& params, const ecto::tendrils& inputs, const ecto::tendrils& outputs)
-    {
-      baseline_ = params["baseline"];
+      outputs.declare(&KeypointsValidator::descriptors_out_, "descriptors", "The matching descriptors, n_points x feature_length");
     }
 
     int
     process(const tendrils& inputs, const tendrils& outputs)
     {
       const std::vector<cv::KeyPoint> & in_keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
-      cv::Mat in_mask, depth, descriptors, in_K, K;
+      cv::Mat in_mask, depth, descriptors, in_K;
       inputs["mask"] >> in_mask;
       inputs["depth"] >> depth;
       inputs["K"] >> in_K;
-      in_K.convertTo(K, CV_32FC1);
       inputs["descriptors"] >> descriptors;
-      size_t n_points = descriptors.rows;
-      cv::Mat clean_descriptors = cv::Mat(descriptors.size(), descriptors.type());
-      cv::Mat_ < cv::Vec2f > clean_points(1, n_points);
-      std::vector<double> disparities;
-      disparities.reserve(n_points);
 
-      cv::Mat_<uchar> mask;
-      in_mask.convertTo(mask, CV_8U);
-      // Erode just because of the possible rescaling
-      cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), 4);
-
-      int width = mask.cols, height = mask.rows;
-      size_t clean_row_index = 0;
-      for (size_t keypoint_index = 0; keypoint_index < n_points; ++keypoint_index)
-      {
-        // First, make sure that the keypoint belongs to the mask
-        const cv::KeyPoint & in_keypoint = in_keypoints[keypoint_index];
-        unsigned int x = roundWithinBounds(in_keypoint.pt.x, 0, width), y = roundWithinBounds(in_keypoint.pt.y, 0,
-                                                                                              height);
-        float z;
-        bool is_good = false;
-        if (mask(y, x))
-          is_good = true;
-        else
-        {
-          // If the keypoint does not belong to the mask, look in a slightly bigger neighborhood
-          int window_size = 2;
-          float min_dist_sq = std::numeric_limits<float>::max();
-          // Look into neighborhoods of different sizes to see if we have a point in the mask
-          for (unsigned int i = roundWithinBounds(x - window_size, 0, width);
-              i <= roundWithinBounds(x + window_size, 0, width); ++i)
-            for (unsigned int j = roundWithinBounds(y - window_size, 0, height);
-                j <= roundWithinBounds(y + window_size, 0, height); ++j)
-              if (mask(j, i))
-              {
-                float dist_sq = (i - in_keypoint.pt.x) * (i - in_keypoint.pt.x)
-                                + (j - in_keypoint.pt.y) * (j - in_keypoint.pt.y);
-                if (dist_sq < min_dist_sq)
-                {
-                  // If the point is in the mask and the closest from the keypoint
-                  x = i;
-                  y = j;
-                  min_dist_sq = dist_sq;
-                  is_good = true;
-                }
-              }
-        }
-        if (!is_good)
-          continue;
-
-        // Now, check that the depth of the keypoint is valid
-        switch (depth.depth())
-        {
-          case CV_16U:
-            z = depth.at<uint16_t>(y, x);
-            if (!cv::isValidDepth(uint16_t(z)))
-              is_good = false;
-            z /= 1000;
-            break;
-          case CV_16S:
-            z = depth.at<int16_t>(y, x);
-            if (!cv::isValidDepth(int16_t(z)))
-              is_good = false;
-            z /= 1000;
-            break;
-          case CV_32F:
-            z = depth.at<float>(y, x);
-            if (!cv::isValidDepth(float(z)))
-              is_good = false;
-            break;
-          default:
-            continue;
-            break;
-        }
-
-        if (!is_good)
-          continue;
-
-        // Store the keypoint and descriptor
-        clean_points.at<cv::Vec2f>(0, clean_row_index) = cv::Vec2f(x, y);
-        disparities.push_back((*baseline_) * K.at<float>(0, 0) / z);
-        cv::Mat clean_descriptor_row = clean_descriptors.row(clean_row_index++);
-        descriptors.row(keypoint_index).copyTo(clean_descriptor_row);
-      }
-
-      cv::Mat final_points, final_descriptors;
-      if (clean_row_index > 0)
-      {
-        clean_points.colRange(0, clean_row_index).copyTo(final_points);
-        clean_descriptors.rowRange(0, clean_row_index).copyTo(final_descriptors);
-      }
-
-      *points_out_ = final_points;
-      outputs.get<cv::Mat>("descriptors") = final_descriptors;
-      *disparities_ = disparities;
+      validateKeyPoints(in_keypoints, in_mask, depth, in_K, descriptors, *points_out_, *descriptors_out_);
 
       return ecto::OK;
     }
   private:
-    ecto::spore<double> baseline_;
-    /** The disparities for the valid */
-    ecto::spore<std::vector<double> > disparities_;
     /** The valid 2d points */
     ecto::spore<cv::Mat> points_out_;
+    /** The valid descriptors */
+    ecto::spore<cv::Mat> descriptors_out_;
   };
 }
 

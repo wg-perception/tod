@@ -1,0 +1,128 @@
+/*
+ * Software License Agreement (BSD License)
+ *
+ *  Copyright (c) 2012, Willow Garage, Inc.
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+#include <string>
+#include <vector>
+
+#include <boost/foreach.hpp>
+
+#include <Eigen/Core>
+#include <Eigen/StdVector>
+
+#include <ecto/ecto.hpp>
+
+#include <opencv2/core/core.hpp>
+
+#include <object_recognition_core/common/types_eigen.h>
+#include <object_recognition_core/db/prototypes/observations.hpp>
+
+#include "training.h"
+
+/** cell storing the 3d points and descriptors while a model is being computed
+ */
+struct Trainer {
+ public:
+  static void declare_params(ecto::tendrils& params) {
+    params.declare(
+        &Trainer::json_feature_params_,
+        "json_feature_params",
+        std::string("Parameters for the feature as a JSON string. ")
+            + std::string("It should have the format: \"{\"type\":\"ORB/SIFT whatever\", ")
+            + std::string("\"module\":\"where_it_is\", \"param_1\":val1, ....}"),
+        "{\"type\": \"ORB\", \"module\": \"ecto_opencv.features2d\"}").required(true);
+    params.declare(
+        &Trainer::json_descriptor_params_,
+        "json_descriptor_params",
+        std::string("Parameters for the descriptor as a JSON string. ")
+            + std::string("It should have the format: \"{\"type\":\"ORB/SIFT whatever\", ")
+            + std::string("\"module\":\"where_it_is\", \"param_1\":val1, ....}"""),
+        "{\"type\": \"ORB\", \"module\": \"ecto_opencv.features2d\"}").required(true);
+    params.declare(&Trainer::object_id_, "object_id", "The id of the object in the DB.");
+    params.declare(&Trainer::json_db_, "json_db", "The parameters of the DB as a JSON string.");
+    params.declare(&Trainer::visualize_, "visualize", "If true, debug data is visualized.", false);
+  }
+
+  static void declare_io(const ecto::tendrils& params, ecto::tendrils& inputs, ecto::tendrils& outputs) {
+    outputs.declare(&Trainer::descriptors_out_, "descriptors", "The stacked descriptors.");
+    outputs.declare(&Trainer::points_out_, "points", "The 3d position of the points.");
+  }
+
+  int process(const ecto::tendrils& inputs, const ecto::tendrils& outputs) {
+    // TODO Get observations from the DB
+    size_t n_observations = 0;
+
+    std::vector<cv::Mat> descriptors_all(n_observations), points_all(n_observations);
+    for (size_t i = 0; i < n_observations; ++i) {
+      // Convert the observation to a usable type
+      object_recognition_core::prototypes::Observation obs;
+      // TODO initialize the doc properly
+      object_recognition_core::db::Document doc;
+      obs << doc;
+
+      // TODO Compute the features/descriptors on the image
+      cv::Mat points, descriptors;
+      std::vector<cv::KeyPoint> keypoints;
+
+      // Validate the keypoints
+      cv::Mat points_clean;
+      validateKeyPoints(keypoints, obs.mask, obs.depth, obs.K, descriptors, points_clean, descriptors_all[i]);
+
+      // Convert the points to world coordinates
+      cameraToWorld(obs.R, obs.T, points_clean, points_all[i]);
+
+      // visualize data if asked for
+      if (!(*visualize_)) {
+        // TODO
+      }
+    }
+
+    // merge the points into unique cv::Mat
+    mergePoints(descriptors_all, points_all, *descriptors_out_, *points_out_);
+
+    return ecto::OK;
+  }
+ private:
+  ecto::spore<std::string> json_feature_params_;
+  ecto::spore<std::string> json_descriptor_params_;
+  ecto::spore<std::string> object_id_;
+  ecto::spore<std::string> json_db_;
+  ecto::spore<std::vector<cv::Mat> > descriptors_in_;
+  ecto::spore<std::vector<cv::Mat> > points_in_;
+  ecto::spore<cv::Mat> points_out_;
+  ecto::spore<cv::Mat> descriptors_out_;
+  ecto::spore<bool> visualize_;
+};
+
+ECTO_CELL(ecto_training, Trainer, "Trainer", "Compute TOD models for a given object")

@@ -25,6 +25,7 @@ ectomodule(ecto_training DESTINATION ${PROJECT_NAME}
                          training/ModelFiller.cpp
                          training/module.cpp
                          training/PointMerger.cpp
+                         training/Trainer.cpp
                          training/training.cpp
                          common/adjacency_ransac.cpp
                          common/maximum_clique.cpp

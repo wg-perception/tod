@@ -1,7 +1,7 @@
 #include <ecto/ecto.hpp>
 #include <opencv2/core/core.hpp>
 
-#include <object_recognition_core/db/db.h>
+#include <object_recognition_core/db/document.h>
 
 namespace tod
 {

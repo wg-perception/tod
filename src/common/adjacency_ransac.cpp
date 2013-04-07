@@ -34,6 +34,7 @@
  */
 
 #include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>

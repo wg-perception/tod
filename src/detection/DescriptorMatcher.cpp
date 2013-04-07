@@ -47,7 +47,6 @@
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types.h>
-#include <object_recognition_core/db/db.h>
 #include <object_recognition_core/db/ModelReader.h>
 #include <object_recognition_core/db/opencv.h>
 #include <opencv_candidate/lsh.h>

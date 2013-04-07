@@ -40,7 +40,6 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <object_recognition_core/db/db.h>
 #include "maximum_clique.h"
 
 namespace tod
@@ -81,7 +80,7 @@ namespace tod
     void
     Ransac(float sensor_error, unsigned int n_ransac_iterations, IndexVector& inliers, cv::Matx33f &R, cv::Vec3f &T);
 
-    object_recognition_core::db::ObjectId object_id_;
+    std::string object_id_;
     size_t object_index_;
     tod::maximum_clique::Graph graph_;
     /** matrix indicating whether two points are close enough physically */

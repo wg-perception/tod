@@ -49,7 +49,7 @@
 
 #include <object_recognition_core/common/types.h>
 #include <object_recognition_core/common/pose_result.h>
-#include <object_recognition_core/db/db_parameters.h>
+#include <object_recognition_core/db/db.h>
 #include "adjacency_ransac.h"
 
 //#define DO_VALGRIND

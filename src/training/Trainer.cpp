@@ -38,69 +38,89 @@
 
 #include <boost/foreach.hpp>
 
-#include <Eigen/Core>
-#include <Eigen/StdVector>
-
 #include <ecto/ecto.hpp>
 
 #include <opencv2/core/core.hpp>
 
 #include <object_recognition_core/common/types_eigen.h>
+#include <object_recognition_core/db/db.h>
 #include <object_recognition_core/db/prototypes/observations.hpp>
+#include <object_recognition_core/db/view.h>
 
 #include "training.h"
 
 /** cell storing the 3d points and descriptors while a model is being computed
  */
 struct Trainer {
- public:
+public:
   static void declare_params(ecto::tendrils& params) {
-    params.declare(
-        &Trainer::json_feature_params_,
-        "json_feature_params",
+    params.declare(&Trainer::json_feature_params_, "json_feature_params",
         std::string("Parameters for the feature as a JSON string. ")
-            + std::string("It should have the format: \"{\"type\":\"ORB/SIFT whatever\", ")
-            + std::string("\"module\":\"where_it_is\", \"param_1\":val1, ....}"),
-        "{\"type\": \"ORB\", \"module\": \"ecto_opencv.features2d\"}").required(true);
-    params.declare(
-        &Trainer::json_descriptor_params_,
-        "json_descriptor_params",
+            + std::string(
+                "It should have the format: \"{\"type\":\"ORB/SIFT whatever\", ")
+            + std::string(
+                "\"module\":\"where_it_is\", \"param_1\":val1, ....}"),
+        "{\"type\": \"ORB\", \"module\": \"ecto_opencv.features2d\"}").required(
+        true);
+    params.declare(&Trainer::json_descriptor_params_, "json_descriptor_params",
         std::string("Parameters for the descriptor as a JSON string. ")
-            + std::string("It should have the format: \"{\"type\":\"ORB/SIFT whatever\", ")
-            + std::string("\"module\":\"where_it_is\", \"param_1\":val1, ....}"""),
-        "{\"type\": \"ORB\", \"module\": \"ecto_opencv.features2d\"}").required(true);
-    params.declare(&Trainer::object_id_, "object_id", "The id of the object in the DB.");
-    params.declare(&Trainer::json_db_, "json_db", "The parameters of the DB as a JSON string.");
-    params.declare(&Trainer::visualize_, "visualize", "If true, debug data is visualized.", false);
+            + std::string(
+                "It should have the format: \"{\"type\":\"ORB/SIFT whatever\", ")
+            + std::string(
+                "\"module\":\"where_it_is\", \"param_1\":val1, ....}" ""),
+        "{\"type\": \"ORB\", \"module\": \"ecto_opencv.features2d\"}").required(
+        true);
+    params.declare(&Trainer::visualize_, "visualize",
+        "If true, debug data is visualized.", false);
   }
 
-  static void declare_io(const ecto::tendrils& params, ecto::tendrils& inputs, ecto::tendrils& outputs) {
-    outputs.declare(&Trainer::descriptors_out_, "descriptors", "The stacked descriptors.");
-    outputs.declare(&Trainer::points_out_, "points", "The 3d position of the points.");
+  static void declare_io(const ecto::tendrils& params, ecto::tendrils& inputs,
+      ecto::tendrils& outputs) {
+    inputs.declare(&Trainer::json_db_, "json_db",
+        "The parameters of the DB as a JSON string.").required(true);
+    inputs.declare(&Trainer::object_id_, "object_id",
+        "The id of the object in the DB.").required(true);
+
+    outputs.declare(&Trainer::descriptors_out_, "descriptors",
+        "The stacked descriptors.");
+    outputs.declare(&Trainer::points_out_, "points",
+        "The 3d position of the points.");
   }
 
   int process(const ecto::tendrils& inputs, const ecto::tendrils& outputs) {
-    // TODO Get observations from the DB
-    size_t n_observations = 0;
+    // Get the DB
+    object_recognition_core::db::ObjectDbPtr db =
+        object_recognition_core::db::ObjectDbParameters(*json_db_).generateDb();
+    // Get observations from the DB
+    object_recognition_core::db::View view(
+        object_recognition_core::db::View::VIEW_OBSERVATION_WHERE_OBJECT_ID);
+    view.set_key(*object_id_);
+    object_recognition_core::db::ViewIterator view_iterator(view, db);
 
-    std::vector<cv::Mat> descriptors_all(n_observations), points_all(n_observations);
-    for (size_t i = 0; i < n_observations; ++i) {
+    std::vector<cv::Mat> descriptors_all, points_all;
+    object_recognition_core::db::ViewIterator iter = view_iterator.begin(),
+        end = view_iterator.end();
+    for (; iter != end; ++iter) {
       // Convert the observation to a usable type
       object_recognition_core::prototypes::Observation obs;
-      // TODO initialize the doc properly
-      object_recognition_core::db::Document doc;
-      obs << doc;
+      object_recognition_core::db::ViewElement view_element = (*iter);
+      obs << &view_element;
 
       // TODO Compute the features/descriptors on the image
       cv::Mat points, descriptors;
       std::vector<cv::KeyPoint> keypoints;
+      continue;
 
       // Validate the keypoints
-      cv::Mat points_clean;
-      validateKeyPoints(keypoints, obs.mask, obs.depth, obs.K, descriptors, points_clean, descriptors_all[i]);
+      cv::Mat points_clean, descriptors_final;
+      validateKeyPoints(keypoints, obs.mask, obs.depth, obs.K, descriptors,
+          points_clean, descriptors_final);
+      descriptors_all.push_back(descriptors_final);
 
       // Convert the points to world coordinates
-      cameraToWorld(obs.R, obs.T, points_clean, points_all[i]);
+      cv::Mat points_final;
+      cameraToWorld(obs.R, obs.T, points_clean, points_final);
+      points_all.push_back(points_final);
 
       // visualize data if asked for
       if (!(*visualize_)) {
@@ -113,7 +133,7 @@ struct Trainer {
 
     return ecto::OK;
   }
- private:
+private:
   ecto::spore<std::string> json_feature_params_;
   ecto::spore<std::string> json_descriptor_params_;
   ecto::spore<std::string> object_id_;
@@ -125,4 +145,5 @@ struct Trainer {
   ecto::spore<bool> visualize_;
 };
 
-ECTO_CELL(ecto_training, Trainer, "Trainer", "Compute TOD models for a given object")
+ECTO_CELL(ecto_training, Trainer, "Trainer",
+    "Compute TOD models for a given object")

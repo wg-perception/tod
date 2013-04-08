@@ -103,13 +103,12 @@ public:
     for (; iter != end; ++iter) {
       // Convert the observation to a usable type
       object_recognition_core::prototypes::Observation obs;
-      object_recognition_core::db::ViewElement view_element = (*iter);
+      object_recognition_core::db::Document view_element = (*iter);
       obs << &view_element;
 
       // TODO Compute the features/descriptors on the image
       cv::Mat points, descriptors;
       std::vector<cv::KeyPoint> keypoints;
-      continue;
 
       // Validate the keypoints
       cv::Mat points_clean, descriptors_final;

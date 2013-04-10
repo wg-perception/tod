@@ -27,7 +27,7 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
 
         # 'real cells'
         cells.update({'model_filler': ecto_training.ModelFiller(),
-                      'model_writer': CellInfo(ModelWriter),
+                      'model_writer': CellInfo(ModelWriter, params={'method':'TOD'}),
                       'trainer': CellInfo(ecto_training.Trainer)})
 
         return cells
@@ -36,8 +36,7 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
     def declare_forwards(cls, _p):
         p = {'json_db': [Forward('value', 'json_db')],
              'object_id': [Forward('value', 'object_id')]}
-        p.update({'model_writer': [Forward('json_submethod'), Forward('method')],
-                  'trainer': 'all'})
+        p.update({'trainer': 'all'})
         i = {}
         o = {}
 

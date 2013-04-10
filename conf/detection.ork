@@ -2,9 +2,9 @@ source1:
   type: 'OpenNI'
   module: 'object_recognition_core.io.source'
   parameters:
-    image_mode: 'SXGA_RES'
+    image_mode: 'VGA_RES'
     depth_mode: 'VGA_RES'
-    image_fps: 'FPS_15'
+    image_fps: 'FPS_30'
     depth_fps: 'FPS_30'
 
 #Use this instead to receive images via ROS
@@ -15,8 +15,6 @@ source1:
 pipeline1:
   type: 'TodDetector'
   module: 'object_recognition_tod'
-  subtype:
-    type: 'ORB'
   inputs: [source1]
   parameters:
     object_ids: "all"

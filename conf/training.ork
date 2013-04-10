@@ -2,10 +2,6 @@
 pipeline1:
   type: TodTrainer
   module: object_recognition_tod
-  submethod:
-    descriptor:
-      type: 'ORB'
-  method: TOD
   parameters:
     feature:
       type: ORB

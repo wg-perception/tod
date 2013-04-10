@@ -40,8 +40,8 @@
 #define TRAINING_H_
 
 void validateKeyPoints(const std::vector<cv::KeyPoint> & in_keypoints, const cv::Mat &in_mask, const cv::Mat & depth,
-                       const cv::Mat &in_K, const cv::Mat & descriptors, cv::Mat final_points,
-                       cv::Mat & final_descriptors);
+                       const cv::Mat &in_K, const cv::Mat & descriptors, std::vector<cv::KeyPoint> & out_keypoints,
+                       cv::Mat &final_points, cv::Mat & final_descriptors);
 
 void mergePoints(const std::vector<cv::Mat> &in_descriptors, const std::vector<cv::Mat> &in_points,
                  cv::Mat &out_descriptors, cv::Mat &out_points);

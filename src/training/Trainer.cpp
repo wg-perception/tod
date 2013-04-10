@@ -41,6 +41,9 @@
 #include <ecto/ecto.hpp>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/rgbd/rgbd.hpp>
 
 #include <object_recognition_core/common/types_eigen.h>
 #include <object_recognition_core/db/db.h>
@@ -48,6 +51,26 @@
 #include <object_recognition_core/db/view.h>
 
 #include "training.h"
+
+void rescale_depth(const cv::Mat depth_in, const cv::Size & isize,
+    cv::Mat &depth_out) {
+  cv::Size dsize = depth_in.size();
+  cv::Mat depth;
+  rescaleDepth(depth_in, CV_32F, depth);
+
+  if (dsize == isize) {
+    depth_out = depth;
+    return;
+  }
+
+  float factor = float(isize.width) / dsize.width; //scaling factor.
+  cv::Mat output(isize, depth.type(), std::numeric_limits<float>::quiet_NaN()); //output is same size as image.
+  //resize into the subregion of the correct aspect ratio
+  cv::Mat subregion(output.rowRange(0, dsize.height * factor));
+  //use nearest neighbor to prevent discontinuities causing bogus depth.
+  cv::resize(depth, subregion, subregion.size(), CV_INTER_NN);
+  depth_out = output;
+}
 
 /** cell storing the 3d points and descriptors while a model is being computed
  */
@@ -106,24 +129,41 @@ public:
       object_recognition_core::db::Document view_element = (*iter);
       obs << &view_element;
 
-      // TODO Compute the features/descriptors on the image
+      // Compute the features/descriptors on the image
       cv::Mat points, descriptors;
       std::vector<cv::KeyPoint> keypoints;
+      // TODO actually use the params and do not force ORB
+      cv::ORB orb;
+      orb(obs.image, obs.mask, keypoints, descriptors);
+
+      // Rescale the depth
+      cv::Mat depth;
+      rescale_depth(obs.depth, obs.image.size(), depth);
 
       // Validate the keypoints
       cv::Mat points_clean, descriptors_final;
-      validateKeyPoints(keypoints, obs.mask, obs.depth, obs.K, descriptors,
-          points_clean, descriptors_final);
+      std::vector<cv::KeyPoint> keypoints_final;
+      validateKeyPoints(keypoints, obs.mask, depth, obs.K, descriptors,
+          keypoints_final, points_clean, descriptors_final);
+
+      if (points_clean.empty())
+        continue;
       descriptors_all.push_back(descriptors_final);
 
       // Convert the points to world coordinates
-      cv::Mat points_final;
-      cameraToWorld(obs.R, obs.T, points_clean, points_final);
+      cv::Mat points_clean_3d, points_final;
+      depthTo3dSparse(depth, obs.K, points_clean, points_clean_3d);
+      cameraToWorld(obs.R, obs.T, points_clean_3d, points_final);
       points_all.push_back(points_final);
 
       // visualize data if asked for
       if (!(*visualize_)) {
-        // TODO
+        // TODO: draw keypoints on the masked object
+        cv::namedWindow("keypoints");
+        cv::Mat img;
+        cv::drawKeypoints(obs.image, keypoints, img, cv::Scalar(255,0,0));
+        cv::imshow("keypoints", img);
+        cv::waitKey(10);
       }
     }
 

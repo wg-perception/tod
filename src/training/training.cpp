@@ -48,15 +48,15 @@ inline unsigned int roundWithinBounds(float xy, int xy_min, int xy_max) {
 }
 
 void validateKeyPoints(const std::vector<cv::KeyPoint> & in_keypoints, const cv::Mat &in_mask, const cv::Mat & depth,
-                       const cv::Mat &in_K, const cv::Mat & descriptors, cv::Mat final_points,
-                       cv::Mat & final_descriptors) {
+                       const cv::Mat &in_K, const cv::Mat & descriptors, std::vector<cv::KeyPoint> & final_keypoints,
+                       cv::Mat &final_points, cv::Mat & final_descriptors) {
   cv::Mat K;
   in_K.convertTo(K, CV_32FC1);
   size_t n_points = descriptors.rows;
   cv::Mat clean_descriptors = cv::Mat(descriptors.size(), descriptors.type());
   cv::Mat_<cv::Vec2f> clean_points(1, n_points);
-  std::vector<double> disparities;
-  disparities.reserve(n_points);
+  final_keypoints.clear();
+  final_keypoints.reserve(n_points);
 
   cv::Mat_<uchar> mask;
   in_mask.convertTo(mask, CV_8U);
@@ -128,6 +128,7 @@ void validateKeyPoints(const std::vector<cv::KeyPoint> & in_keypoints, const cv:
     clean_points.at<cv::Vec2f>(0, clean_row_index) = cv::Vec2f(x, y);
     cv::Mat clean_descriptor_row = clean_descriptors.row(clean_row_index++);
     descriptors.row(keypoint_index).copyTo(clean_descriptor_row);
+    final_keypoints.push_back(in_keypoint);
   }
 
   if (clean_row_index > 0) {

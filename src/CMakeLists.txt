@@ -19,12 +19,8 @@ link_ecto(ecto_detection ${OpenCV_LIBRARIES}
 # deal with the training TOD modules
 ectomodule(ecto_training DESTINATION ${PROJECT_NAME}
                          INSTALL
-                         training/CameraToWorld.cpp
-                         training/KeypointValidator.cpp
-                         training/ModelStacker.cpp
                          training/ModelFiller.cpp
                          training/module.cpp
-                         training/PointMerger.cpp
                          training/Trainer.cpp
                          training/training.cpp
                          common/adjacency_ransac.cpp

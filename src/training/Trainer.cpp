@@ -157,8 +157,8 @@ public:
       points_all.push_back(points_final);
 
       // visualize data if asked for
-      if (!(*visualize_)) {
-        // TODO: draw keypoints on the masked object
+      if (*visualize_) {
+        // draw keypoints on the masked object
         cv::namedWindow("keypoints");
         cv::Mat img;
         cv::drawKeypoints(obs.image, keypoints, img, cv::Scalar(255,0,0));

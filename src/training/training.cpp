@@ -140,7 +140,7 @@ void validateKeyPoints(const std::vector<cv::KeyPoint> & in_keypoints, const cv:
 void mergePoints(const std::vector<cv::Mat> &in_descriptors, const std::vector<cv::Mat> &in_points,
                  cv::Mat &out_descriptors, cv::Mat &out_points) {
   // Figure out the number of points
-  unsigned int n_points = 0, n_images = in_descriptors.size();
+  size_t n_points = 0, n_images = in_descriptors.size();
   for (size_t image_id = 0; image_id < n_images; ++image_id)
     n_points += in_descriptors[image_id].rows;
   if (n_points == 0)
@@ -153,14 +153,16 @@ void mergePoints(const std::vector<cv::Mat> &in_descriptors, const std::vector<c
   for (size_t image_id = 0; image_id < n_images; ++image_id) {
     // Copy the descriptors
     const cv::Mat & descriptors = in_descriptors[image_id];
-    cv::Mat sub_descriptors = out_descriptors.rowRange(row_index, row_index + descriptors.rows);
+    int n_points = descriptors.rows;
+    cv::Mat sub_descriptors = out_descriptors.rowRange(row_index, row_index + n_points);
     descriptors.copyTo(sub_descriptors);
     // Copy the 3d points
-    BOOST_FOREACH ( const cv::Mat & vec, in_points){
-    out_points.at<cv::Vec3f>(0, row_index) = cv::Vec3f(vec.at<float>(0), vec.at<float>(1), vec.at<float>(2));
-    ++row_index;
+    const cv::Mat & points = in_points[image_id];
+    cv::Mat sub_points = out_points.colRange(row_index, row_index + n_points);
+    points.copyTo(sub_points);
+
+    row_index += n_points;
   }
-}
 }
 
 void cameraToWorld(const cv::Mat &R_in, const cv::Mat &T_in, const cv::Mat & in_points_ori,

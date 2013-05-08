@@ -26,7 +26,7 @@ class TodDetector(ecto.BlackBox, DetectorBase):
         cells = {'depth_map': RescaledRegisteredDepth(),
                  'feature_descriptor': CellInfo(FeatureDescriptor),
                  'guess_generator': CellInfo(ecto_detection.GuessGenerator, guess_params),
-                 'passthrough': CellInfo(ecto.PassthroughN, {'items':{'image':'An image', 'K':'The camera matrix'}})}
+                 'passthrough': CellInfo(ecto.PassthroughN, {'items':{'image':'An image', 'K_image':'The camera matrix'}})}
 
         return cells
 
@@ -37,7 +37,7 @@ class TodDetector(ecto.BlackBox, DetectorBase):
              'guess_generator': [Forward('n_ransac_iterations'),
                                  Forward('min_inliers'),
                                  Forward('sensor_error')]}
-        i = {'passthrough': [Forward('image'), Forward('K')],
+        i = {'passthrough': [Forward('image'), Forward('K_image')],
              'feature_descriptor': [Forward('mask')],
              'depth_map': [Forward('depth')]}
 
@@ -65,7 +65,7 @@ class TodDetector(ecto.BlackBox, DetectorBase):
         # Rescale the depth image and convert to 3d
         graph = [ self.passthrough['image'] >> self.depth_map['image'],
                   self.depth_map['depth'] >> self._points3d['depth'],
-                  self.passthrough['K'] >> self._points3d['K'],
+                  self.passthrough['K_image'] >> self._points3d['K'],
                   self._points3d['points3d'] >> self.guess_generator['points3d'] ]
         # make sure the inputs reach the right cells
         if 'depth' in self.feature_descriptor.inputs.keys():

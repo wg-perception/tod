@@ -27,8 +27,6 @@ voter1:
 pipeline1:
   type: 'TodDetector'
   module: 'object_recognition_tod'
-  subtype:
-    type: 'ORB'
   inputs: [source1]
   outputs: [voter1]
   parameters:

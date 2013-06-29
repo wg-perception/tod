@@ -8,7 +8,7 @@
   <license>BSD</license>
   <copyright>Willow Garage</copyright>
 
-  <url>http://ecto.willowgarage.com</url>
+  <url>http://wg-perception.github.io/tod/</url>
   <build_depends>catkin</build_depends>
   <build_depends>ecto</build_depends>
   <build_depends>ecto_opencv</build_depends>

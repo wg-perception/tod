@@ -1,18 +1,18 @@
-source1:
-  type: 'OpenNI'
-  module: 'object_recognition_core.io.source'
-  parameters:
-    image_mode: 'SXGA_RES'
-    depth_mode: 'VGA_RES'
-    image_fps: 'FPS_15'
-    depth_fps: 'FPS_30'
+#source1:
+#  type: 'OpenNI'
+#  module: 'object_recognition_core.io.source'
+#  parameters:
+#    image_mode: 'SXGA_RES'
+#    depth_mode: 'VGA_RES'
+#    image_fps: 'FPS_15'
+#    depth_fps: 'FPS_30'
 
 #Use this instead to receive images via ROS
-#source1:
-#  type: RosKinect
-#  module: 'object_recognition_ros.io'
-#  parameters:
-#    rgb_frame_id: 'camera_rgb_optical_frame'
+source1:
+  type: RosKinect
+  module: 'object_recognition_ros.io'
+  parameters:
+    rgb_frame_id: 'camera_rgb_optical_frame'
 
 sink1:
   type: 'Publisher'
@@ -51,7 +51,7 @@ pipeline1:
       radius: 35
       ratio: 0.8
     n_ransac_iterations: 2500
-    min_inliers: 8
+    min_inliers: 6
     sensor_error: 0.01
     db:
       type: CouchDB

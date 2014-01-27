@@ -1,11 +1,10 @@
-find_package(object_recognition_core)
-if (object_recognition_core_FOUND)
-    # pipeline tests
-    object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/detection.ros.ork)
-    object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/detection.ork)
-    object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/training.ork)
+# pipeline tests
+object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/detection.ros.ork)
+object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/detection.ork)
+object_recognition_core_config_test(${CMAKE_CURRENT_SOURCE_DIR}/../conf/training.ork)
 
-    object_recognition_core_help_test(${CMAKE_CURRENT_SOURCE_DIR}/../apps/feature_viewer)
+if (ecto_pcl_FOUND)
+  object_recognition_core_help_test(${CMAKE_CURRENT_SOURCE_DIR}/../apps/feature_viewer)
 endif()
 
 # clique test

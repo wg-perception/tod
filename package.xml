@@ -16,6 +16,7 @@
 
   <run_depend>ecto</run_depend>
   <run_depend>ecto_opencv</run_depend>
+  <run_depend>ecto_openni</run_depend>
   <run_depend>object_recognition_core</run_depend>
 
   <buildtool_depend>catkin</buildtool_depend>

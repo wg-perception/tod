@@ -13,6 +13,8 @@ source1:
   module: 'object_recognition_ros.io'
   parameters:
     rgb_frame_id: 'camera_rgb_optical_frame'
+    rgb_camera_info: '/camera/rgb/camera_info'
+    rgb_image_topic: '/camera/rgb/image_raw'
 
 sink1:
   type: 'Publisher'
@@ -20,6 +22,11 @@ sink1:
   parameters:
     visualize: true
     object_ids: 'all'
+    
+sink2:
+  type: Publisher
+  module: 'object_recognition_ros.io'
+  inputs: [source1]
 
 voter1:
   type: 'Aggregator'
@@ -30,13 +37,13 @@ pipeline1:
   type: 'TodDetector'
   module: 'object_recognition_tod'
   inputs: [source1]
-  outputs: [voter1]
+  outputs: [voter1, sink2]
   parameters:
     object_ids: "all"
     feature:
       type: ORB
       module: ecto_opencv.features2d
-      n_features: 5000
+      n_features: 1000
       n_levels: 3
       scale_factor: 1.2
     descriptor:
@@ -45,12 +52,12 @@ pipeline1:
     search: 
       type: LSH
       module: ecto_opencv.features2d
-      key_size: 16
-      multi_probe_level: 1
-      n_tables: 10
-      radius: 35
+      key_size: 24
+      multi_probe_level: 2
+      n_tables: 8
+      radius: 55
       ratio: 0.8
-    n_ransac_iterations: 2500
+    n_ransac_iterations: 1000
     min_inliers: 6
     sensor_error: 0.01
     db:

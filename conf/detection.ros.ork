@@ -15,6 +15,8 @@ source1:
     rgb_frame_id: 'camera_rgb_optical_frame'
     rgb_camera_info: '/camera/rgb/camera_info'
     rgb_image_topic: '/camera/rgb/image_raw'
+    depth_image_topic: '/camera/depth/image_raw'
+    depth_camera_info: '/camera/depth/camera_info'
 
 sink1:
   type: 'Publisher'

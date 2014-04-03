@@ -9,6 +9,7 @@
 
   <url>http://wg-perception.github.io/tod/</url>
 
+  <build_depend>cmake_modules</build_depend>
   <build_depend>ecto</build_depend>
   <build_depend>ecto_opencv</build_depend>
   <build_depend>eigen</build_depend>

@@ -225,32 +225,16 @@ namespace tod
       std::vector<cv::KeyPoint> local_keypoints(query_indices.size());
 
       for (unsigned int j = 0; j < query_indices.size(); ++j)
-      {
-    	  local_keypoints[j] = keypoints[query_indices[j]];
-
-
-    	  cv::Point p(local_keypoints[j].pt.x, local_keypoints[j].pt.y);
-    	  //cv::circle(out_img, p, 10, colors[i]);
-    	  cv::circle(out_img, p, 10, cv::Scalar(255,0,0));
-
-      }
-
-      // DEBUG
-//      std::cout << "MX " << (int)local_keypoints[local_keypoints.size()-1].pt.x << std::endl;
-//      std::cout << "Max x " << max_x << std::endl;
-//      std::cout << "Max y " << max_y << std::endl;
+      { local_keypoints[j] = keypoints[query_indices[j]]; }
 
       cv::namedWindow("keypoints from objects", 0);
-	  //cv::drawKeypoints(out_img, local_keypoints, out_img, colors[i]);// NOT WORK (SEG FAULT)
+	  cv::drawKeypoints(out_img, local_keypoints, out_img, colors[i]);// NOT WORK (SEG FAULT)
 	  cv::imshow("keypoints from objects", out_img);
 	  cv::waitKey(10);
 
       ++i;
-      if (i >= colors.size()){
-    	std::cout << "i = " << i << std::endl;
-    	std::cout << "Colors size" << colors.size() << std::endl;
-
-        break;}
+      if (i >= colors.size())
+        break;
     }
 
 

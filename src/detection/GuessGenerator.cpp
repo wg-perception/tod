@@ -108,7 +108,7 @@ namespace tod
     configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs)
     {
 
-      if (*visualize_)
+      if (!*visualize_)
       {
         colors_.push_back(cv::Scalar(255, 255, 0));
         colors_.push_back(cv::Scalar(0, 255, 255));
@@ -178,8 +178,8 @@ namespace tod
         size_t color_index = 0;
         if (!*visualize_)
         {
-          DrawClustersPerObject(keypoints, colors_, initial_image, all_object_points);
-          initial_image.copyTo(visualize_img);
+			DrawClustersPerObject(keypoints, colors_, initial_image, all_object_points);
+			initial_image.copyTo(visualize_img);
         }
 
         // For each object, build the connectivity graph between the matches

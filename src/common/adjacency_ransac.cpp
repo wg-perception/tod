@@ -39,10 +39,13 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/rgbd/rgbd.hpp>
 
 #include "adjacency_ransac.h"
 #include "ransac.h"
 #include "sac_model_registration_graph.h"
+
 
 namespace tod
 {
@@ -209,24 +212,36 @@ namespace tod
                         const cv::Mat & initial_image, const OpenCVIdToObjectPoints &object_points)
   {
     cv::Mat out_img = initial_image.clone();
+
     unsigned int i = 0;
+
     // Draw the keypoints with a different color per object
-    for (OpenCVIdToObjectPoints::const_iterator query_iterator = object_points.begin();
-        query_iterator != object_points.end(); ++query_iterator)
+    for (OpenCVIdToObjectPoints::const_iterator query_iterator = object_points.begin(); query_iterator != object_points.end(); ++query_iterator)
     {
       AdjacencyRansac::IndexVector query_indices = query_iterator->second.query_indices();
       AdjacencyRansac::IndexVector::iterator end = std::unique(query_indices.begin(), query_indices.end());
+
       query_indices.resize(end - query_indices.begin());
       std::vector<cv::KeyPoint> local_keypoints(query_indices.size());
+
       for (unsigned int j = 0; j < query_indices.size(); ++j)
-        local_keypoints[j] = keypoints[query_indices[j]];
-      cv::drawKeypoints(out_img, local_keypoints, out_img, colors[i]);
+      { local_keypoints[j] = keypoints[query_indices[j]]; }
+
+      // DEBUG
+      //std::cout << "Size local KP " << local_keypoints[0].pt << std::endl;
+      //std::cout << "Size out_img " << out_img.size() << std::endl;
+
+	  cv::namedWindow("keypoints from objects", 0);
+	  //cv::drawKeypoints(out_img, local_keypoints, out_img, colors[i]);// NOT WORK (SEG FAULT)
+	  cv::imshow("keypoints from objects", out_img);
+	  cv::waitKey(10);
+
       ++i;
       if (i >= colors.size())
         break;
     }
-    cv::namedWindow("keypoints from objects", 0);
-    cv::imshow("keypoints from objects", out_img);
+
+
   }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

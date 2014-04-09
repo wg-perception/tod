@@ -61,6 +61,8 @@ using ecto::tendrils;
 using object_recognition_core::db::ObjectId;
 using object_recognition_core::common::PoseResult;
 
+
+
 namespace tod
 {
   namespace
@@ -80,11 +82,9 @@ namespace tod
     declare_params(ecto::tendrils& params)
     {
       params.declare(&GuessGenerator::min_inliers_, "min_inliers", "Minimum number of inliers", 15);
-      params.declare(&GuessGenerator::n_ransac_iterations_, "n_ransac_iterations", "Number of RANSAC iterations.",
-                     1000);
+      params.declare(&GuessGenerator::n_ransac_iterations_, "n_ransac_iterations", "Number of RANSAC iterations.", 1000);
       params.declare(&GuessGenerator::sensor_error_, "sensor_error", "The error (in meters) from the Kinect", 0.01);
-      params.declare(&GuessGenerator::visualize_, "visualize", "If true, display temporary info through highgui",
-                     false);
+      params.declare(&GuessGenerator::visualize_, "visualize", "If true, display temporary info through highgui", true);
       params.declare(&GuessGenerator::json_db_, "db", "The DB to get data from, as a JSON string").required(true);
     }
 
@@ -95,9 +95,7 @@ namespace tod
       inputs.declare<cv::Mat>("points3d", "The height by width 3 channel point cloud");
       inputs.declare<std::vector<cv::KeyPoint> >("keypoints", "The interesting keypoints");
       inputs.declare<std::vector<std::vector<cv::DMatch> > >("matches", "The list of OpenCV DMatch");
-      inputs.declare<std::vector<cv::Mat> >(
-          "matches_3d",
-          "The corresponding 3d position of those matches. For each point, a 1 by n 3 channel matrix (for x,y and z)");
+      inputs.declare<std::vector<cv::Mat> >("matches_3d", "The corresponding 3d position of those matches. For each point, a 1 by n 3 channel matrix (for x,y and z)");
       inputs.declare<std::map<ObjectId, float> >("spans", "For each found object, its span based on known features.");
       inputs.declare<std::vector<ObjectId> >("object_ids", "The ids used in the matches");
 
@@ -109,6 +107,7 @@ namespace tod
     void
     configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs)
     {
+
       if (*visualize_)
       {
         colors_.push_back(cv::Scalar(255, 255, 0));
@@ -121,6 +120,7 @@ namespace tod
         colors_.push_back(cv::Scalar(85, 85, 85));
         colors_.push_back(cv::Scalar(170, 170, 170));
         colors_.push_back(cv::Scalar(255, 255, 255));
+
       }
 
       // Set the DB
@@ -148,6 +148,13 @@ namespace tod
 
       const cv::Mat & initial_image = inputs.get<cv::Mat>("image");
 
+      // DEBUG
+	/*	std::cout << "Visualise " << *visualize_ << std::endl;
+		std::cout << "Min inliers " << *min_inliers_ << std::endl;
+		std::cout << "Cloud size " << point_cloud.size() << std::endl;
+		std::cout << "Image_init size " << initial_image.size() << std::endl;*/
+
+
       // Get the outputs
       pose_results_->clear();
       Rs_->clear();
@@ -166,9 +173,10 @@ namespace tod
         // Cluster the matches per object ID
         OpenCVIdToObjectPoints all_object_points;
         ClusterPerObject(keypoints, point_cloud, matches, matches_3d, all_object_points);
+
         cv::Mat visualize_img;
         size_t color_index = 0;
-        if (*visualize_)
+        if (!*visualize_)
         {
           DrawClustersPerObject(keypoints, colors_, initial_image, all_object_points);
           initial_image.copyTo(visualize_img);
@@ -219,7 +227,7 @@ namespace tod
             if (*visualize_)
             {
               std::vector<cv::KeyPoint> draw_keypoints;
-              BOOST_FOREACH(unsigned int index, query_inliers)draw_keypoints.push_back(
+              BOOST_FOREACH(unsigned int index, query_inliers) draw_keypoints.push_back(
                   keypoints[index]);
               if (color_index < colors_.size())
               {

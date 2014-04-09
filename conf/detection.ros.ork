@@ -14,7 +14,9 @@ source1:
   parameters:
     rgb_frame_id: 'camera_rgb_optical_frame'
     rgb_camera_info: '/camera/rgb/camera_info'
-    rgb_image_topic: '/camera/rgb/image_raw'
+    rgb_image_topic: '/camera/rgb/image_color'
+    depth_camera_info: '/camera/depth_registered/camera_info'
+    depth_image_topic: '/camera/depth_registered/image_raw'
 
 sink1:
   type: 'Publisher'
@@ -57,9 +59,10 @@ pipeline1:
       n_tables: 8
       radius: 55
       ratio: 0.8
-    n_ransac_iterations: 1000
+    n_ransac_iterations: 2500
     min_inliers: 6
     sensor_error: 0.01
+    #visualize: 0 # true(1) or false(0) ## true not work
     db:
       type: CouchDB
       root: http://localhost:5984

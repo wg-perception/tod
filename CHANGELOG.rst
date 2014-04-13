@@ -2,8 +2,8 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.0 (2014-04-13)
+------------------
 * compile under Indigo
 * Merge pull request `#6 <https://github.com/wg-perception/tod/issues/6>`_ from awesomebytes/patch-2
   For some reason this is needed using openni

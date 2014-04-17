@@ -216,7 +216,8 @@ namespace tod
     unsigned int i = 0;
 
     // Draw the keypoints with a different color per object
-    for (OpenCVIdToObjectPoints::const_iterator query_iterator = object_points.begin(); query_iterator != object_points.end(); ++query_iterator)
+    OpenCVIdToObjectPoints::const_iterator query_iterator = object_points.begin();
+    for ( ; query_iterator != object_points.end(); ++query_iterator)
     {
       AdjacencyRansac::IndexVector query_indices = query_iterator->second.query_indices();
       AdjacencyRansac::IndexVector::iterator end = std::unique(query_indices.begin(), query_indices.end());
@@ -228,15 +229,15 @@ namespace tod
       { local_keypoints[j] = keypoints[query_indices[j]]; }
 
       cv::namedWindow("keypoints from objects", 0);
-	  cv::drawKeypoints(out_img, local_keypoints, out_img, colors[i]);// NOT WORK (SEG FAULT)
-	  cv::imshow("keypoints from objects", out_img);
-	  cv::waitKey(10);
+      cv::drawKeypoints(out_img.clone(), local_keypoints, out_img, colors[i]);
+      cv::imshow("keypoints from objects", out_img);
+      cv::waitKey(1);
 
       ++i;
-      if (i >= colors.size())
+      if (i >= colors.size()){
         break;
+      }
     }
-
 
   }
 

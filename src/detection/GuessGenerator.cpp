@@ -84,7 +84,7 @@ namespace tod
       params.declare(&GuessGenerator::min_inliers_, "min_inliers", "Minimum number of inliers", 15);
       params.declare(&GuessGenerator::n_ransac_iterations_, "n_ransac_iterations", "Number of RANSAC iterations.", 1000);
       params.declare(&GuessGenerator::sensor_error_, "sensor_error", "The error (in meters) from the Kinect", 0.01);
-      params.declare(&GuessGenerator::visualize_, "visualize", "If true, display temporary info through highgui", true);
+      params.declare(&GuessGenerator::visualize_, "visualize", "If true, display temporary info through highgui", false);
       params.declare(&GuessGenerator::json_db_, "db", "The DB to get data from, as a JSON string").required(true);
     }
 
@@ -107,8 +107,8 @@ namespace tod
     void
     configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs)
     {
-
-      if (!*visualize_)
+      *visualize_ = true;
+      if (*visualize_)
       {
         colors_.push_back(cv::Scalar(255, 255, 0));
         colors_.push_back(cv::Scalar(0, 255, 255));
@@ -148,11 +148,21 @@ namespace tod
 
       const cv::Mat & initial_image = inputs.get<cv::Mat>("image");
 
+      // Input in BGR for unknown reason
+      // Change space color to RGB
+      cv:cvtColor(initial_image.clone(), initial_image, CV_BGR2RGB);
+
       // DEBUG
 	/*	std::cout << "Visualise " << *visualize_ << std::endl;
 		std::cout << "Min inliers " << *min_inliers_ << std::endl;
 		std::cout << "Cloud size " << point_cloud.size() << std::endl;
 		std::cout << "Image_init size " << initial_image.size() << std::endl;*/
+
+      // DEBUG
+
+
+
+
 
 
       // Get the outputs
@@ -176,10 +186,10 @@ namespace tod
 
         cv::Mat visualize_img;
         size_t color_index = 0;
-        if (!*visualize_)
+        if (*visualize_)
         {
-			DrawClustersPerObject(keypoints, colors_, initial_image, all_object_points);
-			initial_image.copyTo(visualize_img);
+            DrawClustersPerObject(keypoints, colors_, initial_image, all_object_points);
+            initial_image.copyTo(visualize_img);
         }
 
         // For each object, build the connectivity graph between the matches

@@ -53,16 +53,17 @@ pipeline1:
       module: ecto_opencv.features2d
     search: 
       type: LSH
+      #type: FLANN
       module: ecto_opencv.features2d
       key_size: 24
       multi_probe_level: 2
       n_tables: 8
-      radius: 55
-      ratio: 0.8
-    n_ransac_iterations: 2500
-    min_inliers: 6
+      radius: 55 
+      ratio: 1.2 
+      k_nn: 15 
+    n_ransac_iterations: 1000
+    min_inliers: 15
     sensor_error: 0.01
-    #visualize: 0 # true(1) or false(0) ## true not work
     db:
       type: CouchDB
       root: http://localhost:5984

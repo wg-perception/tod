@@ -43,7 +43,8 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
-//#include <opencv2/flann/flann.hpp>
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/nonfree/features2d.hpp"
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types.h>
@@ -146,8 +147,7 @@ namespace tod
       inputs.declare < cv::Mat > ("descriptors", "The descriptors to match to the database");
 
       outputs.declare < std::vector<std::vector<cv::DMatch> > > ("matches", "The matches for the input descriptors");
-      outputs.declare < std::vector<cv::Mat>
-      > ("matches_3d", "For each point, the 3d position of the matches, 1 by n matrix with 3 channels for, x, y, and z.");
+      outputs.declare < std::vector<cv::Mat> > ("matches_3d", "For each point, the 3d position of the matches, 1 by n matrix with 3 channels for, x, y, and z.");
       outputs.declare < std::vector<ObjectId> > ("object_ids", "The ids of the objects");
       outputs.declare < std::map<ObjectId, float> > ("spans", "The ids of the objects");
     }
@@ -170,18 +170,21 @@ namespace tod
 
         radius_ = search_param_tree["radius"].get_real();
         ratio_ = search_param_tree["ratio"].get_real();
+        k_nn_ = search_param_tree["k_nn"].get_real();
+
+        int n_tables = search_param_tree["n_tables"].get_uint64();
+        int key_size = search_param_tree["key_size"].get_uint64();
+        int multi_probe_level = search_param_tree["multi_probe_level"].get_uint64();
 
         // Create the matcher depending on the type of descriptors
         std::string search_type = search_param_tree["type"].get_str();
         if (search_type == "LSH")
         {
-          /*cv::flann::LshIndexParams lsh_params(search_param_tree.get<unsigned int>("n_tables"),
-           search_param_tree.get<unsigned int>("key_size"),
-           search_param_tree.get<unsigned int>("multi_probe_level"));
-           matcher_ = new cv::FlannBasedMatcher(&lsh_params);*/
-          matcher_ = new lsh::LshMatcher(search_param_tree["n_tables"].get_uint64(),
-                                         search_param_tree["key_size"].get_uint64(),
-                                         search_param_tree["multi_probe_level"].get_uint64());
+            matcher_ = new lsh::LshMatcher(n_tables, key_size, multi_probe_level);
+        }
+        else if (search_type == "FLANN")
+        {
+           //matcher_ = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(n_tables, key_size, multi_probe_level));
         }
         else
         {
@@ -200,27 +203,52 @@ namespace tod
     process(const ecto::tendrils& inputs, const ecto::tendrils& outputs)
     {
       std::vector < std::vector<cv::DMatch> > matches;
+
+      // for cross matching
+      std::vector < std::vector<cv::DMatch> > matches1;
+      std::vector < std::vector<cv::DMatch> > matches2;
+
       const cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
 
-      // Perform radius search
-      if (radius_)
+      if (matcher_->getTrainDescriptors().empty())
       {
-        if (matcher_->getTrainDescriptors().empty())
-        {
-          std::cerr << "No descriptors loaded" << std::endl;
-          return ecto::OK;
-        }
-        // Perform radius search
-        matcher_->radiusMatch(descriptors, matches, radius_);
+        std::cerr << "No descriptors loaded" << std::endl;
+        return ecto::OK;
       }
+
+      // TODO: Cross matching??
+
+      // Perform radius search
+      matcher_->radiusMatch(descriptors, matches1, radius_);
+      // Perform k-nearest neighbour search
+      matcher_->knnMatch(descriptors, matches2, k_nn_);
+
+      matches = matches2;
+
 
       // TODO Perform ratio testing if necessary
-      if (ratio_)
-      {
 
+      int removed=0;
+      // for all matches
+      std::vector<std::vector<cv::DMatch> >::iterator matchIterator = matches.begin();
+      for ( ; matchIterator!= matches.end(); ++matchIterator) {
+        if (matchIterator->size() > 1) { // if 2 NN has been identified
+            // check distance ratio
+            if ((*matchIterator)[0].distance / (*matchIterator)[1].distance > ratio_)
+            {
+              matchIterator->clear(); // remove match
+              removed++;
+            }
+        } else {  // does not have 2 neighbours
+            matchIterator->clear(); // remove match
+            removed++;
+        }
       }
+      //std::cout << "Removed " << removed << " matches" << std::endl;
+
 
       // TODO remove matches that match the same (common descriptors)
+
 
       // Build the 3D positions of the matches
       std::vector < cv::Mat > matches_3d(descriptors.rows);
@@ -230,12 +258,14 @@ namespace tod
         cv::Mat & local_matches_3d = matches_3d[match_index];
         local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
         unsigned int i = 0;
-BOOST_FOREACH      (const cv::DMatch & match, matches[match_index])
-      {
-        local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
-        ++i;
+        BOOST_FOREACH(const cv::DMatch & match, matches[match_index])
+        {
+          local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
+          ++i;
+        }
+        // check if it's necessary (don't crash)
+        matches_3d.push_back(local_matches_3d);
       }
-    }
 
       outputs["matches"] << matches;
       outputs["matches_3d"] << matches_3d;
@@ -251,6 +281,8 @@ BOOST_FOREACH      (const cv::DMatch & match, matches[match_index])
     unsigned int radius_;
     /** The ratio used for k-nearest neighbors, if not using radius search */
     unsigned int ratio_;
+    /** The k-nearest neighbor value for the search */
+    unsigned int k_nn_;
     /** The descriptors loaded from the DB */
     std::vector<cv::Mat> descriptors_db_;
     /** The 3d position of the descriptors loaded from the DB */

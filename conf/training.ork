@@ -6,8 +6,10 @@ pipeline1:
     feature:
       type: ORB
       module: ecto_opencv.features2d
-      n_features: 1000
-      n_levels: 3
+      #n_features: 1000
+      n_features: 500
+      #n_levels: 3
+      n_levels: 8
       scale_factor: 1.2
     descriptor:
       type: ORB

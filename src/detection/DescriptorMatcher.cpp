@@ -184,7 +184,7 @@ namespace tod
         }
         else if (search_type == "FLANN")
         {
-           //matcher_ = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(n_tables, key_size, multi_probe_level));
+            //matcher_ = new cv::FlannBasedMatcher();
         }
         else
         {
@@ -216,17 +216,26 @@ namespace tod
         return ecto::OK;
       }
 
-      // TODO: Cross matching??
-
       // Perform radius search
       matcher_->radiusMatch(descriptors, matches1, radius_);
       // Perform k-nearest neighbour search
       matcher_->knnMatch(descriptors, matches2, k_nn_);
 
-      matches = matches2;
+      matches = matches1;
+			
+      // TODO: Cross matching
+
+			std::vector<std::vector<cv::DMatch> >::iterator match1Iterator = matches1.begin();
+      for ( ; match1Iterator!= matches1.end(); ++match1Iterator) {
+      	std::vector<std::vector<cv::DMatch> >::iterator match2Iterator = matches2.begin();
+      	for ( ; match2Iterator!= matches2.end(); ++match2Iterator) {
+
+				}
+      }
 
 
       // TODO Perform ratio testing if necessary
+      // TODO remove matches that match the same (common descriptors)
 
       int removed=0;
       // for all matches
@@ -245,10 +254,6 @@ namespace tod
         }
       }
       //std::cout << "Removed " << removed << " matches" << std::endl;
-
-
-      // TODO remove matches that match the same (common descriptors)
-
 
       // Build the 3D positions of the matches
       std::vector < cv::Mat > matches_3d(descriptors.rows);

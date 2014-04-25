@@ -43,8 +43,8 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/nonfree/features2d.hpp"
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/nonfree/features2d.hpp>
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types.h>
@@ -184,7 +184,7 @@ namespace tod
         }
         else if (search_type == "FLANN")
         {
-            //matcher_ = new cv::FlannBasedMatcher();
+						matcher_ = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,10,2));
         }
         else
         {
@@ -219,19 +219,18 @@ namespace tod
       // Perform radius search
       matcher_->radiusMatch(descriptors, matches1, radius_);
       // Perform k-nearest neighbour search
-      matcher_->knnMatch(descriptors, matches2, k_nn_);
+      //matcher_->knnMatch(descriptors, matches2, k_nn_);
 
       matches = matches1;
 			
       // TODO: Cross matching
 
-			std::vector<std::vector<cv::DMatch> >::iterator match1Iterator = matches1.begin();
+      /*std::vector<std::vector<cv::DMatch> >::iterator match1Iterator = matches1.begin();
       for ( ; match1Iterator!= matches1.end(); ++match1Iterator) {
       	std::vector<std::vector<cv::DMatch> >::iterator match2Iterator = matches2.begin();
       	for ( ; match2Iterator!= matches2.end(); ++match2Iterator) {
-
-				}
-      }
+	}
+      }*/
 
 
       // TODO Perform ratio testing if necessary

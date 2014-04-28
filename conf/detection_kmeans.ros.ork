@@ -1,0 +1,69 @@
+#source1:
+#  type: 'OpenNI'
+#  module: 'object_recognition_core.io.source'
+#  parameters:
+#    image_mode: 'SXGA_RES'
+#    depth_mode: 'VGA_RES'
+#    image_fps: 'FPS_15'
+#    depth_fps: 'FPS_30'
+
+#Use this instead to receive images via ROS
+source1:
+  type: RosKinect
+  module: 'object_recognition_ros.io'
+  parameters:
+    rgb_frame_id: 'camera_rgb_optical_frame'
+    rgb_camera_info: '/camera/rgb/camera_info'
+    rgb_image_topic: '/camera/rgb/image_color'
+    depth_camera_info: '/camera/depth_registered/camera_info'
+    depth_image_topic: '/camera/depth_registered/image_raw'
+
+sink1:
+  type: 'Publisher'
+  module: 'object_recognition_ros.io'
+  parameters:
+    visualize: true
+    object_ids: 'all'
+    
+sink2:
+  type: Publisher
+  module: 'object_recognition_ros.io'
+  inputs: [source1]
+
+voter1:
+  type: 'Aggregator'
+  module: 'object_recognition_core.io'
+  outputs: [sink1]
+
+pipeline1:
+  type: 'TodDetector'
+  module: 'object_recognition_tod'
+  inputs: [source1]
+  outputs: [voter1, sink2]
+  parameters:
+    object_ids: "all"
+    feature:
+      type: ORB
+      module: ecto_opencv.features2d
+      n_features: 1000
+      n_levels: 3
+      scale_factor: 1.2
+    descriptor:
+      type: ORB
+      module: ecto_opencv.features2d
+    search: 
+      type: KMEANS_TREE # {LSH,KDE_TREE,KMEANS_TREE,RAND_KDE_KMEANS_TREE,AUTO_TUNED}
+      module: ecto_opencv.features2d
+      branching: 32
+      iterations: 11
+      cb_index: 0.2
+      radius: 55 
+      ratio: 1.2 
+      k_nn: 15 
+    n_ransac_iterations: 1000
+    min_inliers: 15
+    sensor_error: 0.01
+    db:
+      type: CouchDB
+      root: http://localhost:5984
+      collection: object_recognition

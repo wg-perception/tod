@@ -127,7 +127,17 @@ namespace tod
 
       // Clear the matcher and re-train it
       matcher_->clear();
+
+			// make sure it's CV_32F, if not FLANN sometimes crashes
+			for (unsigned int i = 0; i < descriptors_db_.size(); i++)
+			{
+				if(descriptors_db_[i].type() != CV_32F) 
+					descriptors_db_[i].convertTo(descriptors_db_[i], CV_32F); 
+			}
+
+			// Add the descriptors to train the matcher
       matcher_->add(descriptors_db_);
+
     }
 
     static void
@@ -168,23 +178,83 @@ namespace tod
           search_param_tree = value.get_obj();
         }
 
+				// Global search parameters
         radius_ = search_param_tree["radius"].get_real();
         ratio_ = search_param_tree["ratio"].get_real();
         k_nn_ = search_param_tree["k_nn"].get_real();
-
-        int n_tables = search_param_tree["n_tables"].get_uint64();
-        int key_size = search_param_tree["key_size"].get_uint64();
-        int multi_probe_level = search_param_tree["multi_probe_level"].get_uint64();
 
         // Create the matcher depending on the type of descriptors
         std::string search_type = search_param_tree["type"].get_str();
         if (search_type == "LSH")
         {
+						int n_tables = search_param_tree["n_tables"].get_uint64();
+				    int key_size = search_param_tree["key_size"].get_uint64();
+				    int multi_probe_level = search_param_tree["multi_probe_level"].get_uint64();
+
             matcher_ = new lsh::LshMatcher(n_tables, key_size, multi_probe_level);
         }
         else if (search_type == "FLANN")
         {
-						matcher_ = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,10,2));
+					// Parameters object
+					cv::flann::IndexParams* params;
+
+					// Create the parameters depending on the desired searching method
+					std::string param_type = search_param_tree["param_type"].get_str();
+					if (param_type == "KDE_TREE")
+					{
+						// Randomized kd-trees which will be searched in parallel
+						int trees = 4; 
+						params = new cv::flann::KDTreeIndexParams(trees);
+					}
+					else if (param_type == "KMEANS_TREE")
+					{
+						// Hierarchical k-means tree
+						int branching = 32;
+						int iterations = 11;
+						cvflann::flann_centers_init_t centers_init = cvflann::CENTERS_RANDOM;
+						float cb_index = 0.2;
+						params = new cv::flann::KMeansIndexParams(branching, iterations, centers_init, cb_index);
+
+					}	
+					else if (param_type == "RAND_KDE_KMEANS_TREE")
+					{
+						// Combines the randomized kd-trees and the hierarchical k-means tree
+						int trees = 4; 
+						int branching = 32;
+						int iterations = 11;
+						cvflann::flann_centers_init_t centers_init = cvflann::CENTERS_RANDOM;
+						float cb_index = 0.2;
+						params = new cv::flann::CompositeIndexParams(trees, branching, iterations, centers_init, cb_index);
+					}	
+					else if (param_type == "LSH")
+					{
+						// Multi-probe LSH 
+						// Crash supose for CV_32F convertion
+						int n_tables = 20;
+				    int key_size = 10;
+				    int multi_probe_level = 2;
+						params = new cv::flann::LshIndexParams(n_tables, key_size, multi_probe_level);
+					}	
+					else if (param_type == "AUTO_TUNED")
+					{
+						// Automatically tuned to offer the best performance, by choosing the optimal 
+						// index type (randomized kd-trees, hierarchical kmeans, linear) and parameters 
+						// for the dataset provided
+						float target_precision = 0.9;
+				    float build_weight = 0.01;
+				    float memory_weight = 0;
+				    float sample_fraction = 0.1;
+						params = new cv::flann::AutotunedIndexParams(target_precision, build_weight, memory_weight, sample_fraction);
+					}
+					else
+		      {
+						std::cerr << "Search parameters not implemented for that type " << param_type << std::endl;
+		        throw;
+		      }
+			
+					// Add defined parameters to the matcher
+					matcher_ = new cv::FlannBasedMatcher(params);
+
         }
         else
         {
@@ -208,21 +278,30 @@ namespace tod
       std::vector < std::vector<cv::DMatch> > matches1;
       std::vector < std::vector<cv::DMatch> > matches2;
 
-      const cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
+      cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
 
+			// check is there are descriptors
       if (matcher_->getTrainDescriptors().empty())
       {
         std::cerr << "No descriptors loaded" << std::endl;
         return ecto::OK;
       }
 
-      // Perform radius search
-      matcher_->radiusMatch(descriptors, matches1, radius_);
-      // Perform k-nearest neighbour search
-      //matcher_->knnMatch(descriptors, matches2, k_nn_);
+			// make sure it's CV_32F, if not FLANN sometimes crashes
+			if(descriptors.type() != CV_32F) descriptors.convertTo(descriptors, CV_32F); 
 
-      matches = matches1;
+
+      // Perform radius search
+
+			// With FLANN and LSH index not works
+      //matcher_->radiusMatch(descriptors, matches1, radius_);
+
+      // Perform k-nearest neighbour search
+      matcher_->knnMatch(descriptors, matches2, k_nn_);
+
+      matches = matches2;
 			
+
       // TODO: Cross matching
 
       /*std::vector<std::vector<cv::DMatch> >::iterator match1Iterator = matches1.begin();

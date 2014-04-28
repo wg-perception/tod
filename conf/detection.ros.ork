@@ -45,23 +45,20 @@ pipeline1:
     feature:
       type: ORB
       module: ecto_opencv.features2d
-      #n_features: 1000
-      n_features: 500
-      #n_levels: 3
-      n_levels: 8
+      n_features: 1000
+      n_levels: 3
       scale_factor: 1.2
     descriptor:
       type: ORB
       module: ecto_opencv.features2d
     search: 
-      type: LSH
-      #type: FLANN
+      type: FLANN #{LSH,FLANN}
+      param_type: KDE_TREE #{KDE_TREE,KMEANS_TREE,RAND_KDE_KMEANS_TREE,LSH,AUTO_TUNED}
       module: ecto_opencv.features2d
       key_size: 24
       multi_probe_level: 2
       n_tables: 8
-      #radius: 55 
-      radius: 100 
+      radius: 55 
       ratio: 1.2 
       k_nn: 15 
     n_ransac_iterations: 1000

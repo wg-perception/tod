@@ -183,7 +183,7 @@ namespace tod
         ratio_ = search_param_tree["ratio"].get_real();
         k_nn_ = search_param_tree["k_nn"].get_real();
 
-				// Parameters object
+				// Local search parameters
 				cv::flann::IndexParams* params;
 
         // Create the matcher depending on the type of descriptors
@@ -279,12 +279,12 @@ namespace tod
       // Perform radius search
 
 			// With FLANN index not works ?
-      matcher_->radiusMatch(descriptors, matches1, radius_);
+      //matcher_->radiusMatch(descriptors, matches1, radius_);
 
       // Perform k-nearest neighbour search
-      //matcher_->knnMatch(descriptors, matches2, k_nn_);
+      matcher_->knnMatch(descriptors, matches2, k_nn_);
 
-      matches = matches1;
+      matches = matches2;
 			
 
       // TODO: Cross matching
@@ -300,7 +300,7 @@ namespace tod
       // TODO Perform ratio testing if necessary
       // TODO remove matches that match the same (common descriptors)
 
-      /*int removed=0;
+      int removed=0;
       // for all matches
       std::vector<std::vector<cv::DMatch> >::iterator matchIterator = matches.begin();
       for ( ; matchIterator!= matches.end(); ++matchIterator) {
@@ -315,8 +315,8 @@ namespace tod
             matchIterator->clear(); // remove match
             removed++;
         }
-      }*/
-      //std::cout << "Removed " << removed << " matches" << std::endl;
+      }
+      std::cout << "Removed " << removed << " matches" << std::endl;
 
 
       // Build the 3D positions of the matches

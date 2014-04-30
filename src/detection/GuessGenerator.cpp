@@ -150,30 +150,69 @@ namespace tod
 
       // Input in BGR for unknown reason
       // Change space color to RGB
-      cv:cvtColor(initial_image.clone(), initial_image, CV_BGR2RGB);
-
-      // DEBUG
-	/*	std::cout << "Visualise " << *visualize_ << std::endl;
-		std::cout << "Min inliers " << *min_inliers_ << std::endl;
-		std::cout << "Cloud size " << point_cloud.size() << std::endl;
-		std::cout << "Image_init size " << initial_image.size() << std::endl;*/
-
-      // DEBUG
-
-
-
-
-
+      cv::cvtColor(initial_image.clone(), initial_image, CV_BGR2RGB);
 
       // Get the outputs
       pose_results_->clear();
       Rs_->clear();
       Ts_->clear();
-      if (point_cloud.empty())
+
+			// boolean to force to use pnp pose estimation
+			bool use_pnp = true;
+      if (use_pnp || point_cloud.empty())
       {
         // Only use 2d to 3d matching
         // TODO
         //const std::vector<cv::KeyPoint> &keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
+
+				// DEBUG
+				std::cout << "KPTS size " << keypoints.size() << std::endl;
+				std::cout << "MATCH_3D size " << matches_3d[0].size() << std::endl;				
+				std::cout << "MATCHES size " << matches.size() << std::endl;				
+				std::cout << "PTS_3D size " << point_cloud.size() << std::endl;				
+				std::cout << "OBJ_IDS size " << object_ids_in.size() << std::endl;
+
+				std::cout << "******************** " << std::endl << std::endl;
+
+				
+				// PNP variables
+  			cv::Mat cameraMatrix = cv::Mat::zeros(3,3,cv::DataType<double>::type);
+				cv::Mat distCoeffs = cv::Mat::zeros(4,1,cv::DataType<double>::type);
+				cv::Mat rvec = cv::Mat::zeros(3,1,cv::DataType<double>::type);
+				cv::Mat tvec = cv::Mat::zeros(3,1,cv::DataType<double>::type);
+				cv::Mat R_mat = cv::Mat::zeros(3,3,cv::DataType<double>::type);
+				cv::Mat inliers_out;
+				bool useExtrinsicGuess = false; 
+				int flags = CV_ITERATIVE;
+
+				// RANSAC solvePNP parameters
+				int iterationsCount = 100;
+				float reprojectionError = 8.0;
+				int minInliersCount = 100;
+/*
+				for ( int opencv_object_id = 0; opencv_object_id < object_ids_in.size(); object_ids_in++)
+				{
+          ObjectId object_id = object_ids_in[opencv_object_id];
+
+					useExtrinsicGuess = solvePnP(InputArray objectPoints, InputArray imagePoints, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags)
+					if(useExtrinsicGuess) 
+					{
+						solvePnPRansac(InputArray objectPoints, InputArray imagePoints, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, iterationsCount, reprojectionError, minInliersCount, inliers_out, flags)*/
+
+						// Transforms Rotation Vector to Matrix
+						//Rodrigues(rvec,R_mat);
+
+						// Save the result;
+				    /*PoseResult pose_result;
+				    pose_result.set_R(cv::Mat(R_mat));
+				    pose_result.set_T(cv::Mat(tvec));
+				    pose_result.set_object_id(db_, object_id);
+				    pose_results_->push_back(pose_result);
+				    Rs_->push_back(cv::Mat(R_mat));
+				    Ts_->push_back(cv::Mat(tvec));
+					}
+				}
+*/
       }
       else
       {

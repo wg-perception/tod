@@ -316,7 +316,8 @@ namespace tod
             removed++;
         }
       }
-      std::cout << "Removed " << removed << " matches" << std::endl;
+			// Debug the removed matches
+      //std::cout << "Removed " << removed << " matches" << std::endl;
 
 
       // Build the 3D positions of the matches

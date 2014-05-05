@@ -154,10 +154,12 @@ namespace tod
     static void
     declare_io(const ecto::tendrils& params, ecto::tendrils& inputs, ecto::tendrils& outputs)
     {
+      inputs.declare<std::vector<cv::KeyPoint> >("keypoints", "The interesting keypoints");
       inputs.declare < cv::Mat > ("descriptors", "The descriptors to match to the database");
 
       outputs.declare < std::vector<std::vector<cv::DMatch> > > ("matches", "The matches for the input descriptors");
       outputs.declare < std::vector<cv::Mat> > ("matches_3d", "For each point, the 3d position of the matches, 1 by n matrix with 3 channels for, x, y, and z.");
+			outputs.declare < std::vector<cv::Point2f> > ("matches_2d", "For each point, the 2d position of the matches, 1 by n matrix with 2 channels for, u and v.");
       outputs.declare < std::vector<ObjectId> > ("object_ids", "The ids of the objects");
       outputs.declare < std::map<ObjectId, float> > ("spans", "The ids of the objects");
     } // END declare_params
@@ -263,7 +265,11 @@ namespace tod
       std::vector < std::vector<cv::DMatch> > matches1;
       std::vector < std::vector<cv::DMatch> > matches2;
 
+			const std::vector<cv::KeyPoint> &keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
       cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
+
+			std::cout << "*KPTS size " << keypoints.size() << std::endl;
+			std::cout << "*DSCRPTS size " << descriptors.size() << std::endl;
 
 			// check is there are descriptors
       if (matcher_->getTrainDescriptors().empty())
@@ -320,24 +326,29 @@ namespace tod
       //std::cout << "Removed " << removed << " matches" << std::endl;
 
 
-      // Build the 3D positions of the matches
+      // Build the 2D & 3D positions of the matches
       std::vector < cv::Mat > matches_3d(descriptors.rows);
+      std::vector < cv::Point2f > matches_2d;
 
       for (int match_index = 0; match_index < descriptors.rows; ++match_index)
       {
         cv::Mat & local_matches_3d = matches_3d[match_index];
         local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
+
+				// Insert the 2d correspondence
+        matches_2d.push_back(keypoints[match_index].pt);
+
+				// Insert the 3d correspondences
         unsigned int i = 0;
         BOOST_FOREACH(const cv::DMatch & match, matches[match_index])
         {
           local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
           ++i;
         }
-        // check if it's necessary (don't crash)
-        matches_3d.push_back(local_matches_3d);
       }
 
       outputs["matches"] << matches;
+      outputs["matches_2d"] << matches_2d;
       outputs["matches_3d"] << matches_3d;
       outputs["object_ids"] << object_ids_;
       outputs["spans"] << spans_;

@@ -95,6 +95,7 @@ namespace tod
       inputs.declare<cv::Mat>("points3d", "The height by width 3 channel point cloud");
       inputs.declare<std::vector<cv::KeyPoint> >("keypoints", "The interesting keypoints");
       inputs.declare<std::vector<std::vector<cv::DMatch> > >("matches", "The list of OpenCV DMatch");
+			inputs.declare < std::vector<cv::Point2f> > ("matches_2d", "For each point, the 2d position of the matches, 1 by n matrix with 2 channels for, u and v.");
       inputs.declare<std::vector<cv::Mat> >("matches_3d", "The corresponding 3d position of those matches. For each point, a 1 by n 3 channel matrix (for x,y and z)");
       inputs.declare<std::map<ObjectId, float> >("spans", "For each found object, its span based on known features.");
       inputs.declare<std::vector<ObjectId> >("object_ids", "The ids used in the matches");
@@ -139,6 +140,7 @@ namespace tod
       const std::vector<std::vector<cv::DMatch> > & matches = inputs.get<std::vector<std::vector<cv::DMatch> > >(
           "matches");
       const std::vector<cv::Mat> & matches_3d = inputs.get<std::vector<cv::Mat> >("matches_3d");
+      const std::vector<cv::Point2f> & matches_2d = inputs.get<std::vector<cv::Point2f> >("matches_2d");
 
       // Get the original keypoints and point cloud
       const std::vector<cv::KeyPoint> & keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
@@ -166,53 +168,91 @@ namespace tod
         //const std::vector<cv::KeyPoint> &keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
 
 				// DEBUG
-				std::cout << "KPTS size " << keypoints.size() << std::endl;
-				std::cout << "MATCH_3D size " << matches_3d[0].size() << std::endl;				
+				std::cout << "MATCH_2D size " << matches_2d.size() << std::endl;				
+				std::cout << "MATCH_3D size " << matches_3d.size() << std::endl;				
 				std::cout << "MATCHES size " << matches.size() << std::endl;				
 				std::cout << "PTS_3D size " << point_cloud.size() << std::endl;				
 				std::cout << "OBJ_IDS size " << object_ids_in.size() << std::endl;
 
 				std::cout << "******************** " << std::endl << std::endl;
+			
+				// Build matches containers for PNP
+				std::vector<cv::Point2f> matches_2d_pnp = matches_2d;
+  			std::vector<cv::Point3f> matches_3d_pnp;
+								
+				for(unsigned int i = 0; i < matches_3d.size(); i++) 
+				{
+					matches_3d_pnp.push_back(matches_3d[i].at<cv::Point3f>(0,i));				
+					//std::cout << "MATCH_3D " << i << " " << matches_3d[i].at<cv::Point3f>(0,i) << std::endl;
+				}
 
+				std::cout << "MATCH_3D_pnp size " << matches_3d_pnp.size() << std::endl;			
+				std::cout << "MATCH_2D_pnp size " << matches_2d_pnp.size() << std::endl;		
+
+				std::cout << "COMPUTING POSE ... " << std::endl;			
 				
+
 				// PNP variables
-  			cv::Mat cameraMatrix = cv::Mat::zeros(3,3,cv::DataType<double>::type);
+
+				// Set camera matrix from: 
+				// http://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats
+  			double fx, fy, cx, cy;
+				fx = 525.0;  // focal length x
+				fy = 525.0;  // focal length y
+				cx = 319.5;  // optical center x
+				cy = 239.5;  // optical center y
+
+				cv::Mat cameraMatrix = cv::Mat::zeros(3,3,cv::DataType<double>::type);				
+				cameraMatrix.at<double>(0,0) = fx; 
+				cameraMatrix.at<double>(1,1) = fy; 
+				cameraMatrix.at<double>(1,2) = cx; 
+				cameraMatrix.at<double>(0,2) = cy; 
+				cameraMatrix.at<double>(2,2) = 1;
+
+
 				cv::Mat distCoeffs = cv::Mat::zeros(4,1,cv::DataType<double>::type);
 				cv::Mat rvec = cv::Mat::zeros(3,1,cv::DataType<double>::type);
 				cv::Mat tvec = cv::Mat::zeros(3,1,cv::DataType<double>::type);
 				cv::Mat R_mat = cv::Mat::zeros(3,3,cv::DataType<double>::type);
 				cv::Mat inliers_out;
 				bool useExtrinsicGuess = false; 
-				int flags = CV_ITERATIVE;
+				//int flags = CV_ITERATIVE;
+				int flags = CV_EPNP;
 
 				// RANSAC solvePNP parameters
 				int iterationsCount = 100;
 				float reprojectionError = 8.0;
 				int minInliersCount = 100;
-/*
-				for ( int opencv_object_id = 0; opencv_object_id < object_ids_in.size(); object_ids_in++)
+
+				// iterate for all objects
+        ObjectId object_id = object_ids_in[0];
+
+			 	// pose estimation using PNP
+				useExtrinsicGuess = solvePnP(matches_3d_pnp, matches_2d_pnp, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
+
+				if(useExtrinsicGuess) 
 				{
-          ObjectId object_id = object_ids_in[opencv_object_id];
+					std::cout << "POSE FOUND" << std::endl;
+					std::cout << "COMPUTING RANSAC ITERATION ... " << std::endl;			
 
-					useExtrinsicGuess = solvePnP(InputArray objectPoints, InputArray imagePoints, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags)
-					if(useExtrinsicGuess) 
-					{
-						solvePnPRansac(InputArray objectPoints, InputArray imagePoints, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, iterationsCount, reprojectionError, minInliersCount, inliers_out, flags)*/
+					// pose estimation using PNP+RANSAC
+					solvePnPRansac(matches_3d_pnp, matches_2d_pnp, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, iterationsCount, reprojectionError, minInliersCount, inliers_out, flags);
 
-						// Transforms Rotation Vector to Matrix
-						//Rodrigues(rvec,R_mat);
+					std::cout << "RANSAC ITERATION with " << inliers_out.size() << " inliers " << std::endl;
 
-						// Save the result;
-				    /*PoseResult pose_result;
-				    pose_result.set_R(cv::Mat(R_mat));
-				    pose_result.set_T(cv::Mat(tvec));
-				    pose_result.set_object_id(db_, object_id);
-				    pose_results_->push_back(pose_result);
-				    Rs_->push_back(cv::Mat(R_mat));
-				    Ts_->push_back(cv::Mat(tvec));
-					}
+					// Transforms Rotation Vector to Matrix
+					Rodrigues(rvec,R_mat);
+
+					// Save the result;
+			    PoseResult pose_result;
+			    pose_result.set_R(cv::Mat(R_mat));
+			    pose_result.set_T(cv::Mat(tvec));
+			    pose_result.set_object_id(db_, object_id);
+			    pose_results_->push_back(pose_result);
+			    Rs_->push_back(cv::Mat(R_mat));
+			    Ts_->push_back(cv::Mat(tvec));
 				}
-*/
+
       }
       else
       {

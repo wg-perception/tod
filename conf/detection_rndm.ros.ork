@@ -55,12 +55,13 @@ pipeline1:
       type: RAND_KDE_KMEANS_TREE # {LSH,KDE_TREE,KMEANS_TREE,RAND_KDE_KMEANS_TREE,AUTO_TUNED}
       module: ecto_opencv.features2d
       trees: 4
-      branching: 32
+      #branching: 32
+      branching: 64
       iterations: 11
       cb_index: 0.2
-      radius: 55 
-      ratio: 1.2 
-      k_nn: 15 
+      radius: 35 
+      ratio: 0.8 
+      k_nn: 2 
     n_ransac_iterations: 1000
     min_inliers: 15
     sensor_error: 0.01

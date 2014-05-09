@@ -45,6 +45,8 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/rgbd/rgbd.hpp>
+
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types.h>
@@ -76,6 +78,8 @@ namespace tod
         cv::Mat descriptors;
         document.get_attachment<cv::Mat>("descriptors", descriptors);
         descriptors_db_[index] = descriptors;
+	
+	      std::cout << "descriptors_db_ " << index << " SIZE: " << descriptors.size() << std::endl;
 
         // Store the id conversion
         object_ids_[index] = object_id;
@@ -128,17 +132,23 @@ namespace tod
       // Clear the matcher and re-train it
       matcher_->clear();
 
-			// make sure it's CV_32F, if not FLANN sometimes crashes
-			for (unsigned int i = 0; i < descriptors_db_.size(); i++)
+			// make sure it's CV_32F, if not FLANN crashes
+			// make sure it's CV_8U, if not BruteForce with ORB (binaries) crashes
+			/*for (unsigned int i = 0; i < descriptors_db_.size(); i++)
 			{
-				if(descriptors_db_[i].type() != CV_32F) 
-					descriptors_db_[i].convertTo(descriptors_db_[i], CV_32F); 
-			}
+				//if(descriptors_db_[i].type() != CV_32F) descriptors_db_[i].convertTo(descriptors_db_[i], CV_32F);
+				//if(descriptors_db_[i].type() != CV_8U) descriptors_db_[i].convertTo(descriptors_db_[i], CV_8U);  
+			}*/
+
 
 			// Add the descriptors to train the matcher
-      matcher_->add(descriptors_db_);
+      matcher_->add(descriptors_db_); // These are the "training" descriptors, from reference object
 
-    } // END parameter_callback
+    } 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     static void
     declare_params(ecto::tendrils& p)
@@ -154,15 +164,18 @@ namespace tod
     static void
     declare_io(const ecto::tendrils& params, ecto::tendrils& inputs, ecto::tendrils& outputs)
     {
-      inputs.declare<std::vector<cv::KeyPoint> >("keypoints", "The interesting keypoints");
+      //inputs.declare<std::vector<cv::KeyPoint> >("keypoints", "The interesting keypoints");
       inputs.declare < cv::Mat > ("descriptors", "The descriptors to match to the database");
 
       outputs.declare < std::vector<std::vector<cv::DMatch> > > ("matches", "The matches for the input descriptors");
       outputs.declare < std::vector<cv::Mat> > ("matches_3d", "For each point, the 3d position of the matches, 1 by n matrix with 3 channels for, x, y, and z.");
-			outputs.declare < std::vector<cv::Point2f> > ("matches_2d", "For each point, the 2d position of the matches, 1 by n matrix with 2 channels for, u and v.");
       outputs.declare < std::vector<ObjectId> > ("object_ids", "The ids of the objects");
       outputs.declare < std::map<ObjectId, float> > ("spans", "The ids of the objects");
-    } // END declare_params
+    } 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     void
     configure(const ecto::tendrils& params, const ecto::tendrils& inputs, const ecto::tendrils& outputs)
@@ -245,11 +258,23 @@ namespace tod
 				if (search_type != "LSH")
 				{
 					// Add defined parameters to the matcher
-					matcher_ = new cv::FlannBasedMatcher(params);
+					//matcher_ = new cv::FlannBasedMatcher(params);
 				}
-					
+
+				// matcher params
+				int normType = cv::NORM_HAMMING; // NORM_HAMMING should be used with ORB, BRISK and BRIEF
+																				 // NORM_L1 and NORM_L2 are preferable choices for SIFT and SURF descriptors
+																				 // NORM_HAMMING2 should be used with ORB when WTA_K==3 or 4
+				bool crossCheck = false; // in true crahses!
+
+				// Brute Force Matcher
+				matcher_ = new cv::BFMatcher(normType, crossCheck);
       }
-    } // END configure
+    }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     /** Get the 2d keypoints and figure out their 3D position from the depth map
      * @param inputs
@@ -261,15 +286,10 @@ namespace tod
     {
       std::vector < std::vector<cv::DMatch> > matches;
 
-      // for cross matching
-      std::vector < std::vector<cv::DMatch> > matches1;
-      std::vector < std::vector<cv::DMatch> > matches2;
+			// it's suposed to be the scene descriptors
+      cv::Mat & descriptors_scene = inputs.get < cv::Mat > ("descriptors");
 
-			const std::vector<cv::KeyPoint> &keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
-      cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
-
-			std::cout << "*KPTS size " << keypoints.size() << std::endl;
-			std::cout << "*DSCRPTS size " << descriptors.size() << std::endl;
+      std::cout << "SCENE DESCRIPTORS " << descriptors_scene.size() << std::endl;
 
 			// check is there are descriptors
       if (matcher_->getTrainDescriptors().empty())
@@ -278,66 +298,170 @@ namespace tod
         return ecto::OK;
       }
 
-			// make sure it's CV_32F, if not FLANN sometimes crashes
-			if(descriptors.type() != CV_32F) descriptors.convertTo(descriptors, CV_32F); 
+			// make sure it's CV_32F, if not FLANN crashes
+			//if(descriptors.type() != CV_32F) descriptors.convertTo(descriptors, CV_32F); 
+			// make sure it's CV_8U, if not BruteForce with ORB (binaries) crashes
+			//if(descriptors.type() != CV_8U) descriptors.convertTo(descriptors, CV_8U); 
 
+
+		 /****************************************************************************************\
+																       	* Computing Descriptors *
+		 \****************************************************************************************/
+
+			
+			/* I'M NOT SURE THAT THE LOADED DESCRIPTORS ARE THE ONES IN THE SCENE */
+			// Default parameters
+			/*int nfeatures = 500;
+			float scaleFactor = 1.2;
+			int nlevels = 8;
+			int edgeThreshold = 31;
+			int firstLevel = 0;
+			int WTA_K = 2;
+			int scoreType = cv::ORB::HARRIS_SCORE;
+			int patchSize = 31;
+
+			const cv::Mat initial_image;
+			//std::vector<cv::KeyPoint keypoints_pnp = keypoints;
+			cv::Mat descriptors_pnp;*/
+
+			//cv::ORB orb(nfeatures, scaleFactor, nlevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize);
+			//orb.compute(initial_image, keypoints, descriptors_pnp);
+
+
+		 /****************************************************************************************\
+																          	* Matching Descriptors *
+		 \****************************************************************************************/
 
       // Perform radius search
 
 			// With FLANN index not works ?
-      //matcher_->radiusMatch(descriptors, matches1, radius_);
+      //matcher_->radiusMatch(descriptors, matches, radius_);
 
       // Perform k-nearest neighbour search
-      matcher_->knnMatch(descriptors, matches2, k_nn_);
+      matcher_->knnMatch(	descriptors_scene, // These are the "query" descriptors, in the new image			
+													matches,     // Output matches
+													k_nn_);			 // Value of k (we will find the best k matches) 
 
-      matches = matches2;
-			
-
-      // TODO: Cross matching
-
-      /*std::vector<std::vector<cv::DMatch> >::iterator match1Iterator = matches1.begin();
-      for ( ; match1Iterator!= matches1.end(); ++match1Iterator) {
-      	std::vector<std::vector<cv::DMatch> >::iterator match2Iterator = matches2.begin();
-      	for ( ; match2Iterator!= matches2.end(); ++match2Iterator) {
-	}
-      }*/
+			//std::cout << "DEBUG: matches " << matches.size() << std::endl;
 
 
-      // TODO Perform ratio testing if necessary
+			/****************************************************************************************\
+																       	* Ratio Test *
+		  \****************************************************************************************/
+
+
+			// TODO Check if it works properly
       // TODO remove matches that match the same (common descriptors)
 
-      int removed=0;
-      // for all matches
-      std::vector<std::vector<cv::DMatch> >::iterator matchIterator = matches.begin();
-      for ( ; matchIterator!= matches.end(); ++matchIterator) {
-        if (matchIterator->size() > 1) { // if 2 NN has been identified
-            // check distance ratio
-            if ((*matchIterator)[0].distance / (*matchIterator)[1].distance > ratio_)
-            {
-              matchIterator->clear(); // remove match
-              removed++;
-            }
-        } else {  // does not have 2 neighbours
-            matchIterator->clear(); // remove match
-            removed++;
-        }
-      }
-			// Debug the removed matches
-      //std::cout << "Removed " << removed << " matches" << std::endl;
+			std::vector<std::vector<cv::DMatch> > good_matches(descriptors_db_.size());
+			good_matches.reserve(descriptors_db_.size());
+			 
+			// iterate for all keypoints
+			for (size_t match_index = 0; match_index < matches.size(); ++match_index)
+			{
+				// compare first & second best knn matches
+				if (matches[match_index].size() >= 2) 
+				{
+					const cv::DMatch &bestMatch = matches[match_index][0];
+					const cv::DMatch &betterMatch = matches[match_index][1];
+
+					// To avoid NaN's when best match has zero distance we will use inverse ratio. 
+					float inverseRatio = bestMatch.distance / betterMatch.distance;
+
+					// Test for distinctiveness: pass only matches where the inverse
+					// ratio of the distance between nearest matches is less than the minimum.
+					if (inverseRatio < ratio_) good_matches[bestMatch.imgIdx].push_back(bestMatch);   
+				}
+				else
+				{
+					const cv::DMatch &bestMatch = matches[match_index][0];
+					good_matches[bestMatch.imgIdx].push_back(bestMatch);
+				}			
+			}
+
+			//std::cout << "DEBUG: good_matches " << good_matches[0].size() << std::endl;
+
+			// TODO: check which implementation have more good results
+
+			// Clear matches for which NN ratio is > than threshold
+			// return the number of removed points
+			// (corresponding entries being cleared,
+			// i.e. size will be 0)
+			/*int ratioTest(std::vector<std::vector<cv::DMatch> > &matches) {
+				int removed=0;
+				  // for all matches
+				for (std::vector<std::vector<cv::DMatch> >::iterator matchIterator= matches.begin();
+				     matchIterator!= matches.end(); ++matchIterator) {
+				       // if 2 NN has been identified
+				       if (matchIterator->size() > 1) {
+				           // check distance ratio
+				           if ((*matchIterator)[0].distance/
+				               (*matchIterator)[1].distance > ratio_) {
+				              matchIterator->clear(); // remove match
+				              removed++;
+				           }
+				       } else { // does not have 2 neighbours
+				           matchIterator->clear(); // remove match
+				           removed++;
+				       }
+				}
+				return removed;
+			}*/
+
+			/****************************************************************************************\
+																       	* Symmetry test *
+		  \****************************************************************************************/
+
+			// TODO: check how to implement
+
+	/*// Insert symmetrical matches in symMatches vector
+  void symmetryTest(
+      const std::vector<std::vector<cv::DMatch> >& matches1,
+      const std::vector<std::vector<cv::DMatch> >& matches2,
+      std::vector<cv::DMatch>& symMatches) {
+    // for all matches image 1 -> image 2
+    for (std::vector<std::vector<cv::DMatch> >::
+             const_iterator matchIterator1= matches1.begin();
+         matchIterator1!= matches1.end(); ++matchIterator1) {
+       // ignore deleted matches
+       if (matchIterator1->size() < 2)
+           continue;
+       // for all matches image 2 -> image 1
+       for (std::vector<std::vector<cv::DMatch> >::
+          const_iterator matchIterator2= matches2.begin();
+           matchIterator2!= matches2.end();
+           ++matchIterator2) {
+           // ignore deleted matches
+           if (matchIterator2->size() < 2)
+              continue;
+           // Match symmetry test
+           if ((*matchIterator1)[0].queryIdx ==
+               (*matchIterator2)[0].trainIdx &&
+               (*matchIterator2)[0].queryIdx ==
+               (*matchIterator1)[0].trainIdx) {
+               // add symmetrical match
+                 symMatches.push_back(
+                   cv::DMatch((*matchIterator1)[0].queryIdx,
+                             (*matchIterator1)[0].trainIdx,
+                             (*matchIterator1)[0].distance));
+                 break; // next match in image 1 -> image 2
+           }
+       }
+    }*/
 
 
-      // Build the 2D & 3D positions of the matches
-      std::vector < cv::Mat > matches_3d(descriptors.rows);
-      std::vector < cv::Point2f > matches_2d;
+			/****************************************************************************************\
+															      	* Build 3d positions *
+		  \****************************************************************************************/
 
-      for (int match_index = 0; match_index < descriptors.rows; ++match_index)
+			// Build the 3D positions of the matches
+      std::vector < cv::Mat > matches_3d(descriptors_scene.rows);
+
+      for (int match_index = 0; match_index < descriptors_scene.rows; ++match_index)
       {
         cv::Mat & local_matches_3d = matches_3d[match_index];
         local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
-
-				// Insert the 2d correspondence
-        matches_2d.push_back(keypoints[match_index].pt);
-
+				
 				// Insert the 3d correspondences
         unsigned int i = 0;
         BOOST_FOREACH(const cv::DMatch & match, matches[match_index])
@@ -347,8 +471,10 @@ namespace tod
         }
       }
 
+
+			/* OUTPUT DATA */
+
       outputs["matches"] << matches;
-      outputs["matches_2d"] << matches_2d;
       outputs["matches_3d"] << matches_3d;
       outputs["object_ids"] << object_ids_;
       outputs["spans"] << spans_;

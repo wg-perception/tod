@@ -88,6 +88,10 @@ namespace tod
       params.declare(&GuessGenerator::json_db_, "db", "The DB to get data from, as a JSON string").required(true);
     }
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     static void
     declare_io(const tendrils& params, tendrils& inputs, tendrils& outputs)
     {
@@ -128,6 +132,10 @@ namespace tod
       db_ = object_recognition_core::db::ObjectDbParameters(*json_db_).generateDb();
     }
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     /** Get the 2d keypoints and figure out their 3D position from the depth map
      * @param inputs
      * @param outputs
@@ -152,7 +160,7 @@ namespace tod
 
       // Input in BGR for unknown reason
       // Change space color to RGB
-      cv::cvtColor(initial_image.clone(), initial_image, CV_BGR2RGB);
+      //cv::cvtColor(initial_image.clone(), initial_image, CV_BGR2RGB);
 
       // Get the outputs
       pose_results_->clear();
@@ -166,93 +174,125 @@ namespace tod
         // Only use 2d to 3d matching
         // TODO
         //const std::vector<cv::KeyPoint> &keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
-
-				// DEBUG
-				std::cout << "MATCH_2D size " << matches_2d.size() << std::endl;				
-				std::cout << "MATCH_3D size " << matches_3d.size() << std::endl;				
-				std::cout << "MATCHES size " << matches.size() << std::endl;				
-				std::cout << "PTS_3D size " << point_cloud.size() << std::endl;				
-				std::cout << "OBJ_IDS size " << object_ids_in.size() << std::endl;
-
-				std::cout << "******************** " << std::endl << std::endl;
-			
-				// Build matches containers for PNP
-				std::vector<cv::Point2f> matches_2d_pnp = matches_2d;
-  			std::vector<cv::Point3f> matches_3d_pnp;
-								
-				for(unsigned int i = 0; i < matches_3d.size(); i++) 
+					
+				std::cout << "DEBUG: MATCHES " << matches.size() << std::endl;	
+		
+				// TODO iteration for all objects
+				for(unsigned int object_id_it = 0; object_id_it < object_ids_in.size(); object_id_it++) 
 				{
-					matches_3d_pnp.push_back(matches_3d[i].at<cv::Point3f>(0,i));				
-					//std::cout << "MATCH_3D " << i << " " << matches_3d[i].at<cv::Point3f>(0,i) << std::endl;
-				}
+        	std::cout << "***Starting object: " << object_id_it << std::endl;
 
-				std::cout << "MATCH_3D_pnp size " << matches_3d_pnp.size() << std::endl;			
-				std::cout << "MATCH_2D_pnp size " << matches_2d_pnp.size() << std::endl;		
+					// current object id struct
+          ObjectId object_id = object_ids_in[object_id_it];
 
-				std::cout << "COMPUTING POSE ... " << std::endl;			
+					// DEBUG
+					if (*visualize_)
+					{
+
+						// show 2d correspondences
+			      cv::Mat visualize_img;
+						std::vector<cv::KeyPoint> draw_keypoints;			
+
+						// loop for all the keypoint matches
+						// match_index is the position of the keypoints in the vector
+						for (unsigned int match_index = 0; match_index < matches.size(); ++match_index)
+						{
+							// the "best match" for this keypoint
+							cv::DMatch best_match = matches[match_index].at(0);
+
+							int queryIdx = best_match.queryIdx; // query descriptor index
+							int trainIdx = best_match.trainIdx; // train descriptor index
+							int imgIdx = best_match.imgIdx;		  // matched image index (db_)
+
+							if( imgIdx == object_id_it ) draw_keypoints.push_back(keypoints[queryIdx]);
+
+						}
+
+						std::cout << draw_keypoints.size() << " of "  << matches.size() << " matches in object:" << object_id_it << std::endl;
+
+						cv::namedWindow("keypoints from objects", 0);
+						cv::drawKeypoints(initial_image.clone(), draw_keypoints, visualize_img, colors_[object_id_it]);
+						cv::imshow("keypoints from objects", visualize_img);
+						cv::waitKey(1);
+
+					}
+			
+					// Build matches containers for PNP
+					std::vector<cv::Point2f> matches_2d_pnp = matches_2d;
+					std::vector<cv::Point3f> matches_3d_pnp;	
+					for(unsigned int i = 0; i < matches_3d.size(); i++) 
+					{
+						for(unsigned int j = 0; j < matches_3d[j].rows; j++) 
+						{ matches_3d_pnp.push_back(matches_3d[i].at<cv::Point3f>(0,j)); }
+					}
+
+
+					if (*visualize_) std::cout << "DEBUG: estimating pose solvePNP ... " << std::endl;			
 				
 
-				// PNP variables
+					// Kinect intrinsic parameters from: 
+					// http://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats
+					double fx, fy, cx, cy;
+					fx = 525.0;  // focal length x
+					fy = 525.0;  // focal length y
+					cx = 319.5;  // optical center x
+					cy = 239.5;  // optical center y
 
-				// Set camera matrix from: 
-				// http://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats
-  			double fx, fy, cx, cy;
-				fx = 525.0;  // focal length x
-				fy = 525.0;  // focal length y
-				cx = 319.5;  // optical center x
-				cy = 239.5;  // optical center y
+					// Set camera calibration matrix
+					cv::Mat cameraMatrix = cv::Mat::zeros(3,3,cv::DataType<double>::type);				
+					cameraMatrix.at<double>(0,0) = fx; 
+					cameraMatrix.at<double>(1,1) = fy; 
+					cameraMatrix.at<double>(1,2) = cx; 
+					cameraMatrix.at<double>(0,2) = cy; 
+					cameraMatrix.at<double>(2,2) = 1;
 
-				cv::Mat cameraMatrix = cv::Mat::zeros(3,3,cv::DataType<double>::type);				
-				cameraMatrix.at<double>(0,0) = fx; 
-				cameraMatrix.at<double>(1,1) = fy; 
-				cameraMatrix.at<double>(1,2) = cx; 
-				cameraMatrix.at<double>(0,2) = cy; 
-				cameraMatrix.at<double>(2,2) = 1;
+					// PNP Variables
+					cv::Mat distCoeffs = cv::Mat::zeros(4,1,cv::DataType<double>::type);
+					cv::Mat rvec = cv::Mat::zeros(3,1,cv::DataType<double>::type);
+					cv::Mat tvec = cv::Mat::zeros(3,1,cv::DataType<double>::type);
+					cv::Mat R_mat = cv::Mat::zeros(3,3,cv::DataType<double>::type);
+					cv::Mat inliers_out;
+					bool useExtrinsicGuess = false; 
+					//int flags = CV_ITERATIVE;
+					int flags = CV_EPNP;
 
+					// solvepnpRANSAC parameters
+					int iterationsCount = 100;
+					float reprojectionError = 8.0;
+					int minInliersCount = *min_inliers_; //int minInliersCount = 100;
 
-				cv::Mat distCoeffs = cv::Mat::zeros(4,1,cv::DataType<double>::type);
-				cv::Mat rvec = cv::Mat::zeros(3,1,cv::DataType<double>::type);
-				cv::Mat tvec = cv::Mat::zeros(3,1,cv::DataType<double>::type);
-				cv::Mat R_mat = cv::Mat::zeros(3,3,cv::DataType<double>::type);
-				cv::Mat inliers_out;
-				bool useExtrinsicGuess = false; 
-				//int flags = CV_ITERATIVE;
-				int flags = CV_EPNP;
+					// pose estimation using PNP (first aproximation)
+					//useExtrinsicGuess = solvePnP(matches_3d_pnp, matches_2d_pnp, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 
-				// RANSAC solvePNP parameters
-				int iterationsCount = 100;
-				float reprojectionError = 8.0;
-				int minInliersCount = 100;
+					// enters if a pose is found, then remove outliers with ransac
+					if(useExtrinsicGuess) 
+					{
 
-				// iterate for all objects
-        ObjectId object_id = object_ids_in[0];
+						if(*visualize_)
+						{
+							std::cout << "DEBUG: estimate pose solvePNP FOUND ... " << std::endl;			
+							std::cout << "DEBUG: computing RANSAC ... " << std::endl;			
+						}
 
-			 	// pose estimation using PNP
-				useExtrinsicGuess = solvePnP(matches_3d_pnp, matches_2d_pnp, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
+						// pose estimation using PNP+RANSAC (second aproximation)
+						solvePnPRansac(matches_3d_pnp, matches_2d_pnp, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, iterationsCount, reprojectionError, minInliersCount, inliers_out, flags);
+		          
+						std::cout << "RANSAC done with " << inliers_out.size() << " inliers" << std::endl;
 
-				if(useExtrinsicGuess) 
-				{
-					std::cout << "POSE FOUND" << std::endl;
-					std::cout << "COMPUTING RANSAC ITERATION ... " << std::endl;			
+						// Transforms Rotation Vector to Matrix
+						Rodrigues(rvec,R_mat);
 
-					// pose estimation using PNP+RANSAC
-					solvePnPRansac(matches_3d_pnp, matches_2d_pnp, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, iterationsCount, reprojectionError, minInliersCount, inliers_out, flags);
-
-					std::cout << "RANSAC ITERATION with " << inliers_out.size() << " inliers " << std::endl;
-
-					// Transforms Rotation Vector to Matrix
-					Rodrigues(rvec,R_mat);
-
-					// Save the result;
-			    PoseResult pose_result;
-			    pose_result.set_R(cv::Mat(R_mat));
-			    pose_result.set_T(cv::Mat(tvec));
-			    pose_result.set_object_id(db_, object_id);
-			    pose_results_->push_back(pose_result);
-			    Rs_->push_back(cv::Mat(R_mat));
-			    Ts_->push_back(cv::Mat(tvec));
-				}
-
+						// Save the result;
+					  PoseResult pose_result;
+					  pose_result.set_R(cv::Mat(R_mat));
+					  pose_result.set_T(cv::Mat(tvec));
+					  pose_result.set_object_id(db_, object_id);
+					  pose_results_->push_back(pose_result);
+					  Rs_->push_back(cv::Mat(R_mat));
+					  Ts_->push_back(cv::Mat(tvec));
+					}
+				}		
+        std::cout << "********************* found " << pose_results_->size() << " poses" << std::endl;
       }
       else
       {

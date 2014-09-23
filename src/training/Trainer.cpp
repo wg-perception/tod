@@ -68,7 +68,11 @@ void rescale_depth(const cv::Mat depth_in, const cv::Size & isize,
   //resize into the subregion of the correct aspect ratio
   cv::Mat subregion(output.rowRange(0, dsize.height * factor));
   //use nearest neighbor to prevent discontinuities causing bogus depth.
+#if OPENCV3
+  cv::resize(depth, subregion, subregion.size(), cv::INTER_NEAREST);
+#else
   cv::resize(depth, subregion, subregion.size(), CV_INTER_NN);
+#endif
   depth_out = output;
 }
 

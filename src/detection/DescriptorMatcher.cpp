@@ -179,9 +179,14 @@ namespace tod
            search_param_tree.get<unsigned int>("key_size"),
            search_param_tree.get<unsigned int>("multi_probe_level"));
            matcher_ = new cv::FlannBasedMatcher(&lsh_params);*/
-          matcher_ = new lsh::LshMatcher(search_param_tree["n_tables"].get_uint64(),
-                                         search_param_tree["key_size"].get_uint64(),
-                                         search_param_tree["multi_probe_level"].get_uint64());
+           //matcher_ = new lsh::LshMatcher(search_param_tree["n_tables"].get_uint64(),
+           //                               search_param_tree["key_size"].get_uint64(),
+           //                               search_param_tree["multi_probe_level"].get_uint64());
+                                         
+           cv::Ptr<cv::flann::IndexParams> indexParams = cv::makePtr<cv::flann::LshIndexParams>(6, 12, 1); // instantiate LSH index parameters
+           cv::Ptr<cv::flann::SearchParams> searchParams = cv::makePtr<cv::flann::SearchParams>(50); // instantiate flann search parameters
+           matcher_ = new cv::FlannBasedMatcher(indexParams, searchParams); // instantiate FlannBased matcher
+           //matcher_ = cv::DescriptorMatcher::create("BruteForce-Hamming");
         }
         else
         {
@@ -246,7 +251,8 @@ BOOST_FOREACH      (const cv::DMatch & match, matches[match_index])
     }
   private:
     /** The object used to match descriptors to our DB of descriptors */
-    cv::Ptr<cv::DescriptorMatcher> matcher_;
+    //cv::Ptr<cv::DescriptorMatcher> matcher_;
+    cv::DescriptorMatcher * matcher_;
     /** The radius for the nearest neighbors (if not using ratio) */
     unsigned int radius_;
     /** The ratio used for k-nearest neighbors, if not using radius search */

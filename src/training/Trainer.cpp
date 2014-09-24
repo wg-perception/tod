@@ -40,10 +40,16 @@
 
 #include <ecto/ecto.hpp>
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/rgbd/rgbd.hpp>
+#if OPENCV3
+  #include <opencv2/core.hpp>
+  #include <opencv2/highgui.hpp>
+  #include <opencv2/imgproc.hpp>
+#else
+  #include <opencv2/core/core.hpp>
+  #include <opencv2/highgui/highgui.hpp>
+  #include <opencv2/imgproc/imgproc.hpp>
+  #include <opencv2/rgbd/rgbd.hpp>
+#endif
 
 #include <object_recognition_core/common/types_eigen.h>
 #include <object_recognition_core/db/db.h>
@@ -56,7 +62,11 @@ void rescale_depth(const cv::Mat depth_in, const cv::Size & isize,
     cv::Mat &depth_out) {
   cv::Size dsize = depth_in.size();
   cv::Mat depth;
+#if OPENCV3
+
+#else
   rescaleDepth(depth_in, CV_32F, depth);
+#endif
 
   if (dsize == isize) {
     depth_out = depth;
@@ -156,7 +166,11 @@ public:
 
       // Convert the points to world coordinates
       cv::Mat points_clean_3d, points_final;
+#if OPENCV3
+
+#else
       depthTo3dSparse(depth, obs.K, points_clean, points_clean_3d);
+#endif
       cameraToWorld(obs.R, obs.T, points_clean_3d, points_final);
       points_all.push_back(points_final);
 

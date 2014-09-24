@@ -39,6 +39,7 @@
 
 #include <ecto/ecto.hpp>
 
+<<<<<<< HEAD
 #include <boost/foreach.hpp>
 
 #include <opencv2/core/core.hpp>
@@ -53,6 +54,17 @@ using cv::rgbd::rescaleDepth;
 #include <opencv2/rgbd/rgbd.hpp>
 using cv::depthTo3dSparse;
 using cv::rescaleDepth;
+=======
+#if OPENCV3
+  #include <opencv2/core.hpp>
+  #include <opencv2/highgui.hpp>
+  #include <opencv2/imgproc.hpp>
+#else
+  #include <opencv2/core/core.hpp>
+  #include <opencv2/highgui/highgui.hpp>
+  #include <opencv2/imgproc/imgproc.hpp>
+  #include <opencv2/rgbd/rgbd.hpp>
+>>>>>>> get code working for OpenCV3
 #endif
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>

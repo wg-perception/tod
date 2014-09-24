@@ -278,8 +278,16 @@ namespace tod
     }
   private:
     /** The object used to match descriptors to our DB of descriptors */
+<<<<<<< HEAD
     cv::Ptr<cv::DescriptorMatcher> matcher_;
     /** The ratio used for k-nearest neighbors */
+=======
+    //cv::Ptr<cv::DescriptorMatcher> matcher_;
+    cv::DescriptorMatcher * matcher_;
+    /** The radius for the nearest neighbors (if not using ratio) */
+    unsigned int radius_;
+    /** The ratio used for k-nearest neighbors, if not using radius search */
+>>>>>>> get code working for OpenCV3
     unsigned int ratio_;
     /** The descriptors loaded from the DB */
     std::vector<cv::Mat> descriptors_db_;

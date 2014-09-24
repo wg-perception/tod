@@ -64,7 +64,11 @@ void rescale_depth(const cv::Mat depth_in, const cv::Size & isize,
     cv::Mat &depth_out) {
   cv::Size dsize = depth_in.size();
   cv::Mat depth;
+#if OPENCV3
+
+#else
   rescaleDepth(depth_in, CV_32F, depth);
+#endif
 
   if (dsize == isize) {
     depth_out = depth;
@@ -169,7 +173,11 @@ public:
 
       // Convert the points to world coordinates
       cv::Mat points_clean_3d, points_final;
+#if OPENCV3
+
+#else
       depthTo3dSparse(depth, obs.K, points_clean, points_clean_3d);
+#endif
       cameraToWorld(obs.R, obs.T, points_clean_3d, points_final);
       points_all.push_back(points_final);
 

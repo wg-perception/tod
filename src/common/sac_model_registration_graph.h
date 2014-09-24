@@ -36,7 +36,11 @@
 #ifndef SAC_MODEL_REGISTRATION_GRAPH_H_
 #define SAC_MODEL_REGISTRATION_GRAPH_H_
 
-#include <opencv2/core/core.hpp>
+#if OPENCV3
+  #include <opencv2/core.hpp>
+#else
+  #include <opencv2/core/core.hpp>
+#endif
 
 #include "maximum_clique.h"
 
@@ -169,7 +173,7 @@ namespace tod
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     void
-    selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f&T, double threshold, IndexVector &inliers)
+    selectWithinDistance(const cv::Matx33f &R, const cv::Vec3f &T, double threshold, IndexVector &inliers)
     {
       if (samples_.empty())
         return;
@@ -269,7 +273,7 @@ namespace tod
     }
 
     bool
-    computeModelCoefficients(const IndexVector &samples, cv::Matx33f &R, cv::Vec3f&T)
+    computeModelCoefficients(const IndexVector &samples, cv::Matx33f &R, cv::Vec3f &T)
     {
       // Need 3 samples
       if (samples.size() != 3)
@@ -288,7 +292,7 @@ namespace tod
     }
 
     void
-    optimizeModelCoefficients(const IndexVector &inliers, cv::Matx33f&R, cv::Vec3f&T)
+    optimizeModelCoefficients(const IndexVector &inliers, cv::Matx33f &R, cv::Vec3f &T)
     {
       estimateRigidTransformationSVD(inliers, R, T);
     }
@@ -302,7 +306,7 @@ namespace tod
      * This method is an implementation of: Horn, B. “Closed-Form Solution of Absolute Orientation Using Unit Quaternions,” JOSA A, Vol. 4, No. 4, 1987
      */
     bool
-    estimateRigidTransformationSVD(const IndexVector &indices_src, cv::Matx33f &R_in, cv::Vec3f&T)
+    estimateRigidTransformationSVD(const IndexVector &indices_src, cv::Matx33f &R_in, cv::Vec3f &T)
     {
       if (indices_src.size() < 3)
         return false;

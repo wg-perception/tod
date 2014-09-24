@@ -252,7 +252,8 @@ BOOST_FOREACH      (const cv::DMatch & match, matches[match_index])
     }
   private:
     /** The object used to match descriptors to our DB of descriptors */
-    cv::Ptr<cv::DescriptorMatcher> matcher_;
+    //cv::Ptr<cv::DescriptorMatcher> matcher_;
+    cv::DescriptorMatcher * matcher_;
     /** The radius for the nearest neighbors (if not using ratio) */
     unsigned int radius_;
     /** The ratio used for k-nearest neighbors, if not using radius search */

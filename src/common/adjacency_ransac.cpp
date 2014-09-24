@@ -36,13 +36,15 @@
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
 #include "adjacency_ransac.h"
 #include "ransac.h"
 #include "sac_model_registration_graph.h"
+
+#ifndef CV_VERSION_EPOCH
+  #include <opencv2/highgui.hpp>
+#else
+  #include <opencv2/highgui/highgui.hpp>
+#endif
 
 namespace tod
 {

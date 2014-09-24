@@ -40,8 +40,6 @@
 
 #include <set>
 
-#include <opencv2/core/core.hpp>
-
 #include "sac_model_registration_graph.h"
 
 namespace pcl

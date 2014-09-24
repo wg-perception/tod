@@ -12,6 +12,8 @@ from object_recognition_core.pipelines.detection import DetectorBase
 from object_recognition_tod import ecto_detection
 import ecto
 
+########################################################################################################################
+
 class TodDetector(ecto.BlackBox, DetectorBase):
     def __init__(self, *args, **kwargs):
         ecto.BlackBox.__init__(self, *args, **kwargs)
@@ -36,7 +38,8 @@ class TodDetector(ecto.BlackBox, DetectorBase):
                                     Forward('json_descriptor_params')],
              'guess_generator': [Forward('n_ransac_iterations'),
                                  Forward('min_inliers'),
-                                 Forward('sensor_error')]}
+                                 Forward('sensor_error'),
+                                 Forward('use_pnp')]}
         i = {'passthrough': [Forward('image'), Forward('K_image')],
              'feature_descriptor': [Forward('mask')],
              'depth_map': [Forward('depth')]}
@@ -79,6 +82,7 @@ class TodDetector(ecto.BlackBox, DetectorBase):
 
         graph += [ self.feature_descriptor['keypoints'] >> self.guess_generator['keypoints'],
                    self.feature_descriptor['descriptors'] >> self.descriptor_matcher['descriptors'],
+                   self.passthrough['K_image'] >> self.guess_generator['K'],
                    self.descriptor_matcher['matches', 'matches_3d'] >> self.guess_generator['matches', 'matches_3d'] ]
 
         cvt_color = imgproc.cvtColor(flag=imgproc.RGB2GRAY)

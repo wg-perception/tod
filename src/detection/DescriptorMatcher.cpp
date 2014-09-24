@@ -32,16 +32,16 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include <ecto/ecto.hpp>
 #include <string>
 #include <map>
 #include <vector>
+
+#include <ecto/ecto.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 
-#include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/flann/flann.hpp>
 
@@ -174,10 +174,18 @@ namespace tod
         std::string search_type = search_param_tree["type"].get_str();
         if (search_type == "LSH")
         {
-          cv::Ptr<cv::flann::IndexParams> lsh_params = new cv::flann::LshIndexParams(search_param_tree["n_tables"].get_uint64(),
-                                         search_param_tree["key_size"].get_uint64(),
-                                         search_param_tree["multi_probe_level"].get_uint64());
-          matcher_ = new cv::FlannBasedMatcher(lsh_params);
+          int n_tables = search_param_tree["n_tables"].get_uint64();
+          int key_size = search_param_tree["key_size"].get_uint64();
+          int multi_probe_level = search_param_tree["multi_probe_level"].get_uint64();
+
+          cv::Ptr<cv::flann::IndexParams> lsh_params = new cv::flann::LshIndexParams(n_tables, key_size, multi_probe_level);
+          cv::Ptr<cv::flann::SearchParams> search_params = new cv::flann::SearchParams(radius);
+
+          matcher_ = new cv::FlannBasedMatcher(lsh_params, search_params);
+        }
+        else if(search_type == "BFH")
+        {
+          matcher_ = cv::DescriptorMatcher::create("BruteForce-Hamming");
         }
         else
         {
@@ -196,6 +204,7 @@ namespace tod
     process(const ecto::tendrils& inputs, const ecto::tendrils& outputs)
     {
       std::vector < std::vector<cv::DMatch> > matches;
+
       const cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
 
       // Perform radius search
@@ -209,6 +218,7 @@ namespace tod
         // Perform radius search
         // As this does not work for LSH on OpenCV 2.4, we first perform knn
         matcher_->knnMatch(descriptors, matches, 5);
+
         for (size_t i = 0; i < matches.size(); ++i)
         {
           for(size_t j = 0; j < std::min(matches[i].size(), (size_t)5); ++j)
@@ -219,12 +229,34 @@ namespace tod
             }
         }
       }
-
-      // TODO Perform ratio testing if necessary
-      if (ratio_)
+      else
       {
-
+        std::cerr << "No descriptors loaded" << std::endl;
+        return ecto::OK;
       }
+
+      // Perform ratio testing
+      // maybe not needed since I see more than 99%
+      // of matches pass the ratio test
+
+      /*std::vector<cv::DMatch> good_matches;
+      for(size_t i = 0; i < matches.size(); i++)
+      {
+        for(size_t i = 0; i < matches.size(); i++)
+        {
+          cv::DMatch first = matches[i][0];
+          float dist1 = matches[i][0].distance;
+          float dist2 = matches[i][1].distance;
+
+          if(dist1 < ratio_ * dist2) {
+            //kpts1_out.push_back(kpts1[first.queryIdx]);
+            //kpts2_out.push_back(kpts2[first.trainIdx]);
+            good_matches.push_back(first);
+          }
+        }
+      }*/
+
+      std::cout << "Found " << good_matches.size() << " good matches" << std::endl;
 
       // TODO remove matches that match the same (common descriptors)
 
@@ -236,12 +268,12 @@ namespace tod
         cv::Mat & local_matches_3d = matches_3d[match_index];
         local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
         unsigned int i = 0;
-BOOST_FOREACH      (const cv::DMatch & match, matches[match_index])
-      {
-        local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
-        ++i;
+        BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
+        {
+          local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
+          ++i;
+        }
       }
-    }
 
       outputs["matches"] << matches;
       outputs["matches_3d"] << matches_3d;
@@ -255,7 +287,7 @@ BOOST_FOREACH      (const cv::DMatch & match, matches[match_index])
     cv::Ptr<cv::DescriptorMatcher> matcher_;
     /** The radius for the nearest neighbors (if not using ratio) */
     unsigned int radius_;
-    /** The ratio used for k-nearest neighbors, if not using radius search */
+    /** The ratio used for k-nearest neighbors */
     unsigned int ratio_;
     /** The descriptors loaded from the DB */
     std::vector<cv::Mat> descriptors_db_;

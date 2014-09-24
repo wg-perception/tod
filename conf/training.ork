@@ -1,3 +1,4 @@
+
 # info about the db
 pipeline1:
   type: TodTrainer
@@ -5,7 +6,6 @@ pipeline1:
   parameters:
     feature:
       type: ORB
-      module: ecto_opencv.features2d
       n_features: 1000
       n_levels: 3
       scale_factor: 1.2

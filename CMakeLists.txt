@@ -23,6 +23,13 @@ if (OpenCV_VERSION VERSION_EQUAL "3")
  add_definitions("-DOPENCV3=1")
 endif()
 
+if ( OpenCV_VERSION VERSION_GREATER 2.4.9 )
+ add_definitions("-DOPENCV3=1")
+endif()
+
+message(STATUS "OpenCV version: ${OpenCV_VERSION}")
+message(STATUS "OpenCV headers: ${OpenCV_INCLUDE_DIRS}")
+
 include_directories(SYSTEM ${BOOST_INCLUDE_DIRS}
                            ${catkin_INCLUDE_DIRS}
                            ${EIGEN_INCLUDE_DIRS}

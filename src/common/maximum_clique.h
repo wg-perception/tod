@@ -37,6 +37,7 @@
 #define MAXIMUM_CLIQUE_H_
 // inspired by KONC, Janez, JANEŽIČ, Dušanka. An improved branch and bound algorithm for the maximum clique problem
 #include <set>
+#include <map>
 
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>

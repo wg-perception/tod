@@ -54,25 +54,12 @@ using cv::rgbd::rescaleDepth;
 #include <opencv2/rgbd/rgbd.hpp>
 using cv::depthTo3dSparse;
 using cv::rescaleDepth;
-=======
-#if OPENCV3
-  #include <opencv2/core.hpp>
-  #include <opencv2/highgui.hpp>
-  #include <opencv2/imgproc.hpp>
-#else
-  #include <opencv2/core/core.hpp>
-  #include <opencv2/highgui/highgui.hpp>
-  #include <opencv2/imgproc/imgproc.hpp>
-  #include <opencv2/rgbd/rgbd.hpp>
->>>>>>> get code working for OpenCV3
-#endif
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types_eigen.h>
 #include <object_recognition_core/db/db.h>
 #include <object_recognition_core/db/prototypes/observations.hpp>
 #include <object_recognition_core/db/view.h>
-
 
 void
 rescale_depth(const cv::Mat depth_in, const cv::Size & isize, cv::Mat &depth_out)

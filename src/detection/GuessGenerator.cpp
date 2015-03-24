@@ -159,7 +159,7 @@ namespace tod
         // distortion coefficients
         cv::Mat dist_coef = cv::Mat::zeros(1, 4, CV_32F);
 
-        // result containers 
+        // result containers
         cv::Mat rvec, tvec, inliers;
 
         // Default RANSAC parameters
@@ -170,7 +170,7 @@ namespace tod
         int flags = CV_ITERATIVE;
 
 
-        // -- visualization config        
+        // -- visualization config
         cv::Mat visualize_img;
         size_t color_index = 0;
 
@@ -199,7 +199,7 @@ namespace tod
 
             ++i;
           }
-    
+
         }
 
 
@@ -213,7 +213,7 @@ namespace tod
           // estimate 3D pose
 
           cv::solvePnPRansac(object_points[i], image_points[i], K, dist_coef, rvec, tvec, use_extrinsic_guess, iterations_count, reprojection_error, confidence, inliers, flags);
-          
+
           std::cout << "RANSAC done with " << inliers.rows << " inliers" << std::endl;
 
           // -- if given, extract solution
@@ -241,7 +241,7 @@ namespace tod
               initial_image.copyTo(visualize_img);
 
               for (int j = 0; j < inliers.rows; ++j)
-              { 
+              {
                 draw_keypoints.push_back( image_keypoints[i][ inliers.at<int>(i) ] );
               }
 
@@ -256,7 +256,7 @@ namespace tod
               cv::waitKey(3);
             }
 
-          } // end_if inliers         
+          } // end_if inliers
 
           ++i;
         } // end_for objects

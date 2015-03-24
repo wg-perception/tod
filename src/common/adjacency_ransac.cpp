@@ -36,15 +36,9 @@
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
-#if OPENCV3
-  #include <opencv2/core.hpp>
-  #include <opencv2/features2d.hpp>
-  #include <opencv2/highgui.hpp>
-#else
-  #include <opencv2/core/core.hpp>
-  #include <opencv2/features2d/features2d.hpp>
-  #include <opencv2/highgui/highgui.hpp>
-#endif
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "adjacency_ransac.h"
 #include "ransac.h"

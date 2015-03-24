@@ -232,7 +232,7 @@ namespace tod
       // Perform ratio testing
       // maybe not needed since I see more than 99%
       // of matches pass the ratio test
-      
+
       /*std::vector<cv::DMatch> good_matches;
       for(size_t i = 0; i < matches.size(); i++)
       {
@@ -249,7 +249,6 @@ namespace tod
           }
         }
 
-        if(dist1 > ratio_ * dist2) good_matches.push_back(first);
       }*/
 
       // TODO remove matches that match the same (common descriptors)
@@ -260,7 +259,8 @@ namespace tod
       for (int match_index = 0; match_index < descriptors.rows; ++match_index)
       {
         cv::Mat & local_matches_3d = matches_3d[match_index];
-        local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
+        //local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
+        local_matches_3d = cv::Mat(1, good_matches.size(), CV_32FC3);
         unsigned int i = 0;
         BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
         {
@@ -278,16 +278,10 @@ namespace tod
     }
   private:
     /** The object used to match descriptors to our DB of descriptors */
-<<<<<<< HEAD
     cv::Ptr<cv::DescriptorMatcher> matcher_;
-    /** The ratio used for k-nearest neighbors */
-=======
-    //cv::Ptr<cv::DescriptorMatcher> matcher_;
-    cv::DescriptorMatcher * matcher_;
     /** The radius for the nearest neighbors (if not using ratio) */
     unsigned int radius_;
     /** The ratio used for k-nearest neighbors, if not using radius search */
->>>>>>> get code working for OpenCV3
     unsigned int ratio_;
     /** The descriptors loaded from the DB */
     std::vector<cv::Mat> descriptors_db_;

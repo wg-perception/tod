@@ -33,19 +33,20 @@
  *
  */
 
-//#include <limits.h>
-#include <limits>
+#include <limits.h>
 #include <vector>
 
 #include <boost/foreach.hpp>
 
 #include <opencv2/imgproc/imgproc.hpp>
+
 #if CV_VERSION_MAJOR == 3
 #include <opencv2/rgbd.hpp>
 namespace cv {
 using namespace cv::rgbd;
 }
 #else
+
 #include <opencv2/rgbd/rgbd.hpp>
 
 #include "training.h"
@@ -108,19 +109,19 @@ void validateKeyPoints(const std::vector<cv::KeyPoint> & in_keypoints, const cv:
     switch (depth.depth()) {
       case CV_16U:
         z = depth.at<uint16_t>(y, x);
-        //if (!cv::isValidDepth(uint16_t(z)))
+        if (!cv::isValidDepth(uint16_t(z)))
           is_good = false;
         z /= 1000;
         break;
       case CV_16S:
         z = depth.at<int16_t>(y, x);
-        //if (!cv::isValidDepth(int16_t(z)))
+        if (!cv::isValidDepth(int16_t(z)))
           is_good = false;
         z /= 1000;
         break;
       case CV_32F:
         z = depth.at<float>(y, x);
-        //if (!cv::isValidDepth(float(z)))
+        if (!cv::isValidDepth(float(z)))
           is_good = false;
         break;
       default:

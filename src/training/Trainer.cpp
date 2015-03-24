@@ -43,6 +43,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
 #if CV_VERSION_MAJOR == 3
 #include <opencv2/rgbd.hpp>
 using cv::rgbd::depthTo3dSparse;
@@ -64,11 +65,7 @@ void rescale_depth(const cv::Mat depth_in, const cv::Size & isize,
     cv::Mat &depth_out) {
   cv::Size dsize = depth_in.size();
   cv::Mat depth;
-#if OPENCV3
-
-#else
   rescaleDepth(depth_in, CV_32F, depth);
-#endif
 
   if (dsize == isize) {
     depth_out = depth;
@@ -80,11 +77,7 @@ void rescale_depth(const cv::Mat depth_in, const cv::Size & isize,
   //resize into the subregion of the correct aspect ratio
   cv::Mat subregion(output.rowRange(0, dsize.height * factor));
   //use nearest neighbor to prevent discontinuities causing bogus depth.
-#if OPENCV3
-  cv::resize(depth, subregion, subregion.size(), cv::INTER_NEAREST);
-#else
   cv::resize(depth, subregion, subregion.size(), CV_INTER_NN);
-#endif
   depth_out = output;
 }
 
@@ -148,6 +141,7 @@ public:
       // Compute the features/descriptors on the image
       cv::Mat points, descriptors;
       std::vector<cv::KeyPoint> keypoints;
+
       // TODO actually use the params and do not force ORB
 #if CV_VERSION_MAJOR == 3
       cv::Ptr<cv::DescriptorExtractor> orb = cv::ORB::create();
@@ -173,11 +167,7 @@ public:
 
       // Convert the points to world coordinates
       cv::Mat points_clean_3d, points_final;
-#if OPENCV3
-
-#else
       depthTo3dSparse(depth, obs.K, points_clean, points_clean_3d);
-#endif
       cameraToWorld(obs.R, obs.T, points_clean_3d, points_final);
       points_all.push_back(points_final);
 

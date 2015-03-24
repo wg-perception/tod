@@ -219,10 +219,28 @@ namespace tod
             }
         }
       }
+      else
+      {
+        matcher_->knnMatch(descriptors, matches, 2);
+      }
 
       // TODO Perform ratio testing if necessary
+
+      std::vector<cv::DMatch> good_matches;
       if (ratio_)
       {
+        for(size_t i = 0; i < matches.size(); i++)
+        {
+          cv::DMatch first = matches[i][0];
+          float dist1 = matches[i][0].distance;
+          float dist2 = matches[i][1].distance;
+
+          if(dist1 < ratio_ * dist2) {
+            //kpts1_out.push_back(kpts1[first.queryIdx]);
+            //kpts2_out.push_back(kpts2[first.trainIdx]);
+            good_matches.push_back(first);
+          }
+        }
 
       }
 
@@ -234,13 +252,15 @@ namespace tod
       for (int match_index = 0; match_index < descriptors.rows; ++match_index)
       {
         cv::Mat & local_matches_3d = matches_3d[match_index];
-        local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
+        //local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
+        local_matches_3d = cv::Mat(1, good_matches.size(), CV_32FC3);
         unsigned int i = 0;
-BOOST_FOREACH      (const cv::DMatch & match, matches[match_index])
-      {
-        local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
-        ++i;
-      }
+        //BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
+        BOOST_FOREACH (const cv::DMatch & match, good_matches)
+        {
+          local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
+          ++i;
+        }
     }
 
       outputs["matches"] << matches;
@@ -252,8 +272,7 @@ BOOST_FOREACH      (const cv::DMatch & match, matches[match_index])
     }
   private:
     /** The object used to match descriptors to our DB of descriptors */
-    //cv::Ptr<cv::DescriptorMatcher> matcher_;
-    cv::DescriptorMatcher * matcher_;
+    cv::Ptr<cv::DescriptorMatcher> matcher_;
     /** The radius for the nearest neighbors (if not using ratio) */
     unsigned int radius_;
     /** The ratio used for k-nearest neighbors, if not using radius search */

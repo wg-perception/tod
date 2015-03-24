@@ -37,13 +37,8 @@
 #define ADJACENCY_RANSAC_H_
 
 #include <vector>
-#include <map> // added
 
-#if OPENCV3
-  #include <opencv2/core.hpp>
-#else
-  #include <opencv2/core/core.hpp>
-#endif
+#include <opencv2/core/core.hpp>
 
 #include "maximum_clique.h"
 

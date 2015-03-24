@@ -46,6 +46,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 
 #include <object_recognition_core/common/types.h>
 #include <object_recognition_core/common/pose_result.h>
@@ -157,6 +158,83 @@ namespace tod
         // Only use 2d to 3d matching
         // TODO
         //const std::vector<cv::KeyPoint> &keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
+       
+        OpenCVIdToObjectPoints all_object_points;
+        cv::Mat visualize_img;
+        size_t color_index = 0;
+        if (*visualize_)
+        {
+          DrawClustersPerObject(keypoints, colors_, initial_image, all_object_points);
+          initial_image.copyTo(visualize_img);
+        }
+
+        for (size_t i = 0; i < matches_3d.size(); ++i)
+        {
+          std::cout << "***Starting object: " << i << std::endl;
+
+          // 3d points
+          const cv::Mat object_points = matches_3d[i];
+          
+          // extract 2d points
+          cv::vector<cv::Point> image_points;
+          for (size_t j = 0; j < keypoints.size(); ++j) image_points.push_back(keypoints[j].pt);
+
+          // TODO: find this values
+          cv::Mat K(3, 3, CV_32FC1);
+          cv::Mat dist_coef;
+
+          // result containers 
+          cv::Mat rvec, tvec, inliers;
+
+          // Default parameters
+          bool use_extrinsic_guess = false;
+          int iterations_count = 100;
+          float reprojection_error = 8.0;
+          double confidence = 0.99;
+          int flags = CV_ITERATIVE;
+
+          // estimate 3D pose
+          cv::solvePnPRansac(object_points, image_points, K, dist_coef, rvec, tvec, use_extrinsic_guess, iterations_count, reprojection_error, confidence, inliers, flags);
+          
+          std::cout << "RANSAC done with " << inliers.size() << " inliers" << std::endl;
+
+
+          cv::Mat R_mat;
+          cv::Rodrigues(rvec, R_mat);
+
+          // Store the matches for debug purpose
+          if (*visualize_)
+          {
+            /*std::vector<cv::KeyPoint> draw_keypoints;
+            BOOST_FOREACH(unsigned int index, query_inliers)draw_keypoints.push_back(
+                keypoints[index]);
+            if (color_index < colors_.size())
+            {
+              cv::drawKeypoints(visualize_img, draw_keypoints, visualize_img, colors_[color_index]);
+              ++color_index;
+            }*/
+          }
+
+          // Save the result;
+          PoseResult pose_result;
+          pose_result.set_R(R_mat);
+          pose_result.set_T(tvec);
+          // TODO: see whats that
+          //pose_result.set_object_id(db_, object_id);
+          pose_results_->push_back(pose_result);
+          Rs_->push_back(cv::Mat(R_mat));
+          Ts_->push_back(cv::Mat(tvec));
+
+        }
+
+        if (*visualize_)
+        {
+          cv::namedWindow("inliers", 0);
+          cv::imshow("inliers", visualize_img);
+        }
+
+        std::cout << "********************* found " << pose_results_->size() << " poses" << std::endl;
+
       }
       else
       {

@@ -35,11 +35,16 @@
 
 #include "training.h"
 
+<<<<<<< HEAD
 #include <string>
 
 #include <ecto/ecto.hpp>
 
 <<<<<<< HEAD
+=======
+#include <ecto/ecto.hpp>
+
+>>>>>>> Updating trainer
 #include <boost/foreach.hpp>
 
 #include <opencv2/core/core.hpp>
@@ -92,7 +97,6 @@ public:
   static void
   declare_params(ecto::tendrils& params)
   {
-
     params.declare(&Trainer::json_feature_params_, "json_feature_params",
         std::string("Parameters for the feature as a JSON string. ")
             + std::string(

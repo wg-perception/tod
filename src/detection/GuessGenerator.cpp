@@ -196,12 +196,10 @@ namespace tod
             object_points[ match.imgIdx ].push_back( local_point_3d );
             image_points[ match.imgIdx ].push_back( local_keypoint.pt );
             image_keypoints[ match.imgIdx ].push_back( local_keypoint );
-
             ++i;
           }
 
         }
-
 
         // -- let's find the pose for each object
 

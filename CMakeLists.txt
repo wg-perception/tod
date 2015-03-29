@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(object_recognition_tod)
 
-find_package(catkin REQUIRED cmake_modules ecto ecto_opencv object_recognition_core)
+find_package(catkin REQUIRED cmake_modules ecto ecto_opencv object_recognition_core opencv_candidate)
 
 catkin_package()
 

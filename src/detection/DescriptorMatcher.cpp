@@ -32,10 +32,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include <ecto/ecto.hpp>
 #include <string>
 #include <map>
 #include <vector>
+
+#include <ecto/ecto.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/python.hpp>
@@ -179,9 +180,9 @@ namespace tod
            search_param_tree.get<unsigned int>("key_size"),
            search_param_tree.get<unsigned int>("multi_probe_level"));
            matcher_ = new cv::FlannBasedMatcher(&lsh_params);*/
-          matcher_ = new lsh::LshMatcher(search_param_tree["n_tables"].get_uint64(),
-                                         search_param_tree["key_size"].get_uint64(),
-                                         search_param_tree["multi_probe_level"].get_uint64());
+          //matcher_ = new lsh::LshMatcher(search_param_tree["n_tables"].get_uint64(),
+          //                               search_param_tree["key_size"].get_uint64(),
+          //                               search_param_tree["multi_probe_level"].get_uint64());
         }
         else if(search_type == "BFH")
         {

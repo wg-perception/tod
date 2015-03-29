@@ -33,28 +33,22 @@
  *
  */
 
-#include <limits.h>
-#include <vector>
+ #include <limits.h>
+ #include <vector>
 
-#include <boost/foreach.hpp>
+ #include <boost/foreach.hpp>
 
-#include <opencv2/imgproc/imgproc.hpp>
-<<<<<<< HEAD
+ #include <opencv2/imgproc/imgproc.hpp>
+ #if CV_VERSION_MAJOR == 3
+ #include <opencv2/rgbd.hpp>
+ namespace cv {
+ using namespace cv::rgbd;
+ }
+ #else
+ #include <opencv2/rgbd/rgbd.hpp>
+ #endif
 
-#if CV_VERSION_MAJOR == 3
-#include <opencv2/rgbd.hpp>
-namespace cv {
-using namespace cv::rgbd;
-}
-#else
-
-=======
->>>>>>> Adding solvePnP
-#include <opencv2/rgbd/rgbd.hpp>
-
-#include "training.h"
-
-#include <limits>
+ #include "training.h"
 
 inline unsigned int roundWithinBounds(float xy, int xy_min, int xy_max) {
   return std::min(std::max(cvRound(xy), xy_min), xy_max);

@@ -35,16 +35,10 @@
 
 #include "training.h"
 
-<<<<<<< HEAD
 #include <string>
 
 #include <ecto/ecto.hpp>
 
-<<<<<<< HEAD
-=======
-#include <ecto/ecto.hpp>
-
->>>>>>> Updating trainer
 #include <boost/foreach.hpp>
 
 #include <opencv2/core/core.hpp>

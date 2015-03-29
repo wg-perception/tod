@@ -40,6 +40,7 @@
 
 #include <boost/foreach.hpp>
 
+<<<<<<< HEAD
 #if CV_VERSION_MAJOR < 3
   #include <opencv2/core/core.hpp>
   #include <opencv2/imgproc/imgproc.hpp>
@@ -49,6 +50,11 @@
   #include <opencv2/imgproc.hpp>
 #endif
 
+=======
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/features2d.hpp>
+>>>>>>> Updating trainer
 #include <opencv2/rgbd/rgbd.hpp>
 
 void validateKeyPoints(const std::vector<cv::KeyPoint> & in_keypoints, const cv::Mat &in_mask, const cv::Mat & depth,

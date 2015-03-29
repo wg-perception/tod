@@ -2,6 +2,13 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* remove dependency on opencv_candidate
+* clean extensions
+* remove useless build dependency
+* Contributors: Vincent Rabaud
+
 0.5.0 (2014-04-13)
 ------------------
 * compile under Indigo

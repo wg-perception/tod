@@ -12,13 +12,7 @@ pipeline1:
     descriptor:
       type: ORB
       module: ecto_opencv.features2d
-    search:
-      key_size: 24
-      multi_probe_level: 2
-      n_tables: 8
-      radius: 55
-      ratio: 0.8
-      type: 'LSH'
+    visualize: 1
     db:
       type: 'CouchDB'
       root: 'http://localhost:5984'

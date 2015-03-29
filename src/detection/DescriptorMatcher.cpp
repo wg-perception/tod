@@ -32,10 +32,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include <ecto/ecto.hpp>
 #include <string>
 #include <map>
 #include <vector>
+
+#include <ecto/ecto.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/python.hpp>

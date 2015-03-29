@@ -168,7 +168,7 @@ namespace tod
           const cv::Mat object_points = matches_3d[i];
           
           // extract 2d points
-          cv::vector<cv::Point> image_points;
+          std::vector<cv::Point> image_points;
           for (size_t j = 0; j < keypoints.size(); ++j) image_points.push_back(keypoints[j].pt);
 
           // TODO: find this values
@@ -183,7 +183,7 @@ namespace tod
           int iterations_count = 100;
           float reprojection_error = 8.0;
           double confidence = 0.99;
-          int flags = CV_ITERATIVE;
+          int flags = cv::SOLVEPNP_ITERATIVE;
 
           // estimate 3D pose
           cv::solvePnPRansac(object_points, image_points, K, dist_coef, rvec, tvec, use_extrinsic_guess, iterations_count, reprojection_error, confidence, inliers, flags);

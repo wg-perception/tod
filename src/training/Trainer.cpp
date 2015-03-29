@@ -33,17 +33,13 @@
  *
  */
 
+#include "training.h"
+
 #include <string>
-#include <vector>
 
 #include <ecto/ecto.hpp>
 
-#include <boost/foreach.hpp>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/rgbd/rgbd.hpp>
+#include <opencv2/highgui.hpp>
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types_eigen.h>
@@ -51,7 +47,6 @@
 #include <object_recognition_core/db/prototypes/observations.hpp>
 #include <object_recognition_core/db/view.h>
 
-#include "training.h"
 
 void
 rescale_depth(const cv::Mat depth_in, const cv::Size & isize, cv::Mat &depth_out)
@@ -159,7 +154,7 @@ public:
     // check if detector is assigned
     if(feature2d_->empty())
     {
-      std::cerr << "Detector object is empty -> Aborting features detection." << std::endl;
+      std::cerr << "Detector object " << &feature2d_ << " is empty -> Aborting features detection." << std::endl;
       throw;
     }
 
@@ -190,16 +185,11 @@ public:
       obs << &view_element;
 
       // Compute the features/descriptors on the image
-      cv::Mat points, descriptors;
+      cv::Mat /*points,*/ descriptors;
       std::vector<cv::KeyPoint> keypoints;
       
       // Detect keypoints and Compute descriptors
-
-#ifdef CV_VERSION_EPOCH
-      (*feature2d_)(obs.image, obs.mask, keypoints, descriptors);
-#else
       feature2d_->detectAndCompute(obs.image, obs.mask, keypoints, descriptors);
-#endif
 
       // Rescale the depth
       cv::Mat depth;

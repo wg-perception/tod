@@ -33,8 +33,9 @@
  *
  */
 
+#include "training.h"
+
 #include <string>
-#include <vector>
 
 #include <ecto/ecto.hpp>
 
@@ -60,7 +61,6 @@ using cv::rescaleDepth;
 #include <object_recognition_core/db/prototypes/observations.hpp>
 #include <object_recognition_core/db/view.h>
 
-#include "training.h"
 
 void
 rescale_depth(const cv::Mat depth_in, const cv::Size & isize, cv::Mat &depth_out)
@@ -168,7 +168,7 @@ public:
     // check if detector is assigned
     if(feature2d_->empty())
     {
-      std::cerr << "Detector object is empty -> Aborting features detection." << std::endl;
+      std::cerr << "Detector object " << &feature2d_ << " is empty -> Aborting features detection." << std::endl;
       throw;
     }
 
@@ -199,7 +199,7 @@ public:
       obs << &view_element;
 
       // Compute the features/descriptors on the image
-      cv::Mat points, descriptors;
+      cv::Mat /*points,*/ descriptors;
       std::vector<cv::KeyPoint> keypoints;
 
       // TODO actually use the params and do not force ORB

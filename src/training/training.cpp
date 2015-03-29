@@ -51,6 +51,8 @@ using namespace cv::rgbd;
 
 #include "training.h"
 
+#include <limits>
+
 inline unsigned int roundWithinBounds(float xy, int xy_min, int xy_max) {
   return std::min(std::max(cvRound(xy), xy_min), xy_max);
 }

@@ -45,7 +45,7 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
 
     @classmethod
     def declare_direct_params(self, p):
-        p.declare('feature', 'The features parameters as a JSON string', 'ola')
+        p.declare('feature', 'The features parameters as a JSON string', '{}')
         p.declare('descriptor', 'The descriptor parameters as a JSON string', '{}')
 
     def configure(self, p, _i, _o):

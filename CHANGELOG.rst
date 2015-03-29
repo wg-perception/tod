@@ -2,8 +2,8 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.1 (2015-03-29)
+------------------
 * remove dependency on opencv_candidate
 * clean extensions
 * remove useless build dependency

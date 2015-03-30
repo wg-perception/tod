@@ -2,8 +2,8 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.2 (2015-03-30)
+------------------
 * add opencv_candidate as a dependency
   It is included but just transitively so it's better to have it
   directly

@@ -13,11 +13,13 @@
   <build_depend>ecto</build_depend>
   <build_depend>eigen</build_depend>
   <build_depend>object_recognition_core</build_depend>
+  <build_depend>opencv_candidate</build_depend>
 
   <run_depend>ecto</run_depend>
   <run_depend>ecto_opencv</run_depend>
   <run_depend>ecto_openni</run_depend>
   <run_depend>object_recognition_core</run_depend>
+  <run_depend>opencv_candidate</run_depend>
 
   <buildtool_depend>catkin</buildtool_depend>
 </package>

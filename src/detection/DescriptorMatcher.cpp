@@ -43,13 +43,12 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
-//#include <opencv2/flann/flann.hpp>
+#include <opencv2/flann/flann.hpp>
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types.h>
 #include <object_recognition_core/db/ModelReader.h>
 #include <object_recognition_core/db/opencv.h>
-#include <opencv_candidate/lsh.h>
 
 using object_recognition_core::db::Documents;
 using object_recognition_core::db::ObjectId;
@@ -175,13 +174,10 @@ namespace tod
         std::string search_type = search_param_tree["type"].get_str();
         if (search_type == "LSH")
         {
-          /*cv::flann::LshIndexParams lsh_params(search_param_tree.get<unsigned int>("n_tables"),
-           search_param_tree.get<unsigned int>("key_size"),
-           search_param_tree.get<unsigned int>("multi_probe_level"));
-           matcher_ = new cv::FlannBasedMatcher(&lsh_params);*/
-          matcher_ = new lsh::LshMatcher(search_param_tree["n_tables"].get_uint64(),
+          cv::Ptr<cv::flann::IndexParams> lsh_params = new cv::flann::LshIndexParams(search_param_tree["n_tables"].get_uint64(),
                                          search_param_tree["key_size"].get_uint64(),
                                          search_param_tree["multi_probe_level"].get_uint64());
+          matcher_ = new cv::FlannBasedMatcher(lsh_params);
         }
         else
         {

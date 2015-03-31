@@ -2,6 +2,11 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* use OpenCV and not opencv_candidate for LSH
+* Contributors: Vincent Rabaud
+
 0.5.2 (2015-03-30)
 ------------------
 * add opencv_candidate as a dependency

@@ -63,14 +63,6 @@ using object_recognition_core::common::PoseResult;
 
 namespace tod
 {
-  namespace
-  {
-    bool
-    compare_first(const std::pair<int, int>& lhs, const std::pair<int, int>& rhs)
-    {
-      return lhs.first < rhs.first;
-    }
-  }
   /** Ecto implementation of a module that takes
    *
    */

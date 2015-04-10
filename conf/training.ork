@@ -1,3 +1,4 @@
+
 # info about the db
 pipeline1:
   type: TodTrainer
@@ -9,14 +10,16 @@ pipeline1:
       n_features: 1000
       n_levels: 3
       scale_factor: 1.2
-<<<<<<< HEAD
-    visualize: 0
-=======
     descriptor:
       type: ORB
       module: ecto_opencv.features2d
-    visualize: 1
->>>>>>> Updating trainer
+    search:
+      key_size: 24
+      multi_probe_level: 2
+      n_tables: 8
+      radius: 55
+      ratio: 0.8
+      type: 'LSH'
     db:
       type: 'CouchDB'
       root: 'http://localhost:5984'

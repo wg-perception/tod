@@ -67,7 +67,7 @@ rescale_depth(const cv::Mat depth_in, const cv::Size & isize, cv::Mat &depth_out
 {
   cv::Size dsize = depth_in.size();
   cv::Mat depth;
-  rescaleDepth(depth_in, CV_32F, depth);
+  cv::rescaleDepth(depth_in, CV_32F, depth);
 
   if (dsize == isize) {
     depth_out = depth;
@@ -152,23 +152,16 @@ public:
       int n_features = feature_param_tree["n_features"].get_uint64();
       int n_levels = feature_param_tree["n_levels"].get_uint64();
       float scale_factor = feature_param_tree["scale_factor"].get_real();
-
       feature2d_ = cv::ORB::create(n_features, scale_factor, n_levels);
     }
     else if(feature_type == "AKAZE")
     {
       feature2d_ = cv::AKAZE::create();
     }
+#endif
     else
     {
-      std::cerr << "Features not implemented for that type: " << feature_type;
-      throw;
-    }
-
-    // check if detector is assigned
-    if(feature2d_->empty())
-    {
-      std::cerr << "Detector object " << &feature2d_ << " is empty -> Aborting features detection." << std::endl;
+      std::cerr << "Features not implemented for that type: " << feature_type << std::endl;
       throw;
     }
 
@@ -191,7 +184,10 @@ public:
     std::vector<cv::Mat> descriptors_all, points_all;
     object_recognition_core::db::ViewIterator iter = view_iterator.begin(),
         end = view_iterator.end();
-    for (; iter != end; ++iter) {
+
+    int counter = 1;
+
+    for(; iter != end; ++iter) {
 
       // Convert the observation to a usable type
       object_recognition_core::prototypes::Observation obs;
@@ -227,23 +223,28 @@ public:
 
       // Convert the points to world coordinates
       cv::Mat points_clean_3d, points_final;
-      depthTo3dSparse(depth, obs.K, points_clean, points_clean_3d);
+      cv::depthTo3dSparse(depth, obs.K, points_clean, points_clean_3d);
       cameraToWorld(obs.R, obs.T, points_clean_3d, points_final);
       points_all.push_back(points_final);
 
       // visualize data if asked for
-      if (*visualize_) {
+      if (*visualize_)
+      {
         // draw keypoints on the masked object
         cv::namedWindow("keypoints");
         cv::Mat img;
         cv::drawKeypoints(obs.image, keypoints, img, cv::Scalar(255,0,0));
         cv::imshow("keypoints", img);
-        cv::waitKey(10);
+        cv::waitKey(3);
       }
+
+      counter++;
     }
 
     // merge the points into unique cv::Mat
     mergePoints(descriptors_all, points_all, *descriptors_out_, *points_out_);
+
+    std::cout << "Found total " << (*descriptors_out_).rows << " descriptors" << std::endl;
 
     return ecto::OK;
   }

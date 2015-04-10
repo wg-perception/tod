@@ -4,7 +4,7 @@ pipeline1:
   module: object_recognition_tod
   parameters:
     feature:
-      type: ORB
+      type: OR
       module: ecto_opencv.features2d
       n_features: 1000
       n_levels: 3
@@ -12,7 +12,7 @@ pipeline1:
     descriptor:
       type: ORB
       module: ecto_opencv.features2d
-    visualize: 1
+    visualize: 0
     db:
       type: 'CouchDB'
       root: 'http://localhost:5984'

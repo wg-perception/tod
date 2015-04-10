@@ -1,5 +1,12 @@
 #include <ecto/ecto.hpp>
-#include <opencv2/core/core.hpp>
+
+
+#if CV_VERSION_EPOCH < 3
+  #include <opencv2/core/core.hpp>
+#else
+  #include <opencv2/core.hpp>
+#endif
+
 
 #include <object_recognition_core/db/document.h>
 

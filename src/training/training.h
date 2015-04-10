@@ -40,9 +40,15 @@
 
 #include <boost/foreach.hpp>
 
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/features2d.hpp>
+#if CV_VERSION_EPOCH < 3
+  #include <opencv2/core/core.hpp>
+  #include <opencv2/imgproc/imgproc.hpp>
+  #include <opencv2/features2d/features2d.hpp>
+#else
+  #include <opencv2/core.hpp>
+  #include <opencv2/imgproc.hpp>
+#endif
+
 #include <opencv2/rgbd/rgbd.hpp>
 
 void validateKeyPoints(const std::vector<cv::KeyPoint> & in_keypoints, const cv::Mat &in_mask, const cv::Mat & depth,

@@ -50,7 +50,7 @@
 #include <object_recognition_core/common/types.h>
 #include <object_recognition_core/db/ModelReader.h>
 #include <object_recognition_core/db/opencv.h>
-#include <opencv_candidate/lsh.h>
+//#include <opencv_candidate/lsh.h>
 
 using object_recognition_core::db::Documents;
 using object_recognition_core::db::ObjectId;

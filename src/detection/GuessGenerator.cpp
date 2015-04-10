@@ -191,7 +191,8 @@ namespace tod
           int iterations_count = 100;
           float reprojection_error = 8.0;
           double confidence = 0.99;
-          int flags = cv::SOLVEPNP_ITERATIVE;
+          //int flags = cv::SOLVEPNP_ITERATIVE;
+          int flags = CV_ITERATIVE;
 
           // estimate 3D pose
           cv::solvePnPRansac(object_points, image_points, K, dist_coef, rvec, tvec, use_extrinsic_guess, iterations_count, reprojection_error, confidence, inliers, flags);

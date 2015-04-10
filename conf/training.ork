@@ -4,7 +4,7 @@ pipeline1:
   module: object_recognition_tod
   parameters:
     feature:
-      type: OR
+      type: ORB
       module: ecto_opencv.features2d
       n_features: 1000
       n_levels: 3

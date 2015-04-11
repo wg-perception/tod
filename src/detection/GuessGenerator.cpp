@@ -145,8 +145,17 @@ namespace tod
       pose_results_->clear();
       Rs_->clear();
       Ts_->clear();
-      if (point_cloud.empty())
+
+      // TODO: find a way to indicate in yaml file
+      bool camera2d = point_cloud.empty();
+      camera2d = true;
+
+      std::cout << "***Total matches_3d " << matches_3d.size() << std::endl;
+
+      if (camera2d)
       {
+        std::cout << "*** PnP METHOD ***" << std::endl;
+
         // Only use 2d to 3d matching
         // TODO
         //const std::vector<cv::KeyPoint> &keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
@@ -162,11 +171,15 @@ namespace tod
 
         for (size_t i = 0; i < matches_3d.size(); ++i)
         {
-          std::cout << "***Starting object: " << i << std::endl;
+          size_t opencv_object_id = all_object_points.begin()->first;
+          ObjectId object_id = object_ids_in[opencv_object_id];
+
+          std::cout << "***Starting object: " << opencv_object_id << std::endl;
 
           // 3d points
-          const cv::Mat object_points = matches_3d[i];
-          
+          const cv::Mat object_points = matches_3d.clone();
+          //const cv::Mat object_points = matches_3d[i];
+
           // extract 2d points
           std::vector<cv::Point> image_points;
           for (size_t j = 0; j < keypoints.size(); ++j) image_points.push_back(keypoints[j].pt);
@@ -185,6 +198,9 @@ namespace tod
           double confidence = 0.99;
           //int flags = cv::SOLVEPNP_ITERATIVE;
           int flags = CV_ITERATIVE;
+
+          std::cout << object_points.size() << " object_points" << std::endl;
+          std::cout << image_points.size() << " image_points" << std::endl;
 
           // estimate 3D pose
           cv::solvePnPRansac(object_points, image_points, K, dist_coef, rvec, tvec, use_extrinsic_guess, iterations_count, reprojection_error, confidence, inliers, flags);
@@ -234,6 +250,8 @@ namespace tod
 #ifdef DO_VALGRIND
     CALLGRIND_START_INSTRUMENTATION;
 #endif
+        std::cout << "*** AdjacencyRansac METHOD ***" << std::endl;
+
         // Cluster the matches per object ID
         OpenCVIdToObjectPoints all_object_points;
         ClusterPerObject(keypoints, point_cloud, matches, matches_3d, all_object_points);

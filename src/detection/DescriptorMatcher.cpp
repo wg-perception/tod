@@ -168,7 +168,6 @@ namespace tod
           search_param_tree = value.get_obj();
         }
 
-        radius_ = search_param_tree["radius"].get_real();
         ratio_ = search_param_tree["ratio"].get_real();
 
         // Create the matcher depending on the type of descriptors
@@ -196,7 +195,9 @@ namespace tod
     int
     process(const ecto::tendrils& inputs, const ecto::tendrils& outputs)
     {
+      std::vector<cv::DMatch> good_matches;
       std::vector < std::vector<cv::DMatch> > matches;
+
       const cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
 
       // Perform radius search
@@ -222,13 +223,15 @@ namespace tod
       }
       else
       {
-        matcher_->knnMatch(descriptors, matches, 2);
+        std::cerr << "No descriptors loaded" << std::endl;
+        return ecto::OK;
       }
 
-      // TODO Perform ratio testing if necessary
+      // Perform 2 Nearest Neighbors search
+      matcher_->knnMatch(descriptors, matches, 2);
 
-      std::vector<cv::DMatch> good_matches;
-      if (ratio_)
+      // Perform ratio testing
+      for(size_t i = 0; i < matches.size(); i++)
       {
         for(size_t i = 0; i < matches.size(); i++)
         {
@@ -243,7 +246,10 @@ namespace tod
           }
         }
 
+        if(dist1 > ratio_ * dist2) good_matches.push_back(first);
       }
+
+      std::cout << "Found " << good_matches.size() << " good matches" << std::endl;
 
       // TODO remove matches that match the same (common descriptors)
 
@@ -253,16 +259,19 @@ namespace tod
       for (int match_index = 0; match_index < descriptors.rows; ++match_index)
       {
         cv::Mat & local_matches_3d = matches_3d[match_index];
-        //local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
-        local_matches_3d = cv::Mat(1, good_matches.size(), CV_32FC3);
+        local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
+        //local_matches_3d = cv::Mat(1, good_matches.size(), CV_32FC3); // edgar
         unsigned int i = 0;
-        //BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
-        BOOST_FOREACH (const cv::DMatch & match, good_matches)
+        BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
+        //BOOST_FOREACH (const cv::DMatch & match, good_matches) // EDGAR
         {
           local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
           ++i;
         }
-    }
+      }
+
+      std::cout << "Found " << matches.size() << " 2d matches" << std::endl;
+      std::cout << "Found " << matches_3d.size() << " 3d matches" << std::endl;
 
       outputs["matches"] << matches;
       outputs["matches_3d"] << matches_3d;
@@ -274,9 +283,7 @@ namespace tod
   private:
     /** The object used to match descriptors to our DB of descriptors */
     cv::Ptr<cv::DescriptorMatcher> matcher_;
-    /** The radius for the nearest neighbors (if not using ratio) */
-    unsigned int radius_;
-    /** The ratio used for k-nearest neighbors, if not using radius search */
+    /** The ratio used for k-nearest neighbors */
     unsigned int ratio_;
     /** The descriptors loaded from the DB */
     std::vector<cv::Mat> descriptors_db_;

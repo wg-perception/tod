@@ -195,7 +195,6 @@ namespace tod
     int
     process(const ecto::tendrils& inputs, const ecto::tendrils& outputs)
     {
-      std::vector<cv::DMatch> good_matches;
       std::vector < std::vector<cv::DMatch> > matches;
 
       const cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
@@ -231,6 +230,10 @@ namespace tod
       matcher_->knnMatch(descriptors, matches, 2);
 
       // Perform ratio testing
+      // maybe not needed since I see more than 99%
+      // of matches pass the ratio test
+      
+      /*std::vector<cv::DMatch> good_matches;
       for(size_t i = 0; i < matches.size(); i++)
       {
         for(size_t i = 0; i < matches.size(); i++)
@@ -247,9 +250,7 @@ namespace tod
         }
 
         if(dist1 > ratio_ * dist2) good_matches.push_back(first);
-      }
-
-      std::cout << "Found " << good_matches.size() << " good matches" << std::endl;
+      }*/
 
       // TODO remove matches that match the same (common descriptors)
 
@@ -260,18 +261,13 @@ namespace tod
       {
         cv::Mat & local_matches_3d = matches_3d[match_index];
         local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
-        //local_matches_3d = cv::Mat(1, good_matches.size(), CV_32FC3); // edgar
         unsigned int i = 0;
         BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
-        //BOOST_FOREACH (const cv::DMatch & match, good_matches) // EDGAR
         {
           local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
           ++i;
         }
       }
-
-      std::cout << "Found " << matches.size() << " 2d matches" << std::endl;
-      std::cout << "Found " << matches_3d.size() << " 3d matches" << std::endl;
 
       outputs["matches"] << matches;
       outputs["matches_3d"] << matches_3d;

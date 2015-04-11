@@ -103,7 +103,7 @@ namespace tod
     void
     configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs)
     {
-      if (*visualize_)
+      //if (*visualize_)
       {
         colors_.push_back(cv::Scalar(255, 255, 0));
         colors_.push_back(cv::Scalar(0, 255, 255));
@@ -151,8 +151,6 @@ namespace tod
       // TODO: force to use pnp
       if (point_cloud.empty())
       {
-        std::cout << "*** PnP METHOD ***" << std::endl;
-
         // -- pnp config
 
         // distortion coefficients

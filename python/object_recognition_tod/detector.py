@@ -5,9 +5,9 @@ Module defining the TOD detector to find objects in a scene
 
 from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
 from ecto_image_pipeline.base import RescaledRegisteredDepth
-#from ecto_opencv import features2d, highgui, imgproc, calib
+from ecto_opencv import features2d, highgui, imgproc, calib
 from ecto_opencv.calib import DepthTo3d
-#from ecto_opencv.features2d import FeatureDescriptor
+from ecto_opencv.features2d import FeatureDescriptor
 from object_recognition_core.pipelines.detection import DetectorBase
 from object_recognition_tod import ecto_detection
 import ecto

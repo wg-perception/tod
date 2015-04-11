@@ -148,7 +148,6 @@ namespace tod
       Rs_->clear();
       Ts_->clear();
 
-
       // TODO: force to use pnp
       if (point_cloud.empty())
       {
@@ -207,6 +206,9 @@ namespace tod
         BOOST_FOREACH(const ObjectId object_id, object_ids_in)
         {
           std::cout << "***Starting object: " << object_id << std::endl;
+
+          std::cout << object_points.size() << " object_points" << std::endl;
+          std::cout << image_points.size() << " image_points" << std::endl;
 
           // estimate 3D pose
 

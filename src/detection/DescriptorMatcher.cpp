@@ -174,10 +174,19 @@ namespace tod
         std::string search_type = search_param_tree["type"].get_str();
         if (search_type == "LSH")
         {
-          cv::Ptr<cv::flann::IndexParams> lsh_params = new cv::flann::LshIndexParams(search_param_tree["n_tables"].get_uint64(),
-                                         search_param_tree["key_size"].get_uint64(),
-                                         search_param_tree["multi_probe_level"].get_uint64());
-          matcher_ = new cv::FlannBasedMatcher(lsh_params);
+          int n_tables = search_param_tree["n_tables"].get_uint64();
+          int key_size = search_param_tree["key_size"].get_uint64();
+          int multi_probe_level = search_param_tree["multi_probe_level"].get_uint64();
+          int radius = search_param_tree["radius"].get_uint64();
+
+          cv::Ptr<cv::flann::IndexParams> lsh_params = new cv::flann::LshIndexParams(n_tables, key_size, multi_probe_level);
+          cv::Ptr<cv::flann::SearchParams> search_params = new cv::flann::SearchParams(radius);
+
+          matcher_ = new cv::FlannBasedMatcher(lsh_params, search_params);
+        }
+        else if(search_type == "BFH")
+        {
+          matcher_ = cv::DescriptorMatcher::create("BruteForce-Hamming");
         }
         else
         {
@@ -195,6 +204,7 @@ namespace tod
     int
     process(const ecto::tendrils& inputs, const ecto::tendrils& outputs)
     {
+      std::vector<cv::DMatch> good_matches;
       std::vector < std::vector<cv::DMatch> > matches;
 
       const cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
@@ -251,6 +261,8 @@ namespace tod
 
       }*/
 
+      std::cout << "Found " << good_matches.size() << " good matches" << std::endl;
+
       // TODO remove matches that match the same (common descriptors)
 
       // Build the 3D positions of the matches
@@ -259,8 +271,8 @@ namespace tod
       for (int match_index = 0; match_index < descriptors.rows; ++match_index)
       {
         cv::Mat & local_matches_3d = matches_3d[match_index];
-        //local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
-        local_matches_3d = cv::Mat(1, good_matches.size(), CV_32FC3);
+        local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
+        //local_matches_3d = cv::Mat(1, good_matches.size(), CV_32FC3); // edgar
         unsigned int i = 0;
         BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
         {
@@ -279,9 +291,7 @@ namespace tod
   private:
     /** The object used to match descriptors to our DB of descriptors */
     cv::Ptr<cv::DescriptorMatcher> matcher_;
-    /** The radius for the nearest neighbors (if not using ratio) */
-    unsigned int radius_;
-    /** The ratio used for k-nearest neighbors, if not using radius search */
+    /** The ratio used for k-nearest neighbors */
     unsigned int ratio_;
     /** The descriptors loaded from the DB */
     std::vector<cv::Mat> descriptors_db_;

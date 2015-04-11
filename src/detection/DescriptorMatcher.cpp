@@ -174,6 +174,7 @@ namespace tod
         std::string search_type = search_param_tree["type"].get_str();
         if (search_type == "LSH")
         {
+<<<<<<< HEAD
           int n_tables = search_param_tree["n_tables"].get_uint64();
           int key_size = search_param_tree["key_size"].get_uint64();
           int multi_probe_level = search_param_tree["multi_probe_level"].get_uint64();
@@ -187,6 +188,12 @@ namespace tod
         else if(search_type == "BFH")
         {
           matcher_ = cv::DescriptorMatcher::create("BruteForce-Hamming"); 
+=======
+          cv::Ptr<cv::flann::IndexParams> lsh_params = new cv::flann::LshIndexParams(search_param_tree["n_tables"].get_uint64(),
+                                         search_param_tree["key_size"].get_uint64(),
+                                         search_param_tree["multi_probe_level"].get_uint64());
+          matcher_ = new cv::FlannBasedMatcher(lsh_params);
+>>>>>>> 4eccd3b370a1dfcf3314a81ae250e616cd72f408
         }
         else
         {

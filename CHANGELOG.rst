@@ -2,6 +2,28 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.3 (2015-03-31)
+------------------
+* use OpenCV and not opencv_candidate for LSH
+* Contributors: Vincent Rabaud
+
+0.5.2 (2015-03-30)
+------------------
+* add opencv_candidate as a dependency
+  It is included but just transitively so it's better to have it
+  directly
+* Revert "remove dependency on opencv_candidate"
+  This reverts commit 3a515e48c815b9e0c7f6df20b730b98d0dccd5df.
+  The RGBD module from opencv_candidate is indeed needed
+* Contributors: Vincent Rabaud
+
+0.5.1 (2015-03-29)
+------------------
+* remove dependency on opencv_candidate
+* clean extensions
+* remove useless build dependency
+* Contributors: Vincent Rabaud
+
 0.5.0 (2014-04-13)
 ------------------
 * compile under Indigo

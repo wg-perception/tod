@@ -44,13 +44,12 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
-//#include <opencv2/flann/flann.hpp>
+#include <opencv2/flann/flann.hpp>
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types.h>
 #include <object_recognition_core/db/ModelReader.h>
 #include <object_recognition_core/db/opencv.h>
-//#include <opencv_candidate/lsh.h>
 
 using object_recognition_core::db::Documents;
 using object_recognition_core::db::ObjectId;
@@ -169,20 +168,21 @@ namespace tod
           search_param_tree = value.get_obj();
         }
 
-        radius_ = search_param_tree["radius"].get_real();
         ratio_ = search_param_tree["ratio"].get_real();
 
         // Create the matcher depending on the type of descriptors
         std::string search_type = search_param_tree["type"].get_str();
         if (search_type == "LSH")
         {
-          /*cv::flann::LshIndexParams lsh_params(search_param_tree.get<unsigned int>("n_tables"),
-           search_param_tree.get<unsigned int>("key_size"),
-           search_param_tree.get<unsigned int>("multi_probe_level"));
-           matcher_ = new cv::FlannBasedMatcher(&lsh_params);*/
-          //matcher_ = new lsh::LshMatcher(search_param_tree["n_tables"].get_uint64(),
-          //                               search_param_tree["key_size"].get_uint64(),
-          //                               search_param_tree["multi_probe_level"].get_uint64());
+          int n_tables = search_param_tree["n_tables"].get_uint64();
+          int key_size = search_param_tree["key_size"].get_uint64();
+          int multi_probe_level = search_param_tree["multi_probe_level"].get_uint64();
+          int radius = search_param_tree["radius"].get_uint64();
+
+          cv::Ptr<cv::flann::IndexParams> lsh_params = new cv::flann::LshIndexParams(n_tables, key_size, multi_probe_level);             
+          cv::Ptr<cv::flann::SearchParams> search_params = new cv::flann::SearchParams(radius);
+          
+          matcher_ = new cv::FlannBasedMatcher(lsh_params, search_params);
         }
         else if(search_type == "BFH")
         {
@@ -204,44 +204,31 @@ namespace tod
     int
     process(const ecto::tendrils& inputs, const ecto::tendrils& outputs)
     {
+      std::vector<cv::DMatch> good_matches;
       std::vector < std::vector<cv::DMatch> > matches;
+
       const cv::Mat & descriptors = inputs.get < cv::Mat > ("descriptors");
 
-      // Perform radius search
-      if (radius_)
+      if (matcher_->getTrainDescriptors().empty())
       {
-        if (matcher_->getTrainDescriptors().empty())
-        {
-          std::cerr << "No descriptors loaded" << std::endl;
-          return ecto::OK;
-        }
-        // Perform radius search
-        matcher_->radiusMatch(descriptors, matches, radius_);
-      }
-      else
-      {
-        matcher_->knnMatch(descriptors, matches, 2);
+        std::cerr << "No descriptors loaded" << std::endl;
+        return ecto::OK;
       }
 
-      // TODO Perform ratio testing if necessary
+      // Perform 2 Nearest Neighbors search
+      matcher_->knnMatch(descriptors, matches, 2);
 
-      std::vector<cv::DMatch> good_matches;
-      if (ratio_)
+      // Perform ratio testing
+      for(size_t i = 0; i < matches.size(); i++)
       {
-        for(size_t i = 0; i < matches.size(); i++)
-        {
-          cv::DMatch first = matches[i][0];
-          float dist1 = matches[i][0].distance;
-          float dist2 = matches[i][1].distance;
-    
-          if(dist1 < ratio_ * dist2) {
-            //kpts1_out.push_back(kpts1[first.queryIdx]);
-            //kpts2_out.push_back(kpts2[first.trainIdx]);
-            good_matches.push_back(first);
-          }
-        }
+        cv::DMatch first = matches[i][0];
+        float dist1 = matches[i][0].distance;
+        float dist2 = matches[i][1].distance;
 
+        if(dist1 > ratio_ * dist2) good_matches.push_back(first);
       }
+
+      std::cout << "Found " << good_matches.size() << " good matches" << std::endl;
 
       // TODO remove matches that match the same (common descriptors)
 
@@ -251,16 +238,19 @@ namespace tod
       for (int match_index = 0; match_index < descriptors.rows; ++match_index)
       {
         cv::Mat & local_matches_3d = matches_3d[match_index];
-        //local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
-        local_matches_3d = cv::Mat(1, good_matches.size(), CV_32FC3);
+        local_matches_3d = cv::Mat(1, matches[match_index].size(), CV_32FC3);
+        //local_matches_3d = cv::Mat(1, good_matches.size(), CV_32FC3); // edgar
         unsigned int i = 0;
-        //BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
-        BOOST_FOREACH (const cv::DMatch & match, good_matches)
+        BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
+        //BOOST_FOREACH (const cv::DMatch & match, good_matches) // EDGAR
         {
           local_matches_3d.at<cv::Vec3f>(0, i) = features3d_db_[match.imgIdx].at<cv::Vec3f>(0, match.trainIdx);
           ++i;
         }
-    }
+      }
+
+      std::cout << "Found " << matches.size() << " 2d matches" << std::endl;
+      std::cout << "Found " << matches_3d.size() << " 3d matches" << std::endl;
 
       outputs["matches"] << matches;
       outputs["matches_3d"] << matches_3d;
@@ -272,9 +262,7 @@ namespace tod
   private:
     /** The object used to match descriptors to our DB of descriptors */
     cv::Ptr<cv::DescriptorMatcher> matcher_;
-    /** The radius for the nearest neighbors (if not using ratio) */
-    unsigned int radius_;
-    /** The ratio used for k-nearest neighbors, if not using radius search */
+    /** The ratio used for k-nearest neighbors */
     unsigned int ratio_;
     /** The descriptors loaded from the DB */
     std::vector<cv::Mat> descriptors_db_;

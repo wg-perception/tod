@@ -144,7 +144,7 @@ public:
     int n_levels = feature_param_tree["n_levels"].get_uint64();
 
 #if CV_VERSION_EPOCH < 3
-  if (feature_type == "ORB")
+    if (feature_type == "ORB")
     {      
       feature2d_ = new cv::ORB(n_features, scale_factor, n_levels);
     }

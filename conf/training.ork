@@ -5,6 +5,10 @@ pipeline1:
   parameters:
     feature:
       type: ORB
+<<<<<<< HEAD
+=======
+      module: ecto_opencv.features2d
+>>>>>>> c1449cb72eb34b44a89037514dad541406d88b62
       n_features: 1000
       n_levels: 3
       scale_factor: 1.2

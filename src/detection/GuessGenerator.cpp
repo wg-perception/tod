@@ -177,8 +177,7 @@ namespace tod
           std::cout << "***Starting object: " << opencv_object_id << std::endl;
 
           // 3d points
-          const cv::Mat object_points = matches_3d.clone();
-          //const cv::Mat object_points = matches_3d[i];
+          const cv::Mat object_points = matches_3d[i];
 
           // extract 2d points
           std::vector<cv::Point> image_points;

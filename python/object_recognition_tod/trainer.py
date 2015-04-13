@@ -4,8 +4,8 @@ Module defining the TOD trainer to train the TOD models
 """
 
 from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
-from ecto_opencv import calib, features2d, highgui
-from ecto_opencv.features2d import FeatureDescriptor
+#from ecto_opencv import calib, features2d, highgui
+#from ecto_opencv.features2d import FeatureDescriptor
 from object_recognition_core.ecto_cells.db import ModelWriter
 from object_recognition_core.pipelines.training import TrainerBase
 from object_recognition_tod import ecto_training
@@ -21,6 +21,7 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
 
     @classmethod
     def declare_cells(cls, _p):
+
         # passthrough cells
         cells = {'object_id': CellInfo(ecto.Constant),
                  'json_db': CellInfo(ecto.Constant)}
@@ -42,7 +43,17 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
 
         return (p,i,o)
 
-    def connections(self, p):
+    @classmethod
+    def declare_direct_params(self, p):
+        p.declare('feature', 'The features parameters as a JSON string', '{}')
+        p.declare('descriptor', 'The descriptor parameters as a JSON string', '{}')
+
+    def configure(self, p, _i, _o):
+      self.trainer = ecto_training.Trainer("Trainer",
+                          json_feature_params=p['feature'],
+                          json_descriptor_params=p['descriptor'])
+
+    def connections(self, _p):
         connections = [ self.object_id[:] >> self.trainer['object_id'],
                         self.json_db[:] >> self.trainer['json_db'] ]
         connections += [ self.trainer['descriptors', 'points'] >> self.model_filler['descriptors', 'points'] ]

@@ -20,6 +20,9 @@ find_package(Boost REQUIRED system filesystem serialization)
 find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
 
+message(STATUS "OpenCV version: ${OpenCV_VERSION}")
+message(STATUS "OpenCV headers: ${OpenCV_INCLUDE_DIRS}")
+
 include_directories(SYSTEM ${BOOST_INCLUDE_DIRS}
                            ${catkin_INCLUDE_DIRS}
                            ${EIGEN_INCLUDE_DIRS}

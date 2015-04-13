@@ -12,6 +12,8 @@ from object_recognition_core.pipelines.detection import DetectorBase
 from object_recognition_tod import ecto_detection
 import ecto
 
+########################################################################################################################
+
 class TodDetector(ecto.BlackBox, DetectorBase):
     def __init__(self, *args, **kwargs):
         ecto.BlackBox.__init__(self, *args, **kwargs)

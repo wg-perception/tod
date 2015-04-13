@@ -46,6 +46,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 
 #include <object_recognition_core/common/types.h>
 #include <object_recognition_core/common/pose_result.h>
@@ -101,7 +102,7 @@ namespace tod
     void
     configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs)
     {
-      if (*visualize_)
+      //if (*visualize_)
       {
         colors_.push_back(cv::Scalar(255, 255, 0));
         colors_.push_back(cv::Scalar(0, 255, 255));
@@ -144,17 +145,119 @@ namespace tod
       pose_results_->clear();
       Rs_->clear();
       Ts_->clear();
-      if (point_cloud.empty())
+
+      // TODO: find a way to indicate in yaml file
+      bool camera2d = point_cloud.empty();
+      camera2d = true;
+
+      if (camera2d)
       {
+
         // Only use 2d to 3d matching
-        // TODO
+        
         //const std::vector<cv::KeyPoint> &keypoints = inputs.get<std::vector<cv::KeyPoint> >("keypoints");
+        
+        cv::Mat visualize_img;
+        size_t color_index = 0;
+
+        BOOST_FOREACH(const ObjectId object_id, object_ids_in)
+        {
+          std::cout << "***Starting object: " << object_id << std::endl;
+
+          std::vector<cv::Point3f> object_points;
+          std::vector<cv::Point2f> image_points;
+          std::vector<cv::KeyPoint> image_keypoints;
+
+          //TODO: revise how to build the containers
+
+          // build object and image points container
+          for (size_t match_index = 0; match_index < matches_3d.size(); ++match_index)
+          {
+            cv::Mat local_matches_3d = matches_3d[match_index];
+            unsigned int i = 0;
+            BOOST_FOREACH (const cv::DMatch & match, matches[match_index])
+            {
+              object_points.push_back( local_matches_3d.at<cv::Vec3f>(0, i) );
+              image_points.push_back( keypoints[ match.queryIdx ].pt );
+              image_keypoints.push_back( keypoints[ match.queryIdx ] );
+              ++i;
+            }
+          }
+
+          std::cout << object_points.size() << " object_points" << std::endl;
+          std::cout << image_points.size() << " image_points" << std::endl;
+
+          // TODO: get camera matrix values from graph
+          cv::Mat K = (cv::Mat_<float>(3, 3) << 1050.0, 0.0, 639.5, 0.0, 1050.0, 479.5, 0.0, 0.0, 1.0);
+          cv::Mat dist_coef(1, 4, CV_32F, 0.0);
+
+          // result containers 
+          cv::Mat rvec, tvec, inliers;
+
+          // Default parameters
+          bool use_extrinsic_guess = false;
+          int iterations_count = 100;
+          float reprojection_error = 8.0;
+          double confidence = 0.99;
+          //int flags = cv::SOLVEPNP_ITERATIVE;
+          int flags = CV_ITERATIVE;
+          //int flags = CV_EPNP;
+          //int flags = CV_P3P;
+
+          // estimate 3D pose
+          cv::solvePnPRansac(object_points, image_points, K, dist_coef, rvec, tvec, use_extrinsic_guess, iterations_count, reprojection_error, confidence, inliers, flags);
+          
+          std::cout << "RANSAC done with " << inliers.rows << " inliers" << std::endl;
+          std::cout << "Pose " << tvec << std::endl; // debug only
+
+          // convert rotation vector to rotation matrix
+          cv::Mat R_mat;
+          cv::Rodrigues(rvec, R_mat);
+
+          // Save the result;
+          PoseResult pose_result;
+          pose_result.set_R(R_mat);
+          pose_result.set_T(tvec);
+          pose_result.set_object_id(db_, object_id);
+          pose_results_->push_back(pose_result);
+          Rs_->push_back(cv::Mat(R_mat));
+          Ts_->push_back(cv::Mat(tvec));
+
+
+          // Store the matches for debug purpose
+          //if (*visualize_)
+          {
+            std::vector<cv::KeyPoint> draw_keypoints;
+            initial_image.copyTo(visualize_img);
+
+            for (int i = 0; i < inliers.rows; ++i)
+            { 
+              draw_keypoints.push_back( image_keypoints[ inliers.at<int>(i) ] );
+            }
+
+            if (color_index < colors_.size())
+            {
+              cv::drawKeypoints(visualize_img, draw_keypoints, visualize_img, colors_[color_index]);
+              ++color_index;
+            }
+
+            cv::namedWindow("inliers", 0);
+            cv::imshow("inliers", visualize_img);
+            cv::waitKey(3);
+          }
+
+        }
+
+        std::cout << "********************* found " << pose_results_->size() << " poses" << std::endl;
+
       }
       else
       {
 #ifdef DO_VALGRIND
     CALLGRIND_START_INSTRUMENTATION;
 #endif
+        std::cout << "*** AdjacencyRansac METHOD ***" << std::endl;
+
         // Cluster the matches per object ID
         OpenCVIdToObjectPoints all_object_points;
         ClusterPerObject(keypoints, point_cloud, matches, matches_3d, all_object_points);

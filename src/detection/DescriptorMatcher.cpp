@@ -207,7 +207,17 @@ namespace tod
           return ecto::OK;
         }
         // Perform radius search
-        matcher_->radiusMatch(descriptors, matches, radius_);
+        // As this does not work for LSH on OpenCV 2.4, we first perform knn
+        matcher_->knnMatch(descriptors, matches, 5);
+        for (size_t i = 0; i < matches.size(); ++i)
+        {
+          for(int j = 0; j < 5; ++j)
+            if (matches[i][j].distance > radius_)
+            {
+              matches[i].resize(j);
+              break;
+            }
+        }
       }
 
       // TODO Perform ratio testing if necessary

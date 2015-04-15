@@ -2,8 +2,8 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.4 (2015-04-15)
+------------------
 * fix radius search not support with LSH
 * remove useless code
 * Contributors: Vincent Rabaud

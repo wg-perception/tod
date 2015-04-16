@@ -211,7 +211,7 @@ namespace tod
         matcher_->knnMatch(descriptors, matches, 5);
         for (size_t i = 0; i < matches.size(); ++i)
         {
-          for(int j = 0; j < 5; ++j)
+          for(size_t j = 0; j < std::min(matches[i].size(), (size_t)5); ++j)
             if (matches[i][j].distance > radius_)
             {
               matches[i].resize(j);

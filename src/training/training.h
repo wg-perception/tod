@@ -40,7 +40,7 @@
 
 #include <boost/foreach.hpp>
 
-#if CV_VERSION_EPOCH < 3
+#if CV_VERSION_MAJOR < 3
   #include <opencv2/core/core.hpp>
   #include <opencv2/imgproc/imgproc.hpp>
   #include <opencv2/features2d/features2d.hpp>

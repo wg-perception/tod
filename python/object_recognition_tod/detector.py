@@ -81,6 +81,7 @@ class TodDetector(ecto.BlackBox, DetectorBase):
 
         graph += [ self.feature_descriptor['keypoints'] >> self.guess_generator['keypoints'],
                    self.feature_descriptor['descriptors'] >> self.descriptor_matcher['descriptors'],
+                   self.passthrough['K_image'] >> self.guess_generator['K'],
                    self.descriptor_matcher['matches', 'matches_3d'] >> self.guess_generator['matches', 'matches_3d'] ]
 
         cvt_color = imgproc.cvtColor(flag=imgproc.RGB2GRAY)

@@ -14,7 +14,7 @@ source1:
   parameters:
     rgb_frame_id: 'camera_rgb_optical_frame'
     rgb_camera_info: '/camera/rgb/camera_info'
-    rgb_image_topic: '/camera/rgb/image_color'
+    rgb_image_topic: '/camera/rgb/image_rect_color'
     depth_camera_info: '/camera/depth_registered/camera_info'
     depth_image_topic: '/camera/depth_registered/image_raw'
 
@@ -44,8 +44,8 @@ pipeline1:
     object_ids: "all"
     feature:
       type: ORB
-      module: ecto_opencv.features2d
-      n_features: 1000
+      #module: ecto_opencv.features2d
+      n_features: 5000
       n_levels: 3
       scale_factor: 1.2
     descriptor:
@@ -53,12 +53,11 @@ pipeline1:
       module: ecto_opencv.features2d
     search: 
       type: LSH
-      module: ecto_opencv.features2d
-      key_size: 12 #24
-      multi_probe_level: 1 #2
-      n_tables: 6 #8
+      key_size: 24 #12
+      multi_probe_level: 2 #1
+      n_tables: 8 #6
       radius: 55
-      ratio: 0.8
+      ratio: 0.9
     n_ransac_iterations: 1000
     min_inliers: 6
     sensor_error: 0.01

@@ -1,7 +1,7 @@
 #include <ecto/ecto.hpp>
 
 
-#if CV_VERSION_EPOCH < 3
+#if CV_VERSION_MAJOR < 3
   #include <opencv2/core/core.hpp>
 #else
   #include <opencv2/core.hpp>

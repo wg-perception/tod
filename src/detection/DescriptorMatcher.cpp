@@ -241,11 +241,7 @@ namespace tod
       // Perform ratio testing
       // maybe not needed since I see more than 99%
       // of matches pass the ratio test
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> pnp running, but not solving
       /*std::vector<cv::DMatch> good_matches;
       for(size_t i = 0; i < matches.size(); i++)
       {
@@ -262,14 +258,9 @@ namespace tod
           }
         }
 
-<<<<<<< HEAD
       }*/
 
       std::cout << "Found " << good_matches.size() << " good matches" << std::endl;
-=======
-        if(dist1 > ratio_ * dist2) good_matches.push_back(first);
-      }*/
->>>>>>> pnp running, but not solving
 
       // TODO remove matches that match the same (common descriptors)
 

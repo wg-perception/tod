@@ -103,7 +103,7 @@ namespace tod
     void
     configure(const tendrils& params, const tendrils& inputs, const tendrils& outputs)
     {
-      //if (*visualize_)
+      if (*visualize_)
       {
         colors_.push_back(cv::Scalar(255, 255, 0));
         colors_.push_back(cv::Scalar(0, 255, 255));
@@ -165,7 +165,6 @@ namespace tod
         float reprojection_error = 8.0;
         double confidence = 0.99;
         int flags = CV_ITERATIVE;
-
 
         // -- visualization config
         cv::Mat visualize_img;
@@ -230,7 +229,6 @@ namespace tod
             pose_results_->push_back(pose_result);
             Rs_->push_back(cv::Mat(R_mat));
             Ts_->push_back(cv::Mat(tvec));
-
 
             // Store the matches for debug purpose
             if (*visualize_)

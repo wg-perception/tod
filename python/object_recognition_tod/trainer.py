@@ -4,8 +4,6 @@ Module defining the TOD trainer to train the TOD models
 """
 
 from ecto import BlackBoxCellInfo as CellInfo, BlackBoxForward as Forward
-#from ecto_opencv import calib, features2d, highgui
-#from ecto_opencv.features2d import FeatureDescriptor
 from object_recognition_core.ecto_cells.db import ModelWriter
 from object_recognition_core.pipelines.training import TrainerBase
 from object_recognition_tod import ecto_training
@@ -49,7 +47,7 @@ class TodTrainer(ecto.BlackBox, TrainerBase):
         p.declare('descriptor', 'The descriptor parameters as a JSON string', '{}')
 
     def configure(self, p, _i, _o):
-      self.trainer = ecto_training.Trainer("Trainer",
+      	self.trainer = ecto_training.Trainer("Trainer",
                           json_feature_params=p['feature'],
                           json_descriptor_params=p['descriptor'])
 

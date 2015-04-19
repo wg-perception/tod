@@ -65,14 +65,14 @@ rescale_depth(const cv::Mat depth_in, const cv::Size & isize, cv::Mat &depth_out
 {
   cv::Size dsize = depth_in.size();
   cv::Mat depth;
-  cv::rescaleDepth(depth_in, CV_32F, depth);
+  rescaleDepth(depth_in, CV_32F, depth);
 
   if (dsize == isize) {
     depth_out = depth;
     return;
   }
 
-  float factor = float(isize.width) / dsize.width; //scaling factor.
+  float factor = static_cast<float>(isize.width) / dsize.width; //scaling factor.
   cv::Mat output(isize, depth.type(), std::numeric_limits<float>::quiet_NaN()); //output is same size as image.
 
   //resize into the subregion of the correct aspect ratio
@@ -121,7 +121,7 @@ public:
     inputs.declare(&Trainer::object_id_, "object_id",
         "The id of the object in the DB.").required(true);
 
-    // Outpus
+    // Outputs
     outputs.declare(&Trainer::descriptors_out_, "descriptors",
         "The stacked descriptors.");
     outputs.declare(&Trainer::points_out_, "points",

@@ -2,8 +2,8 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.5 (2015-04-19)
+------------------
 * Fix seg fault while detecting objects
   In many cases, matches[i] contains less than 5 elements (varies seemingly random between 0 and 4)
   Long history available [here](https://github.com/plasmodic/ecto_opencv/commit/2f2fe7fb75d09337c1d594cee416bd948f337b30#commitcomment-10687068)

@@ -39,8 +39,6 @@
 #include <map>
 #include <vector>
 
-#include <opencv2/core/core.hpp>
-
 #include "maximum_clique.h"
 
 namespace tod

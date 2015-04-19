@@ -42,9 +42,15 @@
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/flann/flann.hpp>
+#if OPENCV3
+  #include <opencv2/core.hpp>
+  #include <opencv2/features2d.hpp>
+  #include <opencv2/flann/flann.hpp>
+#else
+  #include <opencv2/core/core.hpp>
+  #include <opencv2/features2d/features2d.hpp>
+  #include <opencv2/flann/flann.hpp>
+#endif
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types.h>

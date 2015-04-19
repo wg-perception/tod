@@ -149,11 +149,17 @@ public:
       int n_features = feature_param_tree["n_features"].get_uint64();
       int n_levels = feature_param_tree["n_levels"].get_uint64();
       float scale_factor = feature_param_tree["scale_factor"].get_real();
+
       feature2d_ = cv::ORB::create(n_features, scale_factor, n_levels);
     }
     else if(feature_type == "AKAZE")
     {
       feature2d_ = cv::AKAZE::create();
+    }
+#else
+    if (feature_type == "ORB")
+    {
+      feature2d_ = new cv::ORB(n_features, scale_factor, n_levels);
     }
 #endif
     else

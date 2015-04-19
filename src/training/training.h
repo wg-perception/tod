@@ -40,13 +40,13 @@
 
 #include <boost/foreach.hpp>
 
-#if CV_VERSION_MAJOR < 3
+#if OPENCV3
+  #include <opencv2/core.hpp>
+  #include <opencv2/imgproc.hpp>
+#else
   #include <opencv2/core/core.hpp>
   #include <opencv2/imgproc/imgproc.hpp>
   #include <opencv2/features2d/features2d.hpp>
-#else
-  #include <opencv2/core.hpp>
-  #include <opencv2/imgproc.hpp>
 #endif
 
 #include <opencv2/rgbd/rgbd.hpp>

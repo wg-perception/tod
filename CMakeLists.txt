@@ -20,6 +20,10 @@ find_package(Boost REQUIRED system filesystem serialization)
 find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
 
+if ( NOT DEFINED ${CV_VERSION_EPOCH} )
+ add_definitions("-DOPENCV3=1")
+endif()
+
 message(STATUS "OpenCV version: ${OpenCV_VERSION}")
 message(STATUS "OpenCV headers: ${OpenCV_INCLUDE_DIRS}")
 

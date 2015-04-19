@@ -20,7 +20,7 @@ find_package(Boost REQUIRED system filesystem serialization)
 find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
 
-if ( NOT DEFINED ${CV_VERSION_EPOCH} )
+if ( OpenCV_VERSION VERSION_GREATER 2.4.9 )
  add_definitions("-DOPENCV3=1")
 endif()
 

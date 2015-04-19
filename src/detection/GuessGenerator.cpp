@@ -170,7 +170,6 @@ namespace tod
         cv::Mat visualize_img;
         size_t color_index = 0;
 
-
         // -- build containers for objects and image points
 
         const int n_objects = static_cast<int>(object_ids_in.size());
@@ -223,8 +222,8 @@ namespace tod
 
             // save the result
             PoseResult pose_result;
-            pose_result.set_R(R_mat);
-            pose_result.set_T(tvec);
+            pose_result.set_R(cv::Mat(R_mat));
+            pose_result.set_T(cv::Mat(tvec));
             pose_result.set_object_id(db_, object_id);
             pose_results_->push_back(pose_result);
             Rs_->push_back(cv::Mat(R_mat));
@@ -270,8 +269,7 @@ namespace tod
         // Cluster the matches per object ID
         OpenCVIdToObjectPoints all_object_points;
         ClusterPerObject(keypoints, point_cloud, matches, matches_3d, all_object_points);
-        cv::Mat visualize_img;
-        size_t color_index = 0;
+
         if (*visualize_)
         {
           DrawClustersPerObject(keypoints, colors_, initial_image, all_object_points);

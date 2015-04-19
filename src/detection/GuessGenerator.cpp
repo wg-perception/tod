@@ -141,7 +141,7 @@ namespace tod
       const std::map<ObjectId, float> & spans = inputs.get<std::map<ObjectId, float> >("spans");
 
       const cv::Mat & initial_image = inputs.get<cv::Mat>("image");
-      const cv::Mat & K = inputs.get<cv::Mat>("K");
+      const cv::Matx33f & K = inputs.get<cv::Mat>("K");
 
       // Get the outputs
       pose_results_->clear();
@@ -154,7 +154,7 @@ namespace tod
         // -- pnp config
 
         // distortion coefficients
-        cv::Mat dist_coef = cv::Mat::zeros(1, 4, CV_32F);
+        cv::Matx14f dist_coef;
 
         // result containers
         cv::Mat rvec, tvec, inliers;
@@ -218,7 +218,7 @@ namespace tod
           {
 
             // convert rotation vector to rotation matrix
-            cv::Mat R_mat;
+            cv::Matx33f R_mat;
             cv::Rodrigues(rvec, R_mat);
 
             // save the result

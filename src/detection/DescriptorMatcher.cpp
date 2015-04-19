@@ -174,6 +174,7 @@ namespace tod
           search_param_tree = value.get_obj();
         }
 
+        radius_ = search_param_tree["radius"].get_real();
         ratio_ = search_param_tree["ratio"].get_real();
 
         // Create the matcher depending on the type of descriptors
@@ -183,7 +184,6 @@ namespace tod
           int n_tables = search_param_tree["n_tables"].get_uint64();
           int key_size = search_param_tree["key_size"].get_uint64();
           int multi_probe_level = search_param_tree["multi_probe_level"].get_uint64();
-          int radius = search_param_tree["radius"].get_uint64();
 
           cv::Ptr<cv::flann::IndexParams> lsh_params = new cv::flann::LshIndexParams(n_tables, key_size, multi_probe_level);
           cv::Ptr<cv::flann::SearchParams> search_params = new cv::flann::SearchParams(radius);
@@ -225,6 +225,7 @@ namespace tod
         // Perform radius search
         // As this does not work for LSH on OpenCV 2.4, we first perform knn
         matcher_->knnMatch(descriptors, matches, 5);
+
         for (size_t i = 0; i < matches.size(); ++i)
         {
           for(size_t j = 0; j < std::min(matches[i].size(), (size_t)5); ++j)
@@ -240,9 +241,6 @@ namespace tod
         std::cerr << "No descriptors loaded" << std::endl;
         return ecto::OK;
       }
-
-      // Perform 2 Nearest Neighbors search
-      matcher_->knnMatch(descriptors, matches, 2);
 
       // Perform ratio testing
       // maybe not needed since I see more than 99%
@@ -295,6 +293,8 @@ namespace tod
   private:
     /** The object used to match descriptors to our DB of descriptors */
     cv::Ptr<cv::DescriptorMatcher> matcher_;
+    /** The radius for the nearest neighbors (if not using ratio) */
+    unsigned int radius_;
     /** The ratio used for k-nearest neighbors */
     unsigned int ratio_;
     /** The descriptors loaded from the DB */

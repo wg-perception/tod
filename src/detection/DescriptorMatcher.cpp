@@ -42,12 +42,12 @@
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 
-#if OPENCV3
-  #include <opencv2/core.hpp>
+#include <opencv2/core/version.hpp>
+
+#ifndef CV_VERSION_EPOCH
   #include <opencv2/features2d.hpp>
   #include <opencv2/flann/flann.hpp>
 #else
-  #include <opencv2/core/core.hpp>
   #include <opencv2/features2d/features2d.hpp>
   #include <opencv2/flann/flann.hpp>
 #endif

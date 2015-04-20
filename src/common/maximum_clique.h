@@ -42,11 +42,7 @@
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>
 
-#if OPENCV3
-  #include <opencv2/core.hpp>
-#else
-  #include <opencv2/core/core.hpp>
-#endif
+#include <opencv2/core/core.hpp>
 
 namespace tod
 {

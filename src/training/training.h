@@ -40,11 +40,11 @@
 
 #include <boost/foreach.hpp>
 
-#if OPENCV3
-  #include <opencv2/core.hpp>
+#include <opencv2/core/version.hpp>
+
+#ifndef CV_VERSION_EPOCH
   #include <opencv2/imgproc.hpp>
 #else
-  #include <opencv2/core/core.hpp>
   #include <opencv2/imgproc/imgproc.hpp>
   #include <opencv2/features2d/features2d.hpp>
 #endif

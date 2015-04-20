@@ -4,11 +4,7 @@
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 
-#if OPENCV3
-  #include <opencv2/core.hpp>
-#else
-  #include <opencv2/core/core.hpp>
-#endif
+#include <opencv2/core/core.hpp>
 
 #include <ecto/ecto.hpp>
 

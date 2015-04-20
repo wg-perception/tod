@@ -41,6 +41,10 @@
 
 #include "maximum_clique.h"
 
+#ifdef CV_VERSION_EPOCH
+  #include <opencv2/features2d/features2d.hpp>
+#endif
+
 namespace tod
 {
   class AdjacencyRansac

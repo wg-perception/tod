@@ -58,6 +58,7 @@ pipeline1:
       n_tables: 8 #6
       radius: 55
       ratio: 0.8
+    use_pnp: 1
     n_ransac_iterations: 1000
     min_inliers: 6
     sensor_error: 0.01

@@ -38,7 +38,8 @@ class TodDetector(ecto.BlackBox, DetectorBase):
                                     Forward('json_descriptor_params')],
              'guess_generator': [Forward('n_ransac_iterations'),
                                  Forward('min_inliers'),
-                                 Forward('sensor_error')]}
+                                 Forward('sensor_error'),
+                                 Forward('use_pnp')]}
         i = {'passthrough': [Forward('image'), Forward('K_image')],
              'feature_descriptor': [Forward('mask')],
              'depth_map': [Forward('depth')]}

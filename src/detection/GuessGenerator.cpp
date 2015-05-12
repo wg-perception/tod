@@ -80,6 +80,7 @@ namespace tod
     static void
     declare_params(ecto::tendrils& params)
     {
+      params.declare(&GuessGenerator::use_pnp_, "use_pnp", "If true, use only 2d information and pnp to recover the camera pose", false);
       params.declare(&GuessGenerator::min_inliers_, "min_inliers", "Minimum number of inliers", 15);
       params.declare(&GuessGenerator::n_ransac_iterations_, "n_ransac_iterations", "Number of RANSAC iterations.",
                      1000);
@@ -225,7 +226,8 @@ namespace tod
           {
 
             // convert rotation vector to rotation matrix
-            cv::Matx33f R_mat;
+            //cv::Matx33f R_mat; // makes Rodrigues crash
+            cv::Mat R_mat;
             cv::Rodrigues(rvec, R_mat);
 
             // save the result
@@ -375,6 +377,8 @@ namespace tod
     ecto::spore<std::vector<cv::Mat> > Ts_;
     /** flag indicating whether we run in debug mode */
     ecto::spore<bool> visualize_;
+    /** flag to force to use pnp method */
+    ecto::spore<bool> use_pnp_;
     /** The minimum number of inliers in order to do pose matching */
     ecto::spore<unsigned int> min_inliers_;
     /** The number of RANSAC iterations to perform */

@@ -2,8 +2,8 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.6 (2016-04-24)
+------------------
 * fix OpenCV3 compilation
 * Contributors: Vincent Rabaud
 

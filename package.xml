@@ -1,6 +1,6 @@
 <package>
   <name>object_recognition_tod</name>
-  <version>0.5.5</version>
+  <version>0.5.6</version>
   <description>Textured Object Recognition a standard bag of features approach</description>
   <author email="vincent.rabaud@gmail.com">Vincent Rabaud</author>
   <author email="erublee@willowgarage.com">Ethan Rublee</author>

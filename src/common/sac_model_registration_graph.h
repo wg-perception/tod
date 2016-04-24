@@ -40,6 +40,8 @@
 
 #include "maximum_clique.h"
 
+#include <map>
+
 namespace
 {
   /** Compute the squared distance between two vectors

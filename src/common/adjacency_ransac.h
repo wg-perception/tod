@@ -36,6 +36,7 @@
 #ifndef ADJACENCY_RANSAC_H_
 #define ADJACENCY_RANSAC_H_
 
+#include <map>
 #include <vector>
 
 #include <opencv2/core/core.hpp>

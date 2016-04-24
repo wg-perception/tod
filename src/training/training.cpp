@@ -39,7 +39,14 @@
 #include <boost/foreach.hpp>
 
 #include <opencv2/imgproc/imgproc.hpp>
+#if CV_VERSION_MAJOR == 3
+#include <opencv2/rgbd.hpp>
+namespace cv {
+using namespace cv::rgbd;
+}
+#else
 #include <opencv2/rgbd/rgbd.hpp>
+#endif
 
 #include "training.h"
 

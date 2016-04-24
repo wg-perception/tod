@@ -2,6 +2,11 @@
 Changelog for package object_recognition_tod
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix OpenCV3 compilation
+* Contributors: Vincent Rabaud
+
 0.5.5 (2015-04-19)
 ------------------
 * Fix seg fault while detecting objects

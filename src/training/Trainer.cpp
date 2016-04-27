@@ -53,6 +53,7 @@ using cv::rgbd::rescaleDepth;
 #include <opencv2/rgbd/rgbd.hpp>
 using cv::depthTo3dSparse;
 using cv::rescaleDepth;
+#endif
 
 #include <object_recognition_core/common/json_spirit/json_spirit.h>
 #include <object_recognition_core/common/types_eigen.h>
@@ -91,6 +92,10 @@ public:
   static void
   declare_params(ecto::tendrils& params)
   {
+<<<<<<< HEAD
+=======
+
+>>>>>>> resolve rebasing issues
     params.declare(&Trainer::json_feature_params_, "json_feature_params",
         std::string("Parameters for the feature as a JSON string. ")
             + std::string(
@@ -143,13 +148,23 @@ public:
 
     // Create the pointer depending on the type of descriptors
     std::string feature_type = feature_param_tree["type"].get_str();
+<<<<<<< HEAD
+=======
+
+    int n_features = feature_param_tree["n_features"].get_uint64();
+    float scale_factor = feature_param_tree["scale_factor"].get_real();
+    int n_levels = feature_param_tree["n_levels"].get_uint64();
+>>>>>>> resolve rebasing issues
 
     if (feature_type == "ORB")
     {
+<<<<<<< HEAD
       int n_features = feature_param_tree["n_features"].get_uint64();
       int n_levels = feature_param_tree["n_levels"].get_uint64();
       float scale_factor = feature_param_tree["scale_factor"].get_real();
 
+=======
+>>>>>>> resolve rebasing issues
       feature2d_ = cv::ORB::create(n_features, scale_factor, n_levels);
     }
     else if(feature_type == "AKAZE")
@@ -200,7 +215,27 @@ public:
       // Compute the features/descriptors on the image
       cv::Mat /*points,*/ descriptors;
       std::vector<cv::KeyPoint> keypoints;
+<<<<<<< HEAD
 
+      // TODO actually use the params and do not force ORB
+#if CV_VERSION_MAJOR == 3
+      cv::Ptr<cv::DescriptorExtractor> orb = cv::ORB::create();
+      orb->detectAndCompute(obs.image, obs.mask, keypoints, descriptors);
+=======
+<<<<<<< HEAD
+
+#ifndef CV_VERSION_EPOCH
+      feature2d_->detectAndCompute(obs.image, obs.mask, keypoints, descriptors);
+>>>>>>> resolve rebasing issues
+#else
+      cv::ORB orb;
+      orb(obs.image, obs.mask, keypoints, descriptors);
+#endif
+
+<<<<<<< HEAD
+=======
+      std::cout << "Frame " << counter << " --> found " << descriptors.rows << " descriptors" << std::endl;
+=======
       // TODO actually use the params and do not force ORB
 #if CV_VERSION_MAJOR == 3
       cv::Ptr<cv::DescriptorExtractor> orb = cv::ORB::create();
@@ -209,7 +244,9 @@ public:
       cv::ORB orb;
       orb(obs.image, obs.mask, keypoints, descriptors);
 #endif
+>>>>>>> fix OpenCV3 compilation
 
+>>>>>>> resolve rebasing issues
       // Rescale the depth
       cv::Mat depth;
       rescale_depth(obs.depth, obs.image.size(), depth);

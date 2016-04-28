@@ -41,9 +41,7 @@
 
 #include "maximum_clique.h"
 
-#ifdef CV_VERSION_EPOCH
-  #include <opencv2/features2d/features2d.hpp>
-#endif
+#include <opencv2/features2d/features2d.hpp>
 
 namespace tod
 {
@@ -141,4 +139,4 @@ namespace tod
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
-#endif // ADJACENCY_RANSAC_H_ 
+#endif // ADJACENCY_RANSAC_H_

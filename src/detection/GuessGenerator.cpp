@@ -42,19 +42,10 @@
 
 #include <ecto/ecto.hpp>
 
-#include <opencv2/core/version.hpp>
-
-#ifndef CV_VERSION_EPOCH
-  #include <opencv2/imgproc.hpp>
-  #include <opencv2/features2d.hpp>
-  #include <opencv2/highgui.hpp>
-  #include <opencv2/calib3d.hpp>
-#else
-  #include <opencv2/imgproc/imgproc.hpp>
-  #include <opencv2/features2d/features2d.hpp>
-  #include <opencv2/highgui/highgui.hpp>
-  #include <opencv2/calib3d/calib3d.hpp>
-#endif
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 
 #include <object_recognition_core/common/types.h>
 #include <object_recognition_core/common/pose_result.h>

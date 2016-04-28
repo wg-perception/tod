@@ -40,11 +40,7 @@
 #include "ransac.h"
 #include "sac_model_registration_graph.h"
 
-#ifndef CV_VERSION_EPOCH
-  #include <opencv2/highgui.hpp>
-#else
-  #include <opencv2/highgui/highgui.hpp>
-#endif
+#include <opencv2/highgui/highgui.hpp>
 
 namespace tod
 {

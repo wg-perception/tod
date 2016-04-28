@@ -145,6 +145,7 @@ public:
     // Create the pointer depending on the type of descriptors
     std::string feature_type = feature_param_tree["type"].get_str();
 
+#if CV_VERSION_MAJOR == 3
     if (feature_type == "ORB")
     {
       int n_features = feature_param_tree["n_features"].get_uint64();
@@ -212,7 +213,6 @@ public:
 #endif
 
       std::cout << "Frame " << counter << " --> found " << descriptors.rows << " descriptors" << std::endl;
-<<<<<<< HEAD
 
       // TODO actually use the params and do not force ORB
 #if CV_VERSION_MAJOR == 3
@@ -222,8 +222,6 @@ public:
       cv::ORB orb;
       orb(obs.image, obs.mask, keypoints, descriptors);
 #endif
-=======
->>>>>>> 0cfee6d... resolve rebasing issues
 
       // Rescale the depth
       cv::Mat depth;

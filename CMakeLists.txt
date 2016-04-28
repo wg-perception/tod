@@ -19,9 +19,9 @@ add_definitions("-Wno-pragmas -fno-strict-aliasing -Wall -Wl,--no-undefined")
 find_package(Boost REQUIRED system filesystem serialization)
 find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
-if (OpenCV_VERSION VERSION_EQUAL "3")
- add_definitions("-DOPENCV3=1")
-endif()
+
+message(STATUS "OpenCV version: ${OpenCV_VERSION}")
+message(STATUS "OpenCV headers: ${OpenCV_INCLUDE_DIRS}")
 
 if ( OpenCV_VERSION VERSION_GREATER 2.4.9 )
  add_definitions("-DOPENCV3=1")

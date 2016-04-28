@@ -39,9 +39,9 @@
 #include <map>
 #include <vector>
 
-#include <opencv2/core/core.hpp>
-
 #include "maximum_clique.h"
+
+#include <opencv2/features2d/features2d.hpp>
 
 namespace tod
 {
@@ -139,4 +139,4 @@ namespace tod
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
-#endif // ADJACENCY_RANSAC_H_ 
+#endif // ADJACENCY_RANSAC_H_

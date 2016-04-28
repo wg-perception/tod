@@ -89,7 +89,7 @@ namespace pcl
         */
       inline void
       getRandomSamples (const std::vector<unsigned int> &indices,
-                        size_t nr_samples, 
+                        size_t nr_samples,
                         std::set<unsigned int> &indices_subset)
       {
         indices_subset.clear ();
@@ -97,12 +97,12 @@ namespace pcl
           indices_subset.insert (indices[(unsigned int) (indices.size () * (rand () / (RAND_MAX + 1.0)))]);
       }
 
-      /** \brief Return the best set of inliers found so far for this model. 
+      /** \brief Return the best set of inliers found so far for this model.
         * \param inliers the resultant set of inliers
         */
       inline void getInliers (std::vector<unsigned int> &inliers) { inliers = inliers_; }
 
-      /** \brief Return the model coefficients of the best model found so far. 
+      /** \brief Return the model coefficients of the best model found so far.
         * \param model_coefficients the resultant model coefficients
         */
       inline void getModelCoefficients (cv::Matx33f &R, cv::Vec3f&TT) { R = R_; TT=T_;}
@@ -123,10 +123,10 @@ namespace pcl
 
       /** \brief Total number of internal loop iterations that we've done so far. */
       int iterations_;
-      
+
       /** \brief Distance to model threshold. */
       double threshold_;
-      
+
       /** \brief Maximum number of iterations before giving up. */
       int max_iterations_;
   };

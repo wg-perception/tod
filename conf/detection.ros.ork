@@ -14,9 +14,9 @@ source1:
   parameters:
     rgb_frame_id: 'camera_rgb_optical_frame'
     rgb_camera_info: '/camera/rgb/camera_info'
-    rgb_image_topic: '/camera/rgb/image_raw'
-    depth_image_topic: '/camera/depth/image_raw'
-    depth_camera_info: '/camera/depth/camera_info'
+    rgb_image_topic: '/camera/rgb/image_color'
+    depth_camera_info: '/camera/depth_registered/camera_info'
+    depth_image_topic: '/camera/depth_registered/image_raw'
 
 sink1:
   type: 'Publisher'
@@ -24,7 +24,7 @@ sink1:
   parameters:
     visualize: true
     object_ids: 'all'
-    
+
 sink2:
   type: Publisher
   module: 'object_recognition_ros.io'
@@ -44,21 +44,21 @@ pipeline1:
     object_ids: "all"
     feature:
       type: ORB
-      module: ecto_opencv.features2d
-      n_features: 1000
+      #module: ecto_opencv.features2d
+      n_features: 5000
       n_levels: 3
       scale_factor: 1.2
     descriptor:
       type: ORB
       module: ecto_opencv.features2d
-    search: 
-      type: LSH
-      module: ecto_opencv.features2d
-      key_size: 24
-      multi_probe_level: 2
-      n_tables: 8
+    search:
+      type: LSH #BFH
+      key_size: 24 #12
+      multi_probe_level: 2 #1
+      n_tables: 8 #6
       radius: 55
       ratio: 0.8
+    use_pnp: 1
     n_ransac_iterations: 1000
     min_inliers: 6
     sensor_error: 0.01

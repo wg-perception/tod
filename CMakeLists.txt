@@ -8,12 +8,6 @@ catkin_package()
 #install targets for all things python
 catkin_python_setup()
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
-      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-      FORCE)
-endif()
-
 add_definitions("-Wno-pragmas -fno-strict-aliasing -Wall -Wl,--no-undefined")
 
 find_package(Boost REQUIRED system filesystem serialization)
